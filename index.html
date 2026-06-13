@@ -2616,8 +2616,31 @@ function pRows(rows,lg){
   bumpVer();render();
 }
 
+/* ====== EXTRAER DATOS DEL PACIENTE DEL DOCUMENTO ====== */
+function extraerDatosPaciente(text,lg){
+  var msgs=[];
+  function setIf(id,val){var e=$(id);if(e&&val&&(!e.value||e.value.trim()===''||e.value==='--')){e.value=val;return true;}return false;}
+  var ruido=/ESTADO|CUENTA|CLINICA|CLÍNICA|HOSPITAL|FECHA|PACIENTE|MEDICO|MÉDICO|CLIENTE|EMPRESA|DEPARTAMENTO|FACTURA/;
+  // NOMBRE: palabras en mayusculas justo antes de una fecha de nacimiento
+  var nombre='';
+  var mN=text.match(/([A-ZÁÉÍÓÚÑ]{2,}(?:\s+[A-ZÁÉÍÓÚÑ\.]{2,}){1,4})\s+(?:\d{4}-\d{2}-\d{2}|\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/);
+  if(mN&&!ruido.test(mN[1])){nombre=mN[1].replace(/\s+/g,' ').trim();}
+  if(nombre&&setIf('fn',nombre))msgs.push('Paciente: '+nombre);
+  // EDAD: numero antes de "AÑOS"
+  var mE=text.match(/(\d{1,3})\s*A[ÑN]OS/i);
+  if(mE&&setIf('fage',mE[1]))msgs.push('Edad: '+mE[1]);
+  // SEXO
+  var mS=text.match(/\b(hombre|masculino|mujer|femenino)\b/i);
+  if(mS){var s=mS[1].toLowerCase();var val=(s==='hombre'||s==='masculino')?'Masculino':'Femenino';if(setIf('fsex',val))msgs.push('Sexo: '+val);}
+  if(lg&&msgs.length){lg.innerHTML+='<p class="ok" style="margin-top:3px">&#128100; Datos del paciente detectados: '+msgs.join(' &middot; ')+'</p>';}
+  return msgs;
+}
+
 /* ====== PDF PARSER ====== */
 function parsePdfText(text,lg){
+  // Intenta capturar nombre/edad/sexo del paciente desde el documento
+  try{ extraerDatosPaciente(text,lg); }catch(e){}
+
   // Clean the full text
   var lines=text.split(/[\n\r]+/);
   var found=[];
