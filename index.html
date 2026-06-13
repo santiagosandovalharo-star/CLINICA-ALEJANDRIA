@@ -162,6 +162,10 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 
 /* === PRINT === */
 .print-only{display:none}
+/* Ajuste para que la tabla quepa completa en el PDF (se activa solo al generarlo) */
+.pdf-fit .tw{overflow:visible!important}
+.pdf-fit table{width:100%!important;table-layout:fixed!important;font-size:8.5px!important}
+.pdf-fit table th,.pdf-fit table td{padding:3px 3px!important;white-space:normal!important;word-break:break-word!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important}
 @media print{
   body{background:#fff!important;padding:0!important;font-size:9px!important}
   .layout{display:block!important;padding:4px!important;max-width:100%!important}
@@ -268,18 +272,18 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
   </div>
   <div class="tw"><table><thead><tr>
     <th style="width:22px" class="no-print"></th>
-    <th>Clave</th><th>Concepto</th><th class="no-print">Cat.</th><th class="c">Cant</th>
-    <th class="r no-print">Precio U.</th><th class="r no-print">Precio Tot.</th>
-    <th class="r no-print">Desc.</th><th class="r no-print">Subtotal</th>
-    <th class="r no-print">IVA</th><th class="r">Total</th>
+    <th class="no-print">Clave</th><th>Concepto</th><th class="no-print">Cat.</th><th class="c">Cant</th>
+    <th class="r no-print">Precio U.</th><th class="r">Precio</th>
+    <th class="r">Desc.</th><th class="r no-print">Subtotal</th>
+    <th class="r">IVA</th><th class="r">Precio final</th>
     <th class="r cost-col no-print">Costo</th><th class="r cost-col no-print">Utilidad</th><th class="r cost-col no-print">Margen</th>
     <th style="width:20px" class="no-print"></th>
   </tr></thead><tbody id="tbody"></tbody>
   <tfoot id="tfoot" style="display:none"><tr>
     <td class="no-print"></td><td colspan="3">TOTALES</td><td class="r" id="tf-q"></td>
-    <td class="r no-print" id="tf-precio"></td><td class="r no-print" id="tf-preciotot"></td>
-    <td class="r no-print" id="tf-descuento"></td><td class="r no-print" id="tf-subtotal"></td>
-    <td class="r no-print" id="tf-iva"></td><td class="r" id="tf-total"></td>
+    <td class="r no-print" id="tf-precio"></td><td class="r" id="tf-preciotot"></td>
+    <td class="r" id="tf-descuento"></td><td class="r no-print" id="tf-subtotal"></td>
+    <td class="r" id="tf-iva"></td><td class="r" id="tf-total"></td>
     <td class="r cost-col no-print" id="tf-costo"></td><td class="r cost-col no-print" id="tf-util"></td><td class="r cost-col no-print" id="tf-marg"></td>
     <td class="no-print"></td>
   </tr></tfoot></table>
@@ -2798,15 +2802,15 @@ function render(){
     var tr=document.createElement('tr');tr.className=mc;
     var h='';
     h+='<td class="no-print c"><button class="td-lock'+(it.locked?' on':'')+'" data-cl="'+it.cl+'">'+(it.locked?'&#128274;':'&#128275;')+'</button></td>';
-    h+='<td style="font-size:9px;color:#888">'+it.cl+'</td>';
+    h+='<td class="no-print" style="font-size:9px;color:#888">'+it.cl+'</td>';
     h+='<td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+it.n+'">'+it.n+'</td>';
     h+='<td class="no-print"><span class="cat">'+it.cat+'</span></td>';
     h+='<td class="c"><input class="tq no-print" type="number" min="1" value="'+it.q+'" data-cl="'+it.cl+'"><span class="print-only">'+it.q+'</span></td>';
     h+='<td class="r no-print">'+fmt(precioU)+'</td>';
-    h+='<td class="r no-print">'+fmt(precioT)+'</td>';
-    h+='<td class="r no-print" style="color:var(--err)">-'+fmt(descT)+'</td>';
+    h+='<td class="r">'+fmt(precioT)+'</td>';
+    h+='<td class="r" style="color:var(--err)">-'+fmt(descT)+'</td>';
     h+='<td class="r no-print" style="font-weight:600;color:var(--pri2)">'+fmt(subT)+'</td>';
-    h+='<td class="r no-print">'+fmt(ivT)+'</td>';
+    h+='<td class="r">'+fmt(ivT)+'</td>';
     h+='<td class="r" style="font-weight:700">'+fmt(totT)+'</td>';
     h+='<td class="r cost-col no-print"'+(hideCost?' style="display:none"':'')+'>'+fmt(cT)+'</td>';
     h+='<td class="r cost-col no-print" style="color:'+uC+'"'+(hideCost?' style="display:none"':'')+'>'+fmt(uT)+'</td>';
@@ -2902,11 +2906,11 @@ $('btn-pdf').addEventListener('click',function(){
   $('print-user').textContent=$('h-user').value;
   var np=document.querySelectorAll('.no-print'),po=document.querySelectorAll('.print-only'),tqi=document.querySelectorAll('.tq'),sb=$('sidebar');
   np.forEach(function(e){e.style.display='none';});po.forEach(function(e){e.style.display='block';});tqi.forEach(function(e){e.style.display='none';});sb.style.display='none';
-  var root=$('app-root');root.style.display='block';
+  var root=$('app-root');root.style.display='block';root.classList.add('pdf-fit');
   var pn=$('fn').value||'Paciente';
   html2pdf().set({margin:[6,6,6,6],filename:'Cotizacion_'+folioStr+'_'+pn.replace(/\s+/g,'_')+'.pdf',image:{type:'jpeg',quality:0.95},html2canvas:{scale:2,useCORS:true,scrollY:0},jsPDF:{unit:'mm',format:'letter',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(root).save().then(function(){
-    np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';
-  }).catch(function(){np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';});
+    root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';
+  }).catch(function(){root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';});
 });
 
 /* ====== PRINT ====== */
