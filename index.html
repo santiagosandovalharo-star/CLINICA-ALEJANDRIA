@@ -2923,7 +2923,7 @@ function updateSidebar(n,precio,descuento,sub,iva,hon,util,marg,total,rent){
   $('sb-hon').textContent=fmt(hon);
   $('sb-util').textContent=fmt(util);
   var me=$('sb-marg');me.textContent=marg.toFixed(1)+'%';me.className='sv '+(marg>=25?'sv-green':marg>=10?'sv-amber':'');
-  $('sb-rent').textContent=rent.toFixed(1)+'%';
+  $('sb-rent').textContent=(rent||0).toFixed(1)+'%';
   $('sb-total').textContent=fmt(total);
 }
 
