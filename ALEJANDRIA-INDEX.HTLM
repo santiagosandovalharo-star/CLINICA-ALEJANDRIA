@@ -1,0 +1,3040 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ERP Beta - Clinica Alejandria</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- ====== NUBE: Supabase ====== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* Credenciales de Clinica Alejandria. La publishable key es segura en el navegador
+   porque la base esta protegida con Row Level Security (RLS). */
+var CA_SUPA_URL = 'https://thidufcrovsdaevlhklc.supabase.co';
+var CA_SUPA_KEY = 'sb_publishable_79apPg1qR0ta_RqA10gG6w_CbMzB-XU';
+var caSupa = null;
+try { caSupa = supabase.createClient(CA_SUPA_URL, CA_SUPA_KEY); }
+catch(e){ console.warn('Supabase no se pudo iniciar:', e); }
+</script>
+<style>
+:root{--pri:#1a3a5c;--pri2:#2a6cb0;--accent:#1b7a5a;--warn:#c78c20;--err:#b83232;--bg:#f4f6f8;--card:#fff;--brd:#dce2e8;--txt:#1a1a2e;--txt2:#5a6474;--rad:8px;--shadow:0 1px 4px rgba(0,0,0,.06)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',-apple-system,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:13px;line-height:1.5}
+
+
+/* === LOGIN === */
+.login-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a3a5c 0%,#1e4d7a 50%,#1a3a5c 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;border-radius:16px;padding:40px 36px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center}
+.login-logo{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1a3a5c,#2a6cb0);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 16px;border:3px solid #e8edf2}
+.login-title{font-size:20px;font-weight:700;color:#1a3a5c;margin-bottom:4px}
+.login-sub{font-size:12px;color:#8a95a3;margin-bottom:24px}
+.login-field{margin-bottom:16px;text-align:left}
+.login-field label{display:block;font-size:11px;font-weight:600;color:#5a6474;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.login-field input{width:100%;padding:12px 14px;font-size:14px;border:1.5px solid #dce2e8;border-radius:8px;outline:none;transition:border .2s}
+.login-field input:focus{border-color:#2a6cb0;box-shadow:0 0 0 3px rgba(42,108,176,.12)}
+.login-btn{width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:8px;cursor:pointer;border:none;background:linear-gradient(135deg,#1a3a5c,#2a6cb0);color:#fff;transition:opacity .2s;margin-top:4px}
+.login-btn:hover{opacity:.9}
+.login-btn:active{opacity:.8}
+.login-error{display:none;font-size:12px;color:#b83232;background:#fce8e8;border:1px solid #f0b8b8;border-radius:6px;padding:8px 12px;margin-top:12px}
+.login-footer{font-size:10px;color:#aab4c0;margin-top:20px}
+.login-version{font-size:9px;color:#c0c8d2;margin-top:8px}
+.app-hidden{display:none!important}
+
+/* === LAYOUT === */
+.layout{display:flex;gap:12px;max-width:1300px;margin:0 auto;padding:12px;align-items:flex-start}
+.main{flex:1;min-width:0}
+.sidebar{width:220px;position:sticky;top:12px;flex-shrink:0}
+
+/* === HEADER === */
+.hdr{background:linear-gradient(135deg,#1a3a5c,#1e4d7a);border-radius:var(--rad) var(--rad) 0 0;padding:14px 20px;display:flex;align-items:center;gap:14px;color:#fff}
+.h-logo{width:48px;height:48px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:var(--pri);flex-shrink:0;border:2px solid var(--pri2)}
+.h-center{flex:1}
+.h-center h1{font-size:16px;font-weight:700;letter-spacing:.3px}
+.h-center .slogan{font-size:10px;color:#8cc4e8}
+.h-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.h-chip{background:rgba(255,255,255,.12);padding:2px 8px;border-radius:4px;font-size:10px;color:#b0d0ee}
+.h-chip b{color:#fff}
+.subbar{background:#15304d;color:#8bb8d8;padding:4px 20px;font-size:10px;display:flex;gap:16px;justify-content:space-between;border-radius:0 0 var(--rad) var(--rad);margin-bottom:8px}
+
+/* === TOOLBAR === */
+.toolbar{display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap;font-size:11px}
+.toolbar select,.toolbar input{padding:5px 8px;font-size:11px;border:1px solid var(--brd);border-radius:5px;background:#fff}
+.toolbar .tl{color:var(--txt2);font-weight:600}
+.autosave{margin-left:auto;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:4px}
+.autosave .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+
+/* === SIDEBAR === */
+.sb-card{background:var(--card);border-radius:var(--rad);border:1px solid var(--brd);box-shadow:var(--shadow);overflow:hidden}
+.sb-header{background:var(--pri);color:#fff;padding:10px 14px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px}
+.sb-row{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #f0f2f5;font-size:12px}
+.sb-row:last-child{border-bottom:none}
+.sb-row .sl{color:var(--txt2)}
+.sb-row .sv{font-weight:700;color:var(--txt)}
+.sv-blue{color:var(--pri2)!important}
+.sv-green{color:var(--accent)!important}
+.sv-amber{color:var(--warn)!important}
+.sb-total{background:#f0f5fa;padding:10px 14px;font-size:14px;font-weight:800;display:flex;justify-content:space-between;border-top:2px solid var(--pri2)}
+.sb-version{text-align:center;padding:8px;font-size:10px;color:var(--txt2);background:#f7f9fb;border-top:1px solid var(--brd)}
+
+/* === SECTIONS === */
+.sec{background:var(--card);border-radius:var(--rad);padding:14px 16px;margin-bottom:8px;box-shadow:var(--shadow);border:1px solid var(--brd)}
+.sec-t{font-size:13px;font-weight:700;color:var(--pri);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e8edf2;display:flex;align-items:center;gap:6px}
+.sec-t .ic{font-size:15px}
+label{display:block;font-size:10px;font-weight:600;color:var(--txt2);margin-bottom:2px;text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{width:100%;padding:6px 9px;font-size:12px;border:1px solid var(--brd);border-radius:5px;background:#fff;color:var(--txt);outline:none}
+input:focus,select:focus{border-color:var(--pri2)}
+textarea{resize:vertical;min-height:38px;font-size:12px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.f{margin-bottom:6px}
+
+/* === SLIDERS === */
+.sl{display:flex;align-items:center;gap:6px;margin-bottom:4px;background:#f7f9fb;padding:5px 10px;border-radius:5px}
+.sl label{margin:0;min-width:145px;text-transform:none;font-size:11px;color:var(--txt)}
+.sl input[type=range]{flex:1;height:4px;-webkit-appearance:none;background:#d4dbe4;border-radius:2px;padding:0}
+.sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--pri);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sl-v{font-size:14px;font-weight:800;color:var(--pri);min-width:38px;text-align:right}
+
+/* === SEARCH === */
+.srch{position:relative;margin-bottom:6px}
+.srch input{padding-left:28px;font-size:12px}
+.srch .si{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:13px;color:#999}
+.dd{background:#fff;border:1px solid var(--brd);border-radius:var(--rad);max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 16px rgba(0,0,0,.1);position:absolute;width:100%;z-index:50;margin-top:2px}
+.ddi{padding:6px 10px;font-size:11px;cursor:pointer;display:flex;justify-content:space-between;border-bottom:1px solid #f2f4f6}
+.ddi:hover{background:#f0f5fa}
+.ddp{font-size:10px;color:#888;text-align:right}
+
+/* === FILE === */
+.drop{border:2px dashed #c0c8d2;border-radius:var(--rad);padding:12px;text-align:center;cursor:pointer;background:#f9fafb;margin-bottom:6px}
+.drop:hover{border-color:var(--pri2);background:#eef4fa}
+.drop p{font-size:11px;color:#888;margin-top:2px}
+.fbar{display:none;background:#eaf5ee;border:1.5px solid var(--accent);border-radius:var(--rad);padding:8px 12px;margin-bottom:6px;align-items:center;gap:8px}
+.fbar.show{display:flex}
+.fbar .fn{flex:1;font-weight:600;font-size:11px}
+.btn-az{padding:7px 16px;font-size:12px;border-radius:5px;cursor:pointer;font-weight:700;background:var(--pri2);color:#fff;border:none}
+.btn-sm{padding:5px 10px;font-size:10px;border-radius:4px;cursor:pointer;background:#fff;color:#666;border:1px solid var(--brd)}
+.log{background:#f7f9fb;border-radius:5px;padding:5px 8px;font-size:10px;max-height:70px;overflow-y:auto;margin-bottom:6px;display:none;border:1px solid var(--brd)}
+.log .ok{color:var(--accent)}.log .wn{color:var(--warn)}
+
+/* === TABLE === */
+.tw{overflow-x:auto;border:1px solid var(--brd);border-radius:var(--rad);margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:10px;min-width:920px}
+thead th{background:var(--pri);color:#fff;padding:5px 4px;text-align:left;font-weight:600;font-size:9px;white-space:nowrap;position:sticky;top:0}
+thead th.r{text-align:right}thead th.c{text-align:center}
+tbody td{padding:3px 4px;border-bottom:1px solid #f0f2f5}
+tbody td.r{text-align:right}tbody td.c{text-align:center}
+tbody tr:nth-child(even){background:#fafbfc}
+tbody tr:hover{background:#eef3f8}
+tbody tr.m-ok{border-left:3px solid var(--accent)}
+tbody tr.m-wn{border-left:3px solid var(--warn)}
+tbody tr.m-err{border-left:3px solid var(--err)}
+tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-size:10px}
+.tq{width:38px;text-align:center;font-size:10px;padding:2px;border:1px solid var(--brd);border-radius:3px}
+.td-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#bbb;padding:1px}
+.td-btn:hover{color:var(--err)}
+.td-lock{background:none;border:none;cursor:pointer;font-size:11px;color:#ccc;padding:1px}
+.td-lock.on{color:var(--warn)}
+.cat{display:inline-block;padding:0 4px;border-radius:6px;font-size:8px;font-weight:600;background:#e8edf2;color:#556}
+.empty-t{text-align:center;padding:20px;font-size:12px;color:#999}
+
+/* === OPTIMIZER === */
+.opt-box{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.opt-box input{max-width:180px;font-size:13px;font-weight:700;padding:7px}
+.btn-opt{padding:7px 18px;font-size:12px;border-radius:5px;cursor:pointer;font-weight:700;background:#6c3fa0;color:#fff;border:none}
+.opt-res{background:#f3eef8;border:1px solid #c9b3df;border-radius:5px;padding:6px 10px;font-size:11px;display:none;margin-bottom:6px}
+
+/* === VERSIONS === */
+.ver-list{max-height:100px;overflow-y:auto}
+.ver-item{display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-bottom:1px solid #f0f2f5;font-size:10px}
+.btn-rest{padding:2px 8px;font-size:9px;border-radius:3px;cursor:pointer;background:#fff;color:var(--pri2);border:1px solid var(--pri2);font-weight:600}
+
+/* === ACTIONS === */
+.actions{display:flex;gap:6px;justify-content:center;margin:12px 0;flex-wrap:wrap}
+.btn{padding:9px 20px;font-size:13px;border-radius:var(--rad);cursor:pointer;font-weight:700;border:none}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(27,122,90,.2)}
+.btn-primary:hover{background:#156b4e}
+.btn-secondary{background:#fff;color:var(--txt);border:1.5px solid var(--brd)}
+.footer{text-align:center;padding:6px;font-size:9px;color:#aaa}
+
+/* === PRINT === */
+.print-only{display:none}
+/* Ajuste para que la tabla quepa completa en el PDF (se activa solo al generarlo) */
+.pdf-fit .tw{overflow:visible!important}
+.pdf-fit table{width:100%!important;table-layout:fixed!important;font-size:8.5px!important}
+.pdf-fit table th,.pdf-fit table td{padding:3px 3px!important;white-space:normal!important;word-break:break-word!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important}
+@media print{
+  body{background:#fff!important;padding:0!important;font-size:9px!important}
+  .layout{display:block!important;padding:4px!important;max-width:100%!important}
+  .sidebar{display:none!important}
+  .main{width:100%!important}
+  .no-print,.login-overlay{display:none!important}
+  .print-only{display:block!important}
+  .sec{box-shadow:none!important;border:none!important;padding:6px!important;margin-bottom:4px!important;page-break-inside:avoid}
+  .hdr{border-radius:0!important;padding:8px 12px!important}
+  .subbar{border-radius:0!important;margin-bottom:4px!important}
+  input,select,textarea{border:none!important;padding:1px 0!important;font-size:9px!important;box-shadow:none!important;background:transparent!important}
+  .tw{border:0.5px solid #aaa!important}
+  table{font-size:8px!important;min-width:auto!important}
+  thead th{padding:3px!important;font-size:7px!important}
+  tbody td{padding:2px 3px!important}
+  .sl input[type=range]{display:none!important}
+  .sl{background:transparent!important;padding:1px 0!important}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-overlay" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">CA</div>
+    <div class="login-title">Clinica Alejandria</div>
+    <div class="login-sub">Plataforma de Gestion Hospitalaria</div>
+    <div class="login-field">
+      <label>Usuario</label>
+      <input id="login-user" type="text" placeholder="Ingresa tu usuario" value="admin">
+    </div>
+    <div class="login-field">
+      <label>Contrasena</label>
+      <input id="login-pass" type="password" placeholder="Ingresa tu contrasena">
+    </div>
+    <button class="login-btn" id="login-btn">Iniciar sesion</button>
+    <div class="login-error" id="login-error">Usuario o contrasena incorrectos</div>
+    <div class="login-footer">Acceso restringido &middot; Solo personal autorizado</div>
+    <div class="login-version">ERP Beta v1.0 &middot; Alejandria Core</div>
+  </div>
+</div>
+
+<div class="layout app-hidden" id="app-root">
+
+<!-- ========== MAIN CONTENT ========== -->
+<div class="main">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="h-logo">CA</div>
+  <div class="h-center"><h1>Clinica Alejandria</h1><div class="slogan">Salud &middot; Confianza &middot; Compromiso</div></div>
+  <div class="h-right">
+    <span class="h-chip"><b>Folio:</b> <span id="h-folio"></span></span>
+    <span class="h-chip"><b>Version:</b> <span id="h-ver">1.0</span></span>
+    <span class="h-chip" id="h-fecha"></span>
+  </div>
+</div>
+<div class="subbar"><span>Av. los Portones 1151, Local 14, Juriquilla, Queretaro C.P. 76100</span><span>Tel: 446 141 6785 | RFC: CAS240224NH5</span></div>
+
+<!-- TOOLBAR -->
+<div class="toolbar no-print">
+  <span class="tl">Perfil:</span><select id="sel-perfil"><option value="admin">Administrador</option><option value="auditor">Auditor</option><option value="medico">Medico</option><option value="capturista">Capturista</option></select>
+  <span class="tl">Estado:</span><select id="sel-status"><option>Borrador</option><option>En revision</option><option>Aprobada</option><option>Rechazada</option><option>Finalizada</option></select>
+  <span class="tl">Usuario:</span><input id="h-user" value="Dr. Santiago Sandoval" style="max-width:180px">
+  <div class="autosave" id="autosave"><span class="dot"></span> <span id="save-msg">Sin cambios</span></div>
+</div>
+
+<!-- PACIENTE -->
+<div class="sec">
+  <div class="sec-t"><span class="ic">&#128100;</span> Datos del paciente</div>
+  <div class="g3"><div class="f"><label>Nombre completo</label><input id="fn" placeholder="Nombre del paciente"></div><div class="f"><label>Edad</label><input id="fage" placeholder="45"></div><div class="f"><label>Sexo</label><select id="fsex"><option value="">--</option><option>Masculino</option><option>Femenino</option></select></div></div>
+  <div class="g4"><div class="f"><label>Diagnostico</label><input id="fdx" placeholder="Diagnostico principal"></div><div class="f"><label>Procedimiento</label><input id="fproc" placeholder="Artroscopia, Protesis..."></div><div class="f"><label>Num. Poliza</label><input id="fpo" placeholder="GNP-2026-001234"></div><div class="f"><label>Num. Siniestro</label><input id="fsi" placeholder="SIN-2026-00123"></div></div>
+  <div class="g4"><div class="f"><label>Aseguradora</label><select id="fseg"><option value="">--</option><option>GNP</option><option>AXA</option><option>Qualitas</option><option>Chubb</option><option>Mapfre</option><option>MetLife</option><option>Allianz</option><option>Seguros Monterrey</option><option>IMSS</option><option>ISSSTE</option><option>Otra</option></select></div><div class="f"><label>Medico tratante</label><input id="fmd" value="Dr. Santiago Sandoval"></div><div class="f"><label>Hospital</label><input id="fhosp" value="Clinica Alejandria"></div><div class="f"><label>Folio</label><input id="ff"></div></div>
+  <div class="g4"><div class="f"><label>Fecha ingreso</label><input id="fdin" type="date"></div><div class="f"><label>Fecha egreso est.</label><input id="fdout" type="date"></div><div class="f"><label>Vigencia</label><input id="fvig" placeholder="15 dias"></div><div class="f"><label>Fecha cotizacion</label><input id="fd" type="date"></div></div>
+  <div class="f"><label>Observaciones</label><textarea id="fobs" placeholder="Notas adicionales..."></textarea></div>
+</div>
+
+<!-- CONFIG FINANCIERA -->
+<div class="sec no-print">
+  <div class="sec-t"><span class="ic">&#9881;</span> Configuracion financiera</div>
+  <div class="sl"><label>Honorarios medicos</label><input type="range" id="sl-hon" min="10" max="70" value="50" step="1"><span class="sl-v" id="v-hon">50%</span></div>
+  <div class="sl"><label>Rentabilidad objetivo</label><input type="range" id="sl-rent" min="10" max="60" value="30" step="1"><span class="sl-v" id="v-rent">30%</span></div>
+  <div class="sl"><label>Gastos administrativos</label><input type="range" id="sl-adm" min="0" max="20" value="5" step="1"><span class="sl-v" id="v-adm">5%</span></div>
+  <div class="sl"><label>IVA</label><input type="range" id="sl-iva" min="0" max="16" value="0" step="1"><span class="sl-v" id="v-iva">0%</span></div>
+  <div class="sl"><label>Descuento autorizado</label><input type="range" id="sl-desc" min="0" max="30" value="0" step="1"><span class="sl-v" id="v-desc">0%</span></div>
+  <div class="sl"><label>Utilidad minima</label><input type="range" id="sl-umin" min="5" max="30" value="10" step="1"><span class="sl-v" id="v-umin">10%</span></div>
+</div>
+
+<!-- CONCEPTOS -->
+<div class="sec">
+  <div class="sec-t"><span class="ic">&#128138;</span> Conceptos de la cotizacion</div>
+  <div class="no-print">
+    <div class="srch"><span class="si">&#128269;</span><input id="sc" placeholder="Buscar medicamento, material, procedimiento..." autocomplete="off"><div class="dd" id="ddm"></div></div>
+    <div class="drop" id="dz"><input type="file" id="fi" accept=".xlsx,.xls,.csv,.txt,.pdf" style="display:none"><div style="font-size:22px;color:#aaa">&#8593;</div><p>Importar lista (Excel, CSV, TXT, PDF)</p></div>
+    <div style="text-align:center;font-size:10px;color:#999;margin:4px 0">o bien</div>
+    <div class="no-print" style="margin-bottom:6px">
+      <label style="font-size:11px;color:var(--pri);font-weight:700;margin-bottom:4px">Pegar texto del documento (PDF, estado de cuenta, expediente)</label>
+      <textarea id="paste-area" placeholder="Abre tu PDF, selecciona todo el texto (Ctrl+A), copialo (Ctrl+C) y pegalo aqui..." style="min-height:80px;font-size:11px;border:1.5px dashed var(--brd);background:#f9fafb"></textarea>
+      <button class="btn-az" id="btn-paste" style="margin-top:4px;width:100%">&#128270; Analizar texto pegado</button>
+    </div>
+    <div class="fbar" id="fbar"><span style="font-size:16px">&#128196;</span><div style="flex:1"><div class="fn" id="fname"></div><div style="font-size:9px;color:var(--accent)">Listo para analizar</div></div><button class="btn-az" id="btn-az">&#128270; Analizar</button><button class="btn-sm" id="btn-ch">Cambiar</button></div>
+    <div class="log" id="lg"></div>
+  </div>
+  <div class="tw"><table><thead><tr>
+    <th style="width:22px" class="no-print"></th>
+    <th class="no-print">Clave</th><th>Concepto</th><th class="no-print">Cat.</th><th class="c">Cant</th>
+    <th class="r no-print">Precio U.</th><th class="r">Precio</th>
+    <th class="r">Desc.</th><th class="r no-print">Subtotal</th>
+    <th class="r">IVA</th><th class="r">Precio final</th>
+    <th class="r cost-col no-print">Costo</th><th class="r cost-col no-print">Utilidad</th><th class="r cost-col no-print">Margen</th>
+    <th style="width:20px" class="no-print"></th>
+  </tr></thead><tbody id="tbody"></tbody>
+  <tfoot id="tfoot" style="display:none"><tr>
+    <td class="no-print"></td><td colspan="3">TOTALES</td><td class="r" id="tf-q"></td>
+    <td class="r no-print" id="tf-precio"></td><td class="r" id="tf-preciotot"></td>
+    <td class="r" id="tf-descuento"></td><td class="r no-print" id="tf-subtotal"></td>
+    <td class="r" id="tf-iva"></td><td class="r" id="tf-total"></td>
+    <td class="r cost-col no-print" id="tf-costo"></td><td class="r cost-col no-print" id="tf-util"></td><td class="r cost-col no-print" id="tf-marg"></td>
+    <td class="no-print"></td>
+  </tr></tfoot></table>
+  <div class="empty-t" id="empty-t">No hay conceptos. Usa el buscador o importa un archivo.</div></div>
+</div>
+
+<!-- OPTIMIZACION -->
+<div class="sec no-print">
+  <div class="sec-t"><span class="ic">&#127919;</span> Optimizacion por monto objetivo</div>
+  <div class="opt-box"><input id="opt-monto" type="number" placeholder="Monto objetivo ($)"><button class="btn-opt" id="btn-opt">&#9889; Optimizar</button></div>
+  <div class="opt-res" id="opt-res"></div>
+</div>
+
+<!-- HISTORIAL -->
+<div class="sec no-print">
+  <div class="sec-t"><span class="ic">&#128196;</span> Historial de versiones</div>
+  <div class="ver-list" id="ver-list"><div style="text-align:center;padding:8px;font-size:11px;color:#999">Sin versiones</div></div>
+</div>
+
+<!-- FIRMA (print) -->
+<div class="sec print-only" style="margin-top:12px">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+    <div style="width:260px;border:1px solid #dce2e8;border-radius:6px;overflow:hidden">
+      <div style="background:#1a3a5c;color:#fff;padding:6px 12px;font-size:10px;font-weight:700;text-align:center">RESUMEN FINANCIERO</div>
+      <div class="no-print" style="display:flex;justify-content:space-between;padding:5px 12px;border-bottom:1px solid #eee;font-size:10px"><span>Precio lista:</span><span id="pdf-precio" style="font-weight:600">$0.00</span></div>
+      <div class="no-print" style="display:flex;justify-content:space-between;padding:5px 12px;border-bottom:1px solid #eee;font-size:10px;color:#c78c20"><span>Descuento:</span><span id="pdf-desc" style="font-weight:600">-$0.00</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 12px;border-bottom:1px solid #eee;font-size:10px"><span>Subtotal:</span><span id="pdf-sub" style="font-weight:600">$0.00</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 12px;border-bottom:1px solid #eee;font-size:10px"><span>IVA:</span><span id="pdf-iva" style="font-weight:600">$0.00</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;font-weight:800;background:#f0f5fa;color:#1a3a5c"><span>TOTAL:</span><span id="pdf-total">$0.00</span></div>
+    </div>
+  </div>
+  <div style="margin-top:20px">
+    <div class="g2"><div style="text-align:center;padding-top:32px;border-top:1px solid #333"><div style="font-size:10px;font-weight:600" id="print-user">Dr. Santiago Sandoval</div><div style="font-size:8px;color:#666">Medico responsable</div></div><div style="text-align:center;padding-top:32px;border-top:1px solid #333"><div style="font-size:10px;font-weight:600">Clinica Alejandria</div><div style="font-size:8px;color:#666">Sello institucional</div></div></div>
+  </div>
+  <div style="text-align:center;margin-top:12px;font-size:8px;color:#999;border-top:1px solid #eee;padding-top:6px">Este documento es una cotizacion estimada sujeta a variaciones. Vigencia indicada en los datos del paciente.</div>
+</div>
+
+<!-- ACTIONS -->
+<div class="actions no-print">
+  <button class="btn btn-secondary" id="btn-excel">&#8595; Excel (completo)</button>
+  <button class="btn btn-secondary" id="btn-csv">&#8595; CSV</button>
+  <button class="btn btn-primary" id="btn-pdf">&#128229; Descargar PDF</button>
+  <button class="btn btn-secondary" id="btn-printd">&#128424; Imprimir</button>
+</div>
+<div class="footer no-print">Clinica Alejandria &middot; ERP Beta v1.0</div>
+
+</div><!-- /main -->
+
+<!-- ========== SIDEBAR ========== -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-card">
+    <div class="sb-header">RESUMEN FINANCIERO</div>
+    <div class="sb-row"><span class="sl">Conceptos</span><span class="sv" id="sb-n">0</span></div>
+    <div class="sb-row"><span class="sl">Precio lista</span><span class="sv" id="sb-precio">$0.00</span></div>
+    <div class="sb-row"><span class="sl">Descuento</span><span class="sv sv-amber" id="sb-desc">$0.00</span></div>
+    <div class="sb-row"><span class="sl">Subtotal</span><span class="sv sv-blue" id="sb-sub">$0.00</span></div>
+    <div class="sb-row"><span class="sl">IVA</span><span class="sv" id="sb-iva">$0.00</span></div>
+    <div class="sb-row" style="border-top:1px solid #dce2e8"><span class="sl">Honorarios</span><span class="sv sv-green" id="sb-hon">$0.00</span></div>
+    <div class="sb-row"><span class="sl">Utilidad bruta</span><span class="sv sv-green" id="sb-util">$0.00</span></div>
+    <div class="sb-row"><span class="sl">Margen global</span><span class="sv" id="sb-marg">0%</span></div>
+    <div class="sb-row"><span class="sl">Rentabilidad neta</span><span class="sv" id="sb-rent">0%</span></div>
+    <div class="sb-total"><span>TOTAL FINAL</span><span id="sb-total">$0.00</span></div>
+    <div class="sb-version"><span id="sb-folio"></span> &middot; <span id="sb-ver">v1.0</span></div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<script>
+(function(){
+"use strict";
+
+/* ====== CATALOGO ====== */
+var CAT=[
+["ABATELENGUAS DE MADERA",0.4,1.0,"Material"],
+["ABINTRA 27G SOBRE",188.0,752.0,"Medicamento"],
+["ACCIOGEN SUSP 100/125 MG",241.0,964.0,"Medicamento"],
+["ACEITE DE MANZANILLA 50ML",23.0,103.5,"Medicamento"],
+["ACEMETACINA 90MG CAP",16.76,75.22,"Medicamento"],
+["ACENOCUMAROL 4MG",74.0,333.0,"Medicamento"],
+["ACETAZOLAMIDA 250 MG TAB",23.43,79.56,"Medicamento"],
+["ACETILCISTEINA 100MG/ML 3ML",130.0,536.0,"Medicamento"],
+["ACETILCISTEINA 200MG EFERVECENTE",16.5,74.25,"Medicamento"],
+["ACETILCISTEINA 600MG EFERVECENTE",10.92,58.5,"Medicamento"],
+["ACETONA 1 LT",96.38,366.0,"Medicamento"],
+["ACICLOVIR 400MG TAB",11.84,53.28,"Medicamento"],
+["ACICLOVIR CREMA TUBO C/5G",35.0,157.5,"Medicamento"],
+["ACICLOVIR SOLUCION 250MG INYECTABLE",100.0,480.0,"Insumo"],
+["ACICLOVIR TABLETAS 200MG",2.4,12.0,"Medicamento"],
+["ACIDO ACETILSALICILICO 100MG TAB",3.96,19.8,"Medicamento"],
+["ACIDO ACETILSALICILICO 500MG TAB",11.41,51.35,"Medicamento"],
+["ACIDO ACEXAMICO SOBRES RECOVERON",145.64,582.56,"Medicamento"],
+["ACIDO AMINOCAPROICO 5G/20ML  INY",880.0,3080.0,"Medicamento"],
+["ACIDO ASCORBICO 1G INY",36.67,165.02,"Medicamento"],
+["ACIDO ASCORBICO TAB EFERB",8.5,42.5,"Medicamento"],
+["ACIDO FOLICO TABLETAS",1.35,6.75,"Medicamento"],
+["ACIDO TRANEXAMIC 100MG/10ML INYECTABLE",950.0,3500.0,"Medicamento"],
+["ACIDO TRANEXAMICO 500MG INY",600.0,1300.0,"Medicamento"],
+["ACIDO TRANEXAMICO 650MG TABLETAS",40.0,180.0,"Medicamento"],
+["ACIDO URSODEOXICOLICO 250MG TABLETA",9.34,46.7,"Medicamento"],
+["ACIDO VALPROICO 100MG/5ML",1500.0,4500.0,"Medicamento"],
+["ACIDO VALPROICO 250MG",505.5,1769.25,"Medicamento"],
+["ADAPTADOR DE LINEA DE PRESION ARTEMA",82.8,207.0,"Material"],
+["ADAPTADOR DE LINEA DE PRESION HUDSON",21.0,106.0,"Material"],
+["ADAPTADOR DE LLENADO DE UN SOLO USO",276.0,1104.0,"Material"],
+["ADAPTADOR PARA TORRE DE OXIGENO",14.17,64.0,"Material"],
+["ADAPTADOR UNIVERSAL HUDSON 1421",13.55,61.0,"Material"],
+["ADAPTADOR UNIVERSAL INTERIOR 22MM",13.79,63.0,"Material"],
+["ADEL CLARITROMICINA 500MG TABS",660.0,2310.0,"Medicamento"],
+["ADEMITIONINA 500MG",186.0,744.0,"Medicamento"],
+["ADENOSINA 6MG/2ML INYECTABLE",366.66,1333.32,"Medicamento"],
+["AEROCHABER C/MASCARILLA AD",667.25,2336.0,"Material"],
+["AEROCHAMBER PLUS C/MASCARILLA ADULTO",774.0,2709.0,"Material"],
+["AFRIN NO DRIP 12H",127.87,511.48,"Medicamento"],
+["AGUA 500 ML PET",2.6,13.0,"Medicamento"],
+["AGUA ESTERIL 1000ML",45.0,153.14,"Insumo"],
+["AGUA ESTERIL 10ML",5.94,21.1,"Insumo"],
+["AGUA ESTERIL 3000ML",122.44,403.56,"Insumo"],
+["AGUA ESTERIL 500 ML",33.2,115.47,"Insumo"],
+["AGUA OXIGENADA 1000ML",16.81,105.0,"Insumo"],
+["AGUJA ESPINAL PENCAN 27G 120MM",128.73,515.0,"Material"],
+["AGUJA ESTERIL DESECH 16 X 38 MORADA",0.49,11.0,"Material"],
+["AGUJA ESTERIL DESECH 18 X 38 ROSA",1.39,8.0,"Material"],
+["AGUJA ESTERIL DESECH 20 X 32 AMARILLA",0.62,7.0,"Material"],
+["AGUJA ESTERIL DESECH 21 X 32 VERDE",0.55,5.0,"Material"],
+["AGUJA ESTERIL DESECH 22 X 32 NEGRA",0.63,5.0,"Material"],
+["AGUJA ESTERIL DESECH 25 X 16 NARANJA",0.63,5.0,"Material"],
+["AGUJA ESTERIL DESECH 27 X 13 MM GRIS",1.17,5.0,"Material"],
+["AGUJA P/PLUMA ULTRAFINE 31GX5MM C/10 PZ",72.0,369.0,"Material"],
+["AGUJA PORT-A-SITE C/EXT 22GX19MM",145.05,581.0,"Material"],
+["AGUJA QUINCKE 25G X 3 1/2”",68.9,311.0,"Material"],
+["AGUJA QUINCKE 27G X 3 1/2”",70.05,316.0,"Material"],
+["AGUJA SPINOCAN 20GX3 1/2",53.87,290.0,"Material"],
+["AGUJA SPINOCAN 22G X 3 1/2",58.2,288.0,"Material"],
+["AGUJA SPINOCAN 25G X 3 1/2",58.2,296.0,"Material"],
+["AGUJA STIMUPLEX 20GX100MM",598.0,2558.0,"Material"],
+["AGUJA STIMUPLEX 22GX50MM",688.0,2064.0,"Material"],
+["AGUJA WHITACRE 22G X 3 1/2",63.84,288.0,"Material"],
+["AGUJA WHITACRE 25G X 3 1/2”",196.53,771.0,"Material"],
+["AGUJA WHITACRE 25G X 4 11/16”",191.18,766.0,"Material"],
+["AGUJA WHITACRE 27G X 3 1/2”",181.78,752.0,"Material"],
+["AGUJA WHITACRE 27G X 4 11/16”",176.86,757.0,"Material"],
+["ALACRAMYN INYECTABLE",879.75,1400.0,"Medicamento"],
+["ALANINA Y LEVOGLUTAMINA20%(DIPEPTIVEN)",853.15,2986.03,"Medicamento"],
+["ALBUMINA DE HUEVO -NUMA-",440.0,1760.0,"Medicamento"],
+["ALBUMINA HUMANA AL 20% INYECTABLE",550.0,2450.0,"Medicamento"],
+["ALBUMINA HUMANA AL 25% INYECTABLE",595.0,2625.0,"Medicamento"],
+["ALCOHOL 20 LTS ROJO GARRAFA",540.34,1892.0,"Insumo"],
+["ALCOHOL 96° 1L",45.32,168.0,"Insumo"],
+["ALCOHOL EN GEL 70% 1000ML",40.15,447.0,"Insumo"],
+["ALCOHOL EN GEL 70% 500ML",36.9,167.0,"Insumo"],
+["ALFA DORNASA 2.5MG/2.5ML C/6 AMP",866.67,3033.35,"Medicamento"],
+["ALFUZOSINA 10MG LIBERACION PROLONGADA",71.43,321.44,"Medicamento"],
+["ALGODON PLISADO",59.0,241.0,"Material"],
+["ALITRAQ P/ALIMENTACIÓN ENTERAL",174.73,698.92,"Medicamento"],
+["ALKAZYME POLVO 20 GR C/ 12",166.75,1120.0,"Medicamento"],
+["ALMAGATO SUSPENSION 1.5G/15ML",13.75,61.88,"Medicamento"],
+["ALMOHADA DESECHABLE",85.0,474.26,"Medicamento"],
+["ALMOHADILLAS CON ALCOHOL",0.59,4.0,"Material"],
+["ALOPURINOL 300MG TABLETAS",1.3,6.5,"Medicamento"],
+["ALPRAZOLAM 0.25 MG TAB TAFIL",10.45,47.03,"Medicamento"],
+["ALPRAZOLAM 0.5MG TABS",10.8,40.0,"Medicamento"],
+["ALTEPLASA 50 MG INYECTABLE",35000.0,52500.0,"Medicamento"],
+["ALTRULINE SERTRALINA 50MG TABS",1655.0,5517.0,"Medicamento"],
+["ALUA GOLD PREMIUM ET 1 900GR",618.0,2163.0,"Medicamento"],
+["AMANTADINA/CLORFENAMINA/PARACETAMOL TAB",1.8,9.0,"Medicamento"],
+["AMBISOME 50MG AMPOLLETA",5500.0,13750.0,"Medicamento"],
+["AMBROXOL 15MG/2ML INYECTABLE",32.0,144.0,"Medicamento"],
+["AMBROXOL 300MG/100ML JARABE",25.0,50.0,"Medicamento"],
+["AMFOTERICINA B 50MG INY",472.0,1888.0,"Medicamento"],
+["AMIKACINA 100MG/2ML INYECTABLE",20.0,44.5,"Medicamento"],
+["AMIKACINA 500MG/2ML INYECTABLE",25.0,84.38,"Medicamento"],
+["AMINOFILINA 250MG/10ML INYECTABLE",17.0,35.0,"Medicamento"],
+["AMIODARONA 150MG/3ML  INYECTABLE",73.33,329.99,"Medicamento"],
+["AMIODARONA 200MG TABLETAS",28.85,90.0,"Medicamento"],
+["AMITRIPTILINA 25MG TAB",3.96,19.8,"Medicamento"],
+["AMLODIPINO 5MG TAB",1.21,17.0,"Medicamento"],
+["AMLODIPINO/VALSARTAN 5MG/160MG -EXFORGE-",45.25,203.63,"Medicamento"],
+["AMOXICILINA / ACID CLAVUL 875-125MG TABS",166.99,524.0,"Medicamento"],
+["AMPICILINA  250MG  INYECTABLE",15.0,67.5,"Medicamento"],
+["AMPICILINA 1G TABLETA",3.75,18.75,"Medicamento"],
+["AMPICILINA 1GR  INYECTABLE",35.0,130.5,"Medicamento"],
+["AMPICILINA 500MG  INYECTABLE",20.0,90.0,"Medicamento"],
+["ANASEPT SPRAY 240 ML",843.81,2953.34,"Medicamento"],
+["ANASEPT TUBO GEL 3 ONZAS",1235.29,3705.87,"Medicamento"],
+["ANCLA SWIVELOK 4.75 CIERRE",18987.0,23733.75,"Implante"],
+["ANTADONA 0.5MG/5ML  SOL.INY.",390.53,1562.12,"Medicamento"],
+["ANTIFLU - DES 3/ 50/ 300 MG CAPS",4.85,24.25,"Medicamento"],
+["ANTINFEX 5000 ML",630.18,1808.0,"Medicamento"],
+["ANTIVIPMYN AMP",3106.2,9318.6,"Medicamento"],
+["APIXABAN 2.5MG",778.36,2724.26,"Medicamento"],
+["APLICADOR ISOPO ESTERIL C/3",2.96,15.0,"Medicamento"],
+["APOSITO QX SUAVISEC NO. 2 20X13",2.3,12.0,"Material"],
+["AQUACEL HIDROFIBRA 10X10 C/PLATA",290.0,1160.0,"Medicamento"],
+["AQUAPLAST DE LAMINA",165.0,1160.0,"Medicamento"],
+["ARACMYN PLUS",2920.0,9070.95,"Medicamento"],
+["ARIPIPRAZOL 15MG TABS",298.0,1192.0,"Medicamento"],
+["ARMODAFINILO 150 MG TAB CAJA",762.0,2667.0,"Medicamento"],
+["ARNICA POM 10 %",21.72,97.74,"Medicamento"],
+["ASA PARA AMIGDALAS NO 8 K93008",11.71,53.0,"Medicamento"],
+["ASPIRINA PROTEC TAB100MG",5.17,36.45,"Medicamento"],
+["ATENOLOL 50MG",2.5,12.5,"Medicamento"],
+["ATORVASTATINA 20MG TABLETAS",5.08,20.0,"Medicamento"],
+["ATORVASTATINA 40MG TABLETA",6.0,61.07,"Medicamento"],
+["ATOSIBAN 7.5MG 5ML -TRACTOCILE-",4674.75,14024.25,"Medicamento"],
+["ATP 2 TEST SWABS C/25 PZAS",2832.16,8497.0,"Medicamento"],
+["ATROPINA 1MG/1ML INYECTABLE",20.0,40.0,"Medicamento"],
+["AVAGARD D ANTISEP 500ML",215.0,860.0,"Medicamento"],
+["AVASTIN 100 MG4 ML AMPULA",13000.0,26000.0,"Medicamento"],
+["AVASTIN 400 MG16 ML AMPULA",46000.0,69000.0,"Medicamento"],
+["AZITROMICINA 500MG TABLETAS",37.33,167.99,"Medicamento"],
+["AZITROMICINA INY 500MG MACROZIT",585.22,1951.25,"Medicamento"],
+["AZUL DE METILENO INY 10MG/ML 10ML",3500.0,10500.0,"Medicamento"],
+["BARICITINIB -ALUMIANT- 4MG",726.8,2543.8,"Medicamento"],
+["BATA PARA PACIENTE PAQ 10",76.5,345.0,"Material"],
+["BATA QUIRURGICA L",26.57,209.0,"Material"],
+["BAÑO COLOIDE 20G SOBRE",35.0,157.5,"Medicamento"],
+["BEDOYECTA INYECTABLE",78.0,351.0,"Medicamento"],
+["BENCIDAMINA 360 ML",312.88,1251.52,"Medicamento"],
+["BENCILPENICILINA 800000 UI",21.88,98.45,"Medicamento"],
+["BENCILPENICILINA SODICA 1 000 000 UI INY",22.06,99.27,"Medicamento"],
+["BENCILPENICILINA SODICA 5 000 000 UI INY",48.0,216.0,"Medicamento"],
+["BENCILPENICINILA 1200000 UI INY",43.0,193.5,"Medicamento"],
+["BENTYL CAP 10 MG",368.0,1104.0,"Medicamento"],
+["BENZACAINA 20/ GOTERO",192.0,768.0,"Medicamento"],
+["BENZONATATO 100MG TABLETAS",1.78,8.9,"Medicamento"],
+["BESILATO DE CISATRACURIO 2MG/ML",462.47,1986.88,"Medicamento"],
+["BETAHISTINA 24MG PIEZA",30.94,108.26,"Medicamento"],
+["BETAMETASONA 4MG/1ML",29.7,116.0,"Medicamento"],
+["BETAMETASONA 5MG/2MG INYECTABLE",593.8,2079.0,"Medicamento"],
+["BETAMETASONA 8.0MG/2ML INYECTABLE",35.0,168.0,"Medicamento"],
+["BEZAFIBRATO 200 MG",1.0,5.0,"Medicamento"],
+["BIBERON CRISTAL 4OZ",12.33,56.0,"Medicamento"],
+["BICARBONATO DE SODIO 100G",23.75,107.0,"Medicamento"],
+["BICARNAT 7.5% 10ML",14.4,72.0,"Insumo"],
+["BICARNAT 7.5% 50 ML",120.0,393.0,"Insumo"],
+["BILASTINA 20MG TABS -BLAXITEC-",347.0,1388.0,"Medicamento"],
+["BIO-VAC RESERVORIO 10MM",1108.89,3327.0,"Medicamento"],
+["BIO-VAC RESERVORIO 7MM",975.8,3416.0,"Medicamento"],
+["BIOGAIA PROTECTIS GOTAS 10ML",426.0,1704.0,"Medicamento"],
+["BISOPROLOL 2.50MG TABLETAS",17.95,81.0,"Medicamento"],
+["BISULFITO SODICO DE MENADIONA (K-50) INY",140.0,560.0,"Medicamento"],
+["BOBINA DE PAPEL AZUL 30KG",6678.39,16698.0,"Medicamento"],
+["BOLSA DE PLASTICO TRANSP. 60X90 CM",81.25,366.0,"Material"],
+["BOLSA DE PLASTICO TRANSP. 90X120 CM",58.28,366.0,"Material"],
+["BOLSA MORTAJA  GRANDE",259.1,496.0,"Material"],
+["BOLSA MORTAJA CHICA",162.95,652.0,"Material"],
+["BOLSA MORTAJA MEDIANA",231.7,927.0,"Material"],
+["BOLSA P/ ESTERILIZAR 18X33X6 CM",456.12,1956.0,"Material"],
+["BOLSA P/ FUNDA DE ARCO EN C 90X120",6.77,34.0,"Material"],
+["BOLSA P/ANESTECIA 1LT LIBRE DE LATEX",109.2,437.0,"Material"],
+["BOLSA P/COLOSTOMIA C/CARAYA",43.3,222.0,"Material"],
+["BOLSA P/ESTER 12X26X4 C/HILO",847.61,3079.0,"Material"],
+["BOLSA P/ESTERILIZAR 14X33X4.5CM",1243.5,3731.0,"Material"],
+["BOLSA P/RESIDUOS AMARILLA",3.67,30.0,"Material"],
+["BOLSA P/RESIDUOS ROJA",4.39,30.0,"Material"],
+["BOLSA PAA ESTERILIZAR 38X61X12.5",1828.63,5486.0,"Material"],
+["BOLSA PAPEL P ESTERILIZAR 7.5X23X4 C HIL",608.3,2211.0,"Material"],
+["BOLSA PARA DRENAJE",3.5,18.0,"Material"],
+["BOLSA PARA ENEMA ENEBAG",45.21,331.0,"Material"],
+["BOLSA PARA ESTERILIZAR 25X38X8CM",1075.25,3226.0,"Material"],
+["BOLSA RECOLECTORA DE ORINA EDIGAR",41.89,189.0,"Material"],
+["BOLSA RECOLECTORA DE ORINA KENGUARD",96.6,409.0,"Material"],
+["BOLSA RECOLECTORA DE ORINA NINA",3.12,16.0,"Material"],
+["BOLSA RECOLECTORA DE ORINA NINO",4.99,21.0,"Material"],
+["BOLSA SUCCION  1000CC  MEDIVAC",102.58,487.0,"Material"],
+["BOLSA SUCCION  1500CC  MEDIVAC",136.83,517.0,"Material"],
+["BOLSA SUCCION  3000CC  MEDIVAC",145.25,572.0,"Material"],
+["BOLSA TRANSPARENTE ESTERIL 60X90",16.0,21.0,"Material"],
+["BOMBA DE INFUSION",150.0,500.0,"Medicamento"],
+["BOMBA DE PERFUSION MINDRAY",3500.0,4375.0,"Medicamento"],
+["BOTA DESECHABLE PAQ C/25 PARES",64.28,249.0,"Medicamento"],
+["BOTA NEUMATICA",1722.7,5169.0,"Medicamento"],
+["BOTA WALKER CORTA CON AIRE L",2690.0,3362.5,"Medicamento"],
+["BOTA WALKER G CORTA",1131.7,3396.0,"Medicamento"],
+["BOTA WALKER G LARGA",1707.75,5122.14,"Medicamento"],
+["BOTA WALKER M CORTA",1213.52,3641.0,"Medicamento"],
+["BOTA WALKER M LARGA",1131.0,3393.0,"Medicamento"],
+["BOTON AQJUSTABLE",14000.0,18200.0,"Medicamento"],
+["BOWIE DICK PAQ. PRUEBA",91.16,216.0,"Medicamento"],
+["BRAZALETE DE IDENTIFICACION AZUL",1.84,10.0,"Medicamento"],
+["BRAZALETE DE IDENTIFICACION ROSA",1.98,10.0,"Medicamento"],
+["BREDELIN LEVOFLOXACINO 500MG/100ML INY",482.4,1930.0,"Medicamento"],
+["BROCA PARA PERNO DE BLOQUEO",2500.0,7500.0,"Medicamento"],
+["BROMURO DE IPATROPIO AEROSOL 200 DOSIS",310.0,1240.0,"Medicamento"],
+["BROMURO DE IPATROPIO FCO 20ML",98.11,442.0,"Medicamento"],
+["BROMURO DE IPATROPIO500MCG/2ML(ATROVENT)",136.0,440.0,"Medicamento"],
+["BROMURO DE PINAVERIO 100MG",2.75,14.0,"Medicamento"],
+["BROMURO DE ROCURONIO 50MG/5ML INY",150.0,700.0,"Medicamento"],
+["BROMURO DE VECURONIO 4MG INYECTABLE",48.0,179.0,"Medicamento"],
+["BROMURO IPRATROPIO/SALBUTAMOL 0.5/2.5MG",11.56,59.0,"Medicamento"],
+["BRONCHOCATH TUBO ENDOBRONQ IZQ 37FR",3970.0,11910.0,"Material"],
+["BROSPINA 0.3MG/ML AMP",88.19,356.0,"Medicamento"],
+["BUDESONIDA 0.250MG/ML SOLUCION",40.0,177.0,"Insumo"],
+["BUDESONIDA AEROSOL 200 MCG P/INHALACION",157.75,631.0,"Medicamento"],
+["BUDESONIDA/FORMOTEROL 160/4.5MCG VANNAIR",760.0,2660.0,"Medicamento"],
+["BUDESONIDA/FORMOTEROL 320/9MCG SYMBICORT",1248.0,3744.0,"Medicamento"],
+["BULTO INTEGRAL",5000.0,6500.0,"Medicamento"],
+["BUMETANIDA 0.5MG/2ML INYECTABLE -MICCIL-",40.25,182.0,"Medicamento"],
+["BUMETANIDA 1MG TABLETAS -MICCIL-",15.0,68.0,"Medicamento"],
+["BUPRENORFINA 0.3MG/ML SOL.INY.",66.67,263.0,"Medicamento"],
+["BUPRENORFINA PARCHE 5MG",500.0,2000.0,"Material"],
+["BUTILHIOSCINA 20MG/1ML INYECTABLE",15.0,42.0,"Medicamento"],
+["BUTILHIOSINA 10MG",3.0,17.0,"Medicamento"],
+["BUVACAINA   150MG/30ML INYECTABLE",130.0,260.0,"Medicamento"],
+["BUVACAINA 50 MG / 10 ML INY",28.68,130.0,"Medicamento"],
+["BUVACAINA CON EPINEFRINA  5MG/ML INY",12.0,30.0,"Medicamento"],
+["BUVACAINA PESADA   15MG/3ML INYECTABLE",85.07,233.0,"Medicamento"],
+["CABESTRILLO CHICO",65.13,576.0,"Medicamento"],
+["CABESTRILLO EXTRA GRANDE",72.11,302.0,"Medicamento"],
+["CABESTRILLO GRANDE",65.13,294.0,"Medicamento"],
+["CABESTRILLO MEDIANO",65.13,302.0,"Medicamento"],
+["CABESTRILLO PEDIATRICO",96.72,436.0,"Medicamento"],
+["CAJA AMOXICILINA / ACID CLAVUL 875-125MG TABS",67.2,224.0,"Medicamento"],
+["CAJA CEFALEXINA 500MG",48.86,162.88,"Medicamento"],
+["CAJA CEFIXIMA 400 MG  TABS",471.6,1572.0,"Medicamento"],
+["CAJA CIPROFLOXACINO 500MG TABLETAS",34.56,115.2,"Medicamento"],
+["CAJA CLINDAMICINA 300MG CAPS",41.28,137.6,"Medicamento"],
+["CAJA DICLOFENACO 100MG TABS",19.2,64.0,"Medicamento"],
+["CAJA DICLOXACILINA 500MG C/12 TAB",60.0,128.0,"Medicamento"],
+["CAJA DICLOXACILINA 500MG C/20 TAB",60.0,300.0,"Medicamento"],
+["CAJA DIFENIDOL25MG C/30 TAB",30.0,135.0,"Medicamento"],
+["CAJA GABAPENTINA 300MG C/15 TAB",39.0,176.0,"Medicamento"],
+["CAJA IBUPROFENO 400MG C/10 TAB",30.0,80.0,"Medicamento"],
+["CAJA KETOROLACO 10MG TABS",19.2,64.0,"Medicamento"],
+["CAJA KETOROLACO 30MG SUBLINGUAL",19.2,64.0,"Medicamento"],
+["CAJA MELOXICAM 7.5MG C/14 TAB",35.0,158.0,"Medicamento"],
+["CAJA MELOXICAM/METOCARBAMOL 15/215MG",153.0,612.0,"Medicamento"],
+["CAJA METOCARBAMOL/PARACETAMOL 400/350MG",45.0,203.0,"Medicamento"],
+["CAJA NAPROXENO 550MG C/12 TAB",25.0,113.0,"Medicamento"],
+["CAJA NAPROXENO500MG C/20 TAB",35.0,158.0,"Medicamento"],
+["CAJA OMEPRAZOL 20MG C/14 TAB",13.0,59.0,"Medicamento"],
+["CAJA PARACETAMOL 500MG TABS",14.4,48.0,"Medicamento"],
+["CAJA PARACETAMOL/NAPROXENO300/175MG C/12",16.8,76.0,"Medicamento"],
+["CAJA PENTOXIFILINA 400MG C/300TAB",150.0,1200.0,"Medicamento"],
+["CAJA PREGABALINA75MG C/14 TAB",70.0,315.0,"Medicamento"],
+["CAJA PROGESTERONA 200MG C/14 TAB",1791.7,5376.0,"Medicamento"],
+["CAJA TRAMADOL 50MG C/10 TAB",35.0,158.0,"Medicamento"],
+["CAL SODADA 19 KG",1955.0,6264.0,"Medicamento"],
+["CAMPANA DE CIRCUNCICION 1.1CM",20.91,95.0,"Medicamento"],
+["CAMPANA DE CIRCUNSICION 1.3 CM",20.91,95.0,"Medicamento"],
+["CAMPO DE TELA 1.20 X 1.20 M P/STERRAD",3084.34,5690.0,"Medicamento"],
+["CAMPO ESTERIL 50X70  PZ",15.35,58.96,"Material"],
+["CAMPO PARA ESTERILIZAR 121X121 CM",3084.34,5483.0,"Medicamento"],
+["CAMPO PARA ESTERILIZAR 76X76 CM CONSUMO",147.55,3409.0,"Medicamento"],
+["CANCIDAS 70MG AMPULA",7500.0,18750.0,"Medicamento"],
+["CANDADO PASIVO ROJO C/100",14.0,63.0,"Medicamento"],
+["CANDESARTAN 16MG TABLETAS",33.75,152.0,"Medicamento"],
+["CANULA GUEDEL 0 ROSA 40MM",17.9,81.0,"Material"],
+["CANULA GUEDEL 00 AZUL 50MM",19.35,88.0,"Material"],
+["CANULA GUEDEL 1 NEGRA 60MM",13.24,79.0,"Material"],
+["CANULA GUEDEL 2 BLANCA 70MM",12.7,105.0,"Material"],
+["CANULA GUEDEL 3 VERDE 80MM",22.9,67.0,"Material"],
+["CANULA GUEDEL 4 AMARILLA 90MM",17.0,67.0,"Material"],
+["CANULA GUEDEL 5 ROJA 100MM",16.0,67.0,"Material"],
+["CANULA GUEDEL 6 NARANJA 120 MM",14.0,63.0,"Material"],
+["CANULA NASOFARINGEA 3.0",132.04,584.0,"Material"],
+["CANULA NASOFARINGEA 4.0",128.76,584.0,"Material"],
+["CANULA NASOTRAQUEAL 6",345.0,1380.0,"Material"],
+["CANULA P/DRENAJE TORAXICO34FR",185.0,740.0,"Material"],
+["CANULA P/TRAQUEOSTOMIA 7.0 FR",2185.0,6555.0,"Material"],
+["CANULA P/TRAQUEOSTOMIA 7.5FR",1265.0,3795.0,"Material"],
+["CANULA P/TRAQUEOSTOMIA 8.0 FR",1126.81,3381.0,"Material"],
+["CANULA P/TRAQUEOSTOMIA FRENESTRADA 7.0FR",2185.0,6555.0,"Material"],
+["CANULA P/TRAQUEOSTOMIA FRENESTRADA 7.5FR",2100.0,6300.0,"Material"],
+["CANULA P/TRAQUEOSTOMIA FRENESTRADA 8.0FR",1126.81,3381.0,"Material"],
+["CANULA P/TRAQUIOSTOMIA #8FR XLT SHYLEY",987.0,8518.0,"Material"],
+["CANULA YANKAHUER",26.0,260.0,"Material"],
+["CAPTOPRIL 25MG TABLETAS",0.66,4.0,"Medicamento"],
+["CARBAMAZEPINA 200MG TAB",0.85,5.0,"Medicamento"],
+["CARBAZOCROMO,BISULFITOSODICO (HEMOSIN-K)",138.35,554.0,"Medicamento"],
+["CARBETOCINA 100UG/ML",300.0,1800.0,"Medicamento"],
+["CARBON ACTIVADO POLVO EN FRASCO",71.0,270.0,"Medicamento"],
+["CARBON VEGETAL ACTIVADO 250MG",5.8,29.0,"Medicamento"],
+["CARBONATO DE CALCIO TAB 75MG (TUMS)",1.2,6.0,"Medicamento"],
+["CARBOXIMALTOSA 500MG/10ML -RENEGY-",3900.0,11700.0,"Medicamento"],
+["CARGA DE ESTERILIZACION",400.0,1000.0,"Medicamento"],
+["CARTUCHO ECHELON AZUL",2300.0,5750.0,"Medicamento"],
+["CARTUCHO P/ENGRAPADORA LINEAL",3900.0,11700.0,"Medicamento"],
+["CARVEDILOL 6.25MG TABLETA",21.21,85.0,"Medicamento"],
+["CASCADA HUMIDIFICADOR CHAMBER",405.33,1622.0,"Medicamento"],
+["CASEC SUPLEMENTO ALIMENTICIO LAT 100GR",328.0,1312.0,"Medicamento"],
+["CASPOFUNGINA 50MG SOL INY",3585.0,6210.0,"Medicamento"],
+["CATETER ARTERIAL 20G 3FR 8CM",8.44,2893.68,"Material"],
+["CATETER CENTRAL 2LUM X 4FR",1391.39,4175.0,"Material"],
+["CATETER CENTRAL 3LUM X 7FR",350.0,1820.0,"Material"],
+["CATETER DOBLE J 4.7*24",2614.27,7846.0,"Material"],
+["CATETER DOBLE J 4.7*26",2614.27,7843.0,"Material"],
+["CATETER DOBLE J 6*24",2643.71,6716.0,"Material"],
+["CATETER DOBLE J 6*26",2614.27,7843.0,"Material"],
+["CATETER HEMOD NIAGARA 13.5 FR 15CM CURV",1879.15,5638.0,"Material"],
+["CATETER HEMOD NIAGARA 13.5FR 20CM CURV",3083.6,9251.0,"Material"],
+["CATETER INTRAVENOSO #14 NARANJA",11.99,71.0,"Material"],
+["CATETER INTRAVENOSO #16 GRIS",13.49,70.0,"Material"],
+["CATETER INTRAVENOSO #18 VERDE",13.08,65.0,"Material"],
+["CATETER INTRAVENOSO #20 ROSA",13.15,64.0,"Material"],
+["CATETER INTRAVENOSO #22 AZUL",14.87,73.0,"Material"],
+["CATETER INTRAVENOSO #24 AMARILLO",11.99,68.0,"Material"],
+["CATETER INTRAVENOSO #26 MORADO",17.95,81.0,"Material"],
+["CATETER NEUMOTORAX 8FR",2171.43,6515.0,"Material"],
+["CATETER PICC  5FR 60CM 2LUMEN",4950.0,14850.0,"Material"],
+["CATETER PIGTAIL 12 FR UNICO",2198.28,6595.0,"Material"],
+["CATETER TORACICO #16",100.0,450.0,"Material"],
+["CATETER TORACICO #24",106.71,427.0,"Material"],
+["CATETER TORACICO #28",135.97,544.0,"Material"],
+["CATETER TORACICO #30",167.9,672.0,"Material"],
+["CATETER TORACICO #32",102.21,409.0,"Material"],
+["CATETER TORACICO #34",100.0,450.0,"Material"],
+["CATETER TORACICO #36",102.21,409.0,"Material"],
+["CATETER UMBILICAL 3.5FR",121.63,487.0,"Material"],
+["CATETER UMBILICAL 5FR",121.63,487.0,"Material"],
+["CATETER VENOSOCENTRAL 5.5FR 3LUMEN 13CM",1855.0,5061.0,"Material"],
+["CATGUT CROMICO 0 SG3611-75/36MM REDONDA",94.0,235.0,"Medicamento"],
+["CATGUT CROMICO 1 SG3618-75/36MM REDONDA",94.0,235.0,"Medicamento"],
+["CATGUT CROMICO 2-0 SG3612-75/36MM REDOND",94.0,235.0,"Medicamento"],
+["CATGUT CROMICO 2-0 SR2612-75/26MM REDOND",88.8,222.0,"Medicamento"],
+["CATGUT CROMICO 3-0 1/2 G37MM",247.6,619.0,"Medicamento"],
+["CATGUT CROMICO 3-0 G3713-75/36MM REDONDA",88.8,222.0,"Medicamento"],
+["CATGUT CROMICO 3-0 SR2613-75/26MM REDOND",88.8,222.0,"Medicamento"],
+["CATGUT CROMICO 4-0 C1214/2-30 DOBLE ARMA",120.4,301.0,"Medicamento"],
+["CATGUT CROMICO 4-0 SR1714-75/17MM REDOND",146.4,366.0,"Medicamento"],
+["CATGUT CROMICO 4-0 SR2614-75/26MM REDOND",88.8,222.0,"Medicamento"],
+["CATGUT CROMICO 5-0 SR-17",86.6,390.0,"Medicamento"],
+["CATGUT CROMICO 5-0 SR1715-75/17MM REDOND",120.4,301.0,"Medicamento"],
+["CATGUT CROMICO 5/0 20MM 70 CM R205",62.5,282.0,"Medicamento"],
+["CATGUT SIMPLE 3-0 SC 20 H122T",136.44,545.76,"Medicamento"],
+["CATGUT SIMPLE 4-0 PE1924-75/19MM CORT",115.2,288.0,"Medicamento"],
+["CATGUT SIMPLE 4-0 SC-20/19MM H121T CORT",136.44,335.0,"Medicamento"],
+["CAVILON FRASCO 26ML",432.0,1728.0,"Medicamento"],
+["CAVILON HISOPOP 1ML",47.99,216.0,"Medicamento"],
+["CEFALEXINA 500MG",188.0,752.0,"Medicamento"],
+["CEFALOTINA 1G INYECTABLE",48.73,217.0,"Medicamento"],
+["CEFAXONA 500 MG AMP",300.0,1200.0,"Medicamento"],
+["CEFEPIMA 1.0G INYECTABLE",395.0,1580.0,"Medicamento"],
+["CEFIXIMA 400 MG  TABS",400.0,1600.0,"Medicamento"],
+["CEFIXIMA CAP 400MG CAJ C/6",400.0,3301.0,"Medicamento"],
+["CEFIXIMA SUSP 100MG/100ML",592.0,2765.0,"Medicamento"],
+["CEFOTAXIMA 1G INTRAVENOSA",40.0,180.0,"Medicamento"],
+["CEFTAZIDIMA 1GR IV",50.0,225.0,"Medicamento"],
+["CEFTRIAXONA 1G INTRAVENOSA",30.0,141.0,"Medicamento"],
+["CEFTRIAXONA INTRAMUSCULAR IG",40.01,181.0,"Medicamento"],
+["CEFUROXIMA 500MG TABS",348.0,2379.0,"Medicamento"],
+["CEFUROXIMA 750MG",45.0,203.0,"Medicamento"],
+["CELECOXIB 200MG (CELEBREX)",6.62,30.0,"Medicamento"],
+["CEPILLO AZUL C/JABON BD",20.0,97.0,"Material"],
+["CEPILLO CITOLOGICO ESTERIL",10.8,27.0,"Material"],
+["CERA P/HUESO CH-2.5P",73.03,401.0,"Medicamento"],
+["CERA PARA HUESO",129.48,475.2,"Medicamento"],
+["CHLORA-PREP 26ML",185.6,892.0,"Medicamento"],
+["CHLORAPREP APLICADOR CON 10.5M",111.0,444.0,"Medicamento"],
+["CIDEX GALON JOHNSON",1268.08,3805.0,"Medicamento"],
+["CINARIZINA TAB 75MG C/60",2.8,7.0,"Medicamento"],
+["CINITAPRIDA 1MG",4.96,22.0,"Medicamento"],
+["CINTA MERSILENE C/AGUJA RS22",2974.18,8499.0,"Material"],
+["CINTA METRICA AHULADA 1.5MTS",21.85,99.0,"Material"],
+["CINTA TESTIGO PARA GAS",110.0,420.0,"Material"],
+["CINTA TESTIGO PARA VAPOR",58.63,224.0,"Material"],
+["CINTA TESTIGO VAPOR",48.6,249.0,"Material"],
+["CINTA UMBILICAL",3.1,17.0,"Material"],
+["CIPROFIBRATO 100 MG GIABRI",25.0,113.0,"Medicamento"],
+["CIPROFLOXACINO 1GR TABLETA",75.0,338.0,"Medicamento"],
+["CIPROFLOXACINO 200MG/100ML INYECTABLE",24.65,381.0,"Medicamento"],
+["CIPROFLOXACINO 250MG TABLETAS",25.0,113.0,"Medicamento"],
+["CIPROFLOXACINO 400MG/200ML INY",390.0,1720.0,"Medicamento"],
+["CIPROFLOXACINO 500MG TABLETAS",3.34,17.0,"Medicamento"],
+["CIRCUITO ACTIVO RESPIRONICS ADULTO",1500.0,3010.0,"Material"],
+["CIRCUITO ACTIVO RESPIRONICS PED",320.6,1283.0,"Material"],
+["CIRCUITO BAIN ADULTO",692.8,2425.0,"Material"],
+["CIRCUITO CAREFUSION P/LTV",1500.0,4500.0,"Material"],
+["CIRCUITO DE ANESTESIA ADULTO",190.0,795.0,"Material"],
+["CIRCUITO DE ANESTESIA ADULTO QUIROFANO",220.0,1138.0,"Hospitalizacion"],
+["CIRCUITO DE ANESTESIA NEONATAL",245.17,981.0,"Material"],
+["CIRCUITO DE ANESTESIA PEDIATRICO",318.47,1220.0,"Material"],
+["CIRCUITO DE ASPIRACION CERRADA 14FR ENDO",295.2,1615.0,"Material"],
+["CIRCUITO DE ASPIRACION CERRADA 14FR TRAQ",242.86,972.0,"Material"],
+["CIRCUITO DE ASPIRACION CERRADA 16FR ENDO",295.2,972.0,"Material"],
+["CIRCUITO DE ASPIRACION CERRADA 16FR TRAQ",242.86,972.0,"Material"],
+["CIRCUITO DE REPUESTO P/ AIRVO 900PT501",2300.0,6840.0,"Material"],
+["CIRCUITO P/VENTILACION MEC ADULTO RT200",1600.0,3384.0,"Material"],
+["CIRCUITO P/VENTILACION MEC PED RT225",1064.0,3192.0,"Material"],
+["CIRCUITO PASIVO RESPIRONICS",638.91,2237.0,"Material"],
+["CIRCUITO RPPI 22MM",256.5,1026.0,"Material"],
+["CISAPRIDA 1MG GOTAS",95.0,428.0,"Medicamento"],
+["CITALOPRAM 20MG TABS",10.75,49.0,"Medicamento"],
+["CITICOLINA 500 MG TABS",601.0,2104.0,"Medicamento"],
+["CITICOLINA SOBRES 10ML C/10",960.0,3360.0,"Medicamento"],
+["CITICOLINA- SOMAZINA - 1000MG/4ML AMP",204.8,512.0,"Medicamento"],
+["CLARITROMICINA 500 MG TABS",18.5,89.0,"Medicamento"],
+["CLARITROMICINA 500MG INYECTABLE",850.0,2870.0,"Medicamento"],
+["CLAVE C/BAYONETA P/FCO O BSA C/VAL.CHECK",88.1,397.0,"Medicamento"],
+["CLAVE CON BAYONETA PARA VIAL CON VALVULA",60.0,270.0,"Medicamento"],
+["CLAVO CENTRO MEDULAR POLIXIAL",35000.0,52500.0,"Implante"],
+["CLINDAMICINA 300MG CAPS",5.88,11.0,"Medicamento"],
+["CLINDAMICINA 300MG/2ML INYECTABLE",14.62,79.0,"Medicamento"],
+["CLINDAMICINA 600MG/4ML INYECTABLE",20.0,86.0,"Medicamento"],
+["CLONAZEPAM 2.5MG/ 10 ML -RIVOTRIL-",800.0,2800.0,"Medicamento"],
+["CLONAZEPAM 2.5MG/1ML GOTAS",230.0,880.0,"Medicamento"],
+["CLONAZEPAM 2MG TAB",6.0,30.0,"Medicamento"],
+["CLONIDINA 150MG 1ML INY",35.59,161.0,"Medicamento"],
+["CLONIXINATO DE LISINA /HIOSINA TABLETAS",8.25,42.0,"Medicamento"],
+["CLONIXINATO DE LISINA 100MG/2ML INY",7.0,32.0,"Medicamento"],
+["CLONIXINATO DE LISINA/CICLOBENZAPRINA TA",28.95,131.0,"Medicamento"],
+["CLOPIDOGREL 75MG TABLETAS",2.85,23.0,"Medicamento"],
+["CLORANFENICOL OFTALMICO 10ML",19.29,144.0,"Medicamento"],
+["CLORANFENICOL UNGUENTO 5G",72.0,180.0,"Medicamento"],
+["CLORFENAMINA 10MG/ML INY",35.0,158.0,"Medicamento"],
+["CLORFENAMINA 4MG TAB",0.62,4.0,"Medicamento"],
+["CLORHEXI WIPES TOALLAS ANTISEPTICAS",186.74,747.0,"Insumo"],
+["CLORHEXI- CLEAN 60ML",72.05,192.0,"Insumo"],
+["CLORHEXI-GUM 0.12% 250ML",407.76,1632.0,"Insumo"],
+["CLORHEXI-RUB 0.5% C/750ML",596.93,2090.0,"Insumo"],
+["CLOROPIRAMINA 20MG/2ML (AVAPENA) INY",59.96,342.0,"Medicamento"],
+["CLOROPIRAMINA CAP 25MG",2.5,12.0,"Medicamento"],
+["CLORPOX TOALLAS C/30",38.0,171.0,"Medicamento"],
+["CLORTALIDONA TAB 50MG",0.49,3.0,"Medicamento"],
+["CLORURO DE ETILO SPRAY",86.25,389.0,"Medicamento"],
+["CLORURO DE POTASIO 1500MG TABLETAS",20.0,90.0,"Medicamento"],
+["CLORURO DE POTASIO EFERV -CORPOTASIN CL-",30.72,139.0,"Medicamento"],
+["CLORURO DE SODIO  0.9% 3000ML - CS3000",108.42,338.0,"Insumo"],
+["CLORURO DE SODIO 0.9% 1000ML - CS TA",42.63,192.0,"Insumo"],
+["CLORURO DE SODIO 0.9% 1000ML - CS1000",32.76,114.0,"Insumo"],
+["CLORURO DE SODIO 0.9% 100ML - CS100",25.95,80.0,"Insumo"],
+["CLORURO DE SODIO 0.9% 250ML - CS250",29.59,89.0,"Insumo"],
+["CLORURO DE SODIO 0.9% 500ML - CS500",28.56,99.0,"Insumo"],
+["CLORURO DE SODIO 0.9% 50ML - CS50",15.64,67.0,"Insumo"],
+["CLORURO DE SODIO 17.7% 10ML",8.62,44.0,"Insumo"],
+["COBAMAMIDA, TIOCOLCHICOSIDO (NEUROFLAX)",450.0,1800.0,"Medicamento"],
+["COCA COLA PET 355ML",11.27,50.71,"Medicamento"],
+["COJIN POSICIONADOR P/CABEZA AD",142.32,346.0,"Medicamento"],
+["COLCHICINA 1MG",2.6,13.0,"Medicamento"],
+["COLCHON AIRSOFT TIP BURBU C/ BOMBA Y REG",732.0,2562.0,"Medicamento"],
+["COLECALCIFEROL 4000UI TAB HISTOFIL",4.55,23.0,"Medicamento"],
+["COLESTIRAMINA C/C4GR C/ 50 SOBRES (NOZAC",1386.9,4161.0,"Medicamento"],
+["COLISTIMETATO DE SODIO 150 MG INY",2200.0,6600.0,"Medicamento"],
+["COLLAR CERVICAL BLANDO CHICO",53.41,241.0,"Medicamento"],
+["COLLAR CERVICAL BLANDO GRANDE",50.91,274.0,"Medicamento"],
+["COLLAR CERVICAL BLANDO MEDIANO",50.91,225.0,"Medicamento"],
+["COLLAR CERVICAL BLANDO XG",60.76,274.0,"Medicamento"],
+["COLLAR FILADELFIA CHICO",356.75,1427.0,"Medicamento"],
+["COLLAR FILADELFIA GRANDE",310.47,1242.0,"Medicamento"],
+["COLLAR FILADELFIA MEDIANO",336.49,1346.0,"Medicamento"],
+["COLLARIN CERVICAL BLANDO PED",102.0,408.0,"Medicamento"],
+["COLLARIN SOMI 31STD",4967.0,14901.0,"Medicamento"],
+["COMODO REFORZADO",51.32,421.0,"Medicamento"],
+["COMPLEJO B  CAP",5.0,59.0,"Medicamento"],
+["COMPLEJO B INYECTABLE",100.0,1690.5,"Medicamento"],
+["COMPRESA PARA VIENTRE ESTERIL",81.73,594.0,"Material"],
+["COMPRESA PARA VIENTRE NO ESTERIL",83.33,409.0,"Material"],
+["CONECTOR  DELGADO",8.34,37.0,"Material"],
+["CONECTOR  GRUESO",7.38,37.0,"Material"],
+["CONECTOR COLA DE RATON",12.35,60.0,"Material"],
+["CONECTOR EN Y",18.46,84.0,"Material"],
+["CONFIDEX 500UI INYECTABLE",12500.0,25000.0,"Medicamento"],
+["CONO P/OTOSCOPIO C/34 PZA",46.2,147.0,"Medicamento"],
+["CONO PARA OTOSCOPIO PEDIATRICO",43.35,196.0,"Medicamento"],
+["CONTENEDOR P/PUNZOCORTANTES 1.5L",101.29,406.0,"Medicamento"],
+["CONTENEDOR RPBI 2.7LTS",32.79,148.0,"Medicamento"],
+["COTONOIDE CODMAN 1 X 3",185.0,1620.0,"Medicamento"],
+["COTONOIDE CODMAN 1/2 X 3",175.0,1840.0,"Medicamento"],
+["CPAP KIT #0",427.8,1712.0,"Medicamento"],
+["CPAP KIT #00",621.6,2176.0,"Medicamento"],
+["CPAP KIT #1",450.0,1800.0,"Medicamento"],
+["CPAP KIT #2",418.04,1712.0,"Medicamento"],
+["CPAP KIT #3",418.04,1518.0,"Medicamento"],
+["CREMA P BEBE 250 ML HIPOALERGENICA",4.8,12.0,"Medicamento"],
+["CROMICO 0 CT1/ 36.4MM 812T REDON",131.88,528.0,"Medicamento"],
+["CROMICO 1 CT1/ 36.4MM 813T REDON",60.72,528.0,"Medicamento"],
+["CROMICO 2-0 CT1/ 36.4MM 811T REDON",73.92,333.0,"Medicamento"],
+["CROMICO 2-0 SH /26MM G123T REDON",55.6,251.0,"Medicamento"],
+["CROMICO 3-0 CT1/ 36.4MM G126T REDON",57.8,261.0,"Medicamento"],
+["CROMICO 3-0 SH /26MM G122T REDON",78.9,356.0,"Medicamento"],
+["CROMICO 4-0 DOBLE  ARMADA P13/13MM 744T",582.4,2039.0,"Medicamento"],
+["CROMICO 4-0 RB-1/17MM U203T REDON",195.81,476.0,"Medicamento"],
+["CROMICO 4-0 SH /26MM G121T REDON",62.01,280.0,"Medicamento"],
+["CROMICO 5-0 RB-1 / 17MM U202T REDON",181.65,727.0,"Medicamento"],
+["CUBIERTAS DESECHABLES P/TERMOMETRO",266.0,1106.0,"Medicamento"],
+["CUBRE BOCA 1 PLIEGO",0.73,4.0,"Material"],
+["CUBRE BOCA DE ALTA FILTRACION 3 PLIEGOS",0.9,3.0,"Material"],
+["CUBRE BOCA DE ALTA FILTRACION KN95",8.9,45.0,"Material"],
+["CUBRE ZAPATO C/ANTIDERRAPANTE C/100",72.0,428.0,"Medicamento"],
+["CUBRE-ZAPATO SIN ANTIDERRAPANTE C/50 PZA",125.66,503.0,"Medicamento"],
+["CURIOSIN GEL TUBO",263.9,1056.0,"Medicamento"],
+["CURITA ESTANDAR CAJA C/100",42.57,192.0,"Medicamento"],
+["CURITA REDONDO",0.39,2.0,"Medicamento"],
+["CUROSURF 240MG 3ML",15500.0,23250.0,"Medicamento"],
+["DALVEAR 300/160 ADUL  JARABE  120 ML",204.0,816.0,"Medicamento"],
+["DAPAGLIFOXINA 10 MG TABS  FORXIGA",1300.0,3900.0,"Medicamento"],
+["DAPAGLIFOZINA 10MG TABS -FORXIGA-",47.15,213.0,"Medicamento"],
+["DARZALEX 400MG20ML AMPOLLETA",37500.0,56250.0,"Medicamento"],
+["DARZALEX AMP 100MG5ML AMPOLLETA",9500.0,23750.0,"Medicamento"],
+["DEFLAZACORT 30MG",11.61,1135.3,"Medicamento"],
+["DEFLAZACORT 6MG TABS",148.0,592.0,"Medicamento"],
+["DEMECAPRONE 2-0 PS1 CORTANTE 24 MM",150.79,580.0,"Medicamento"],
+["DERMABOND ADHESIVO CHICO",896.68,3103.0,"Medicamento"],
+["DERMOCLEAN JABON QX",182.85,764.0,"Insumo"],
+["DERMODEX GALON",116.0,461.0,"Medicamento"],
+["DERMODINE ESPUMA 118ML",25.89,117.0,"Material"],
+["DERMODINE ESPUMA GALON",365.98,1834.0,"Material"],
+["DERMODINE SOLUCION 118ML",30.9,140.0,"Material"],
+["DERMODINE SOLUCION GALON",472.65,2059.0,"Material"],
+["DESFLURANO 200ML",3100.0,9300.0,"Medicamento"],
+["DESMOPRESINA P/ INHALAR 0.09MG/ML",890.0,3115.0,"Medicamento"],
+["DESVENLAFAXINA 50MG COMP",42.6,192.0,"Medicamento"],
+["DEXAMETASONA 4MG",13.65,62.0,"Medicamento"],
+["DEXAMETASONA 4MG/2ML -ALIN DEPOT-",166.19,665.0,"Medicamento"],
+["DEXAMETASONA 8MG/2ML INYECTABLE",9.0,45.0,"Medicamento"],
+["DEXAMETASONA GOTAS OFT ALIN",82.0,369.0,"Medicamento"],
+["DEXAMETASONA/TOBRAMICINA GOTAS OFT",516.0,1806.0,"Medicamento"],
+["DEXIVANT CAP 60 MG",865.0,3027.5,"Medicamento"],
+["DEXKETOPROFENO  TROMETAMOL  50MG/2ML INY",233.33,867.0,"Medicamento"],
+["DEXKETOPROFENO 25MG TABLETAS",34.0,153.0,"Medicamento"],
+["DEXKETOPROFENO 25MG/10ML SOBRES",34.0,153.0,"Medicamento"],
+["DEXMEDETOMIDINA 200MG/2ML INYECTABLE",90.0,405.0,"Medicamento"],
+["DEXPANTHENOL 5% POMADA -BEPANTHEN-",80.0,162.0,"Medicamento"],
+["DIAZEPAM 10 MG TABS",380.0,1520.0,"Medicamento"],
+["DIAZEPAM 10MG/2ML SOL.INY.",25.49,59.0,"Medicamento"],
+["DICLOFENACO 100MG TABS",1.0,5.0,"Medicamento"],
+["DICLOFENACO 75MG/3ML  INYECTABLE",12.5,28.0,"Medicamento"],
+["DICLOFENACO GEL 60G",28.51,126.0,"Medicamento"],
+["DICLOXACILINA 250MG/5ML",12.3,56.0,"Medicamento"],
+["DICLOXACILINA 500MG CAPS",5.0,13.0,"Medicamento"],
+["DIFENHIDRAMINA 10MG/ML AMP INY",89.29,273.0,"Medicamento"],
+["DIFENHIDRAMINA 50 MG C/20 TAB",1.5,8.0,"Medicamento"],
+["DIFENHIDRAMINA JARABE 250MG/100ML",25.0,113.0,"Medicamento"],
+["DIFENIDOL 25MG",0.38,2.0,"Medicamento"],
+["DIFENIDOL 40MG/2ML INYECTABLE",6.94,49.0,"Medicamento"],
+["DIGOXINA 0.25MG TABS",1.5,8.0,"Medicamento"],
+["DIGOXINA 0.5MG/2ML INYECTABLE",33.75,152.0,"Medicamento"],
+["DIHEXAZINA 60MG JARABE 140ML",260.0,1040.0,"Medicamento"],
+["DILTIAZEM 180MG LIBERACION PROLONGADA",425.0,1700.0,"Medicamento"],
+["DILTIAZEM 30MG",20.4,51.0,"Medicamento"],
+["DILTIAZEM 60MG GEL",743.0,1708.9,"Medicamento"],
+["DIMENHIDRINATO 50MG/1ML INYECTABLE",21.85,99.0,"Medicamento"],
+["DINITRATO DE ISOSORBIDA 10 MG AMP",90.0,405.0,"Medicamento"],
+["DINITRATO DE ISOSORBIDA 5MG TAB",2.85,15.0,"Medicamento"],
+["DIOSMECTITA 3G SUSP -IPRIKENE-",29.0,131.0,"Medicamento"],
+["DIOSMINA/HESPERIDINA 450/50 DAFLON TAB",23.2,105.0,"Medicamento"],
+["DOBUTAMINA 250MG/20ML",70.0,175.0,"Medicamento"],
+["DOBUTAMINA 250MG/5ML INYECTABLE",260.0,804.0,"Medicamento"],
+["DOMPERIDONA 10 MG",18.5,1999.0,"Medicamento"],
+["DOPAMINA 200MG/5ML INYECTABLE",29.66,134.0,"Medicamento"],
+["DORSAL TAB 15MG",807.0,2824.5,"Medicamento"],
+["DOSIS ANESTESIA LOCAL",39.99,99.98,"Medicamento"],
+["DOSIS ASPIRINA 100 MG",65.0,99.98,"Medicamento"],
+["DOSIS CLOPIDOGREL 75MG",10.0,99.98,"Medicamento"],
+["DOSIS KETOROLACO 30MG SUBLINGUAL",19.96,49.9,"Medicamento"],
+["DOSIS LOSARTAN 50MG",15.0,99.98,"Medicamento"],
+["DOSIS METOPROLOL 100MG",15.0,99.98,"Medicamento"],
+["DOSIS NIFEDIPINO 30 MG",18.0,99.98,"Medicamento"],
+["DOSIS PARACETAMOL 750 MG",15.0,49.98,"Medicamento"],
+["DOSIS PARACETAMOL GOTAS  (TEMPRA)",39.99,99.98,"Medicamento"],
+["DOXICICLINA 100 MG C/10 TABS",77.0,347.0,"Medicamento"],
+["DRENAJE BLAKE 10FR C/TROCAR 2227",1286.06,3859.0,"Medicamento"],
+["DRENAJE BLAKE 15FR C/TROCAR 2229",784.0,4157.0,"Medicamento"],
+["DRENAJE BLAKE 19FR C/TROCAR 2232",1598.3,4252.0,"Medicamento"],
+["DRENAJE BLAKE 24FR C/TROCAR 2234",1309.95,3930.0,"Medicamento"],
+["DRENAJE PERCUTANEO 12FR C/LÍNEA DE EXT",1785.0,5355.0,"Medicamento"],
+["DRENAJE PLEURAL",618.2,2164.0,"Medicamento"],
+["DRENAJE TIPO BLAKE 19 FR GENERICO",775.0,1937.5,"Medicamento"],
+["DRENAJE TORACICO (WET) VALVULA DE AGUA",665.0,2328.0,"Medicamento"],
+["DRENOVAC 1/4 AZUL",241.88,1115.0,"Material"],
+["DRENOVAC 1/8 ROJO",231.19,1115.0,"Material"],
+["DROPROPIZINA - AMBROXOL 120ML",155.0,620.0,"Medicamento"],
+["DROPROPIZINA 30MG TABLETAS",8.52,43.0,"Medicamento"],
+["DROPROPIZINA JARABE 120ML 3MG/1ML",140.0,560.0,"Medicamento"],
+["DUOLOXETINA 60MG TAB",8.95,45.0,"Medicamento"],
+["DURAPREP 6ML",211.19,845.0,"Material"],
+["DURAPREP APLICADOR C/26 ML",175.42,756.0,"Material"],
+["DURASAFE CAL 18",989.65,3464.0,"Medicamento"],
+["DUTASTERIDA TAMSULOSINA 0.50MG 0.40MG",28.8,122.0,"Medicamento"],
+["DYNASTAT (PARECOXIB) 40MG INY",116.66,1160.0,"Medicamento"],
+["EDOXABAN (LIXIANA) 30MG TAB",49.92,225.0,"Medicamento"],
+["EFEDRINA 50MG/2ML SOL.INY.",38.52,174.0,"Medicamento"],
+["EJERCITADOR AEROBIKA",1343.25,4030.0,"Medicamento"],
+["EJERCITADOR PULMONAR THRESHOLD IMT",572.34,2004.0,"Medicamento"],
+["EJERCITADOR PULMONAR THRESHOLD PEP",393.45,1574.0,"Medicamento"],
+["ELECTROCARDIOGRAMA",150.0,500.0,"Medicamento"],
+["ELECTRODO ADULTO",1.8,10.0,"Material"],
+["ELECTRODO PEDIATRICO",2.04,10.0,"Material"],
+["ELECTRODOS NEONATALES PAQ C/3",79.0,356.0,"Material"],
+["ELECTROLIT 625ML",22.0,113.0,"Medicamento"],
+["ELECTROLITOS 20GR POLVO",5.43,28.0,"Laboratorio"],
+["ELICUIS TAB 5 MG CAJ/20",883.0,3091.0,"Medicamento"],
+["EMPAGLIFLOZINA 10MG  -JARDIANZ-",87.8,396.0,"Medicamento"],
+["EMPAGLIFLOZINA,METFORMINA 12.5MG/850MG",20.7,94.0,"Medicamento"],
+["ENALAPRIL 10MG",0.5,4.0,"Medicamento"],
+["ENALAPRIL 20MG PRIMAZEN",0.69,6.0,"Medicamento"],
+["ENBRACE STD 500ML",77.82,350.2,"Medicamento"],
+["ENDOZIME A W 4000ML",2780.38,8342.0,"Medicamento"],
+["ENFAMIL  LATA 375 GR",379.0,1032.0,"Medicamento"],
+["ENGRAPADORA CIRCULAR 28MM-4.8MM",14500.0,29000.0,"Medicamento"],
+["ENGRAPADORA CIRCULAR 31",14500.0,29000.0,"Medicamento"],
+["ENGRAPADORA LINEAL 75MM",5700.0,14250.0,"Medicamento"],
+["ENGRAPADORA LINEAL ECHELON",11500.0,18975.0,"Medicamento"],
+["ENGRAPADORA PIEL 35W",229.41,712.0,"Medicamento"],
+["ENJUAGUE BUCAL GUM 0.12 % 200 ML",183.45,734.0,"Medicamento"],
+["ENOXAPARINA 80MGR 0.8 ML AMPOLLETA",850.0,2975.0,"Medicamento"],
+["ENOXAPARINA SODICA 40 MG",275.0,1028.0,"Medicamento"],
+["ENOXAPARINA SODICA 60 MG",275.0,1342.0,"Medicamento"],
+["ENSURE 237ML",69.0,297.0,"Medicamento"],
+["ENTEREX H-RAMIFICADO",417.5,1248.0,"Medicamento"],
+["ENTEREX IMX",294.0,1070.0,"Medicamento"],
+["ENTEREX RNL",56.6,255.0,"Medicamento"],
+["ENTEROBAG 1500ML",47.58,215.0,"Medicamento"],
+["ENTEROBAG PARA BOMBA DE 1000 ML",193.76,776.0,"Medicamento"],
+["ENTEROBAG PARA BOMBA DE 500 ML",157.72,431.0,"Medicamento"],
+["ENTEROGERMINA 2 BILLONES AMP 5ML",28.5,129.0,"Medicamento"],
+["EPINEFRINA (ADRENALINA) 1MG/ML INY",9.39,31.0,"Medicamento"],
+["EPINEFRINA RACEMICA 2.25% AMP ASTHMANEFR",86.35,389.0,"Medicamento"],
+["EQUALTHA 100MG INY",3700.0,11100.0,"Medicamento"],
+["EQUIPO PARA ARTROSCOPIA",1246.81,3741.0,"Material"],
+["EQUIPO PARA CIRUGIA MAYOR",200.0,500.0,"Material"],
+["ERDOSTEINA 175MG SUSP ORAL",266.0,1064.0,"Medicamento"],
+["ERDOSTEINA 300MG C/20 CAPS",433.0,1732.0,"Medicamento"],
+["ERGOMETRINA .02MG /1 ML",27.6,1380.0,"Medicamento"],
+["ERGOSTAR CM 50 DRAGER",231.25,925.0,"Medicamento"],
+["ERGOTAMINA/CAFEINA 1MG/100MG ERGOCRAF",20.0,90.0,"Medicamento"],
+["ERITROMICINA 500 MG TABS",71.88,324.0,"Medicamento"],
+["ERITROPOYETINA HUMANA 4000UI/ML",160.16,642.0,"Medicamento"],
+["ERTAPENEM 1G INYECTABLE",900.0,3325.0,"Medicamento"],
+["ESCITALOPRAM 10MG",2.83,15.0,"Medicamento"],
+["ESENFLEX P 1250 ML NTP BBRAUN",1247.64,4366.82,"Medicamento"],
+["ESMOLOL 100 MG/ 10 ML",750.0,2275.0,"Medicamento"],
+["ESOMEPRAZOL 40MG INYECTABLE",180.0,880.0,"Medicamento"],
+["ESOMEPRAZOL TABS 40MG",9.73,49.0,"Medicamento"],
+["ESOXX-ONE SOBRES",26.15,118.0,"Medicamento"],
+["ESPATULA DE AIRE N ESTERIL",1.6,4.0,"Medicamento"],
+["ESPAVEN ENZIMATICO TABS",251.0,1004.0,"Medicamento"],
+["ESPEJO VAGINAL DESECH MED",14.44,65.0,"Medicamento"],
+["ESPIRONOLACTONA 25MG",4.6,12.0,"Medicamento"],
+["ESPONJA D GASA 10X10 S/TRAMA PISA C/10",17.93,167.0,"Material"],
+["ESPONJA D/GASA C/T OPACA 10X10 C/10 PISA",37.04,168.0,"Material"],
+["ESPONJA HEMOSTATICA",198.76,596.0,"Medicamento"],
+["ESPONJA PARA BAÑO",6.53,33.0,"Medicamento"],
+["ESSENFLEX P 1250ML NTP BBRAUN",1247.66,3119.15,"Medicamento"],
+["ESSENFLEX P 1875 ML NTP BBRAUN",1217.81,4262.33,"Medicamento"],
+["ESSENFLEX SONDER 1875ML NPT",1774.36,5323.08,"Medicamento"],
+["ESSENFLEX SONDER 625ML NPT B BRAUN",1364.5,4093.47,"Medicamento"],
+["ESTERICIDE",238.8,956.0,"Medicamento"],
+["ESTILETE P/INTUBACION",34.96,158.0,"Material"],
+["ESTILETE P/INTUBACION 10FR",64.6,291.0,"Material"],
+["ESTILETE P/INTUBACION 12FR",35.2,159.0,"Material"],
+["ESTILETE P/INTUBACION 14FR",53.49,241.0,"Material"],
+["ETAMSILATO 250MG/2ML INYECTABLE",124.37,440.0,"Medicamento"],
+["ETHIBOND EXCEL 2-0 CT2/ 26MM B411 REDON",235.08,850.0,"Medicamento"],
+["ETHIBOND EXCEL O CT2/ 26MM B412 REDON",187.6,751.0,"Medicamento"],
+["ETOFENAMATO 1G/2ML INYECTABLE",85.0,383.0,"Medicamento"],
+["ETORICOXIB 120MG",18.0,36.0,"Medicamento"],
+["ETORICOXIB 90MG COMPRIMIDO",18.78,85.0,"Medicamento"],
+["EUCERIN LOCIÓN PH5",372.41,1490.0,"Medicamento"],
+["FACTS* LIMPIADOR P/AUTOCLAVE",883.83,3094.0,"Medicamento"],
+["FAJA LUMBAR GDE",290.0,1160.0,"Medicamento"],
+["FAJA LUMBAR MEDIANA",380.0,1520.0,"Medicamento"],
+["FAMOTIDINA 40 MG",3.7,19.0,"Medicamento"],
+["FCO DICLOXACILINA 125MG SUSPENSION",25.0,113.0,"Medicamento"],
+["FCO DICLOXACILINA 250MG SUSPENSION",449.0,1796.0,"Medicamento"],
+["FCO IBUPROFENO 2G/100ML  120ML SUSP",30.0,135.0,"Medicamento"],
+["FELODIPINO 5MG",3.37,17.0,"Medicamento"],
+["FENAZOPIRIDINA 100MG TAB",3.4,15.0,"Medicamento"],
+["FENITOINA SODICA 100MG TABS",10.85,49.0,"Medicamento"],
+["FENITOINA SODICA 250MG/5ML  INYECTABLE",25.0,90.0,"Medicamento"],
+["FENODID 0.5MG /10ML",216.66,668.0,"Medicamento"],
+["FENOFIBRATO CAPS 135MG CONTROLIP-TRI",35.5,160.0,"Medicamento"],
+["FENTANILO 0.5 MG/10 ML SOL.INY.",157.5,630.0,"Medicamento"],
+["FERULA  DEDO TIPO SOMBRALLA CHICA",49.0,221.0,"Medicamento"],
+["FERULA DEDO TIPO SOMBRILLA GRANDE",49.3,222.0,"Medicamento"],
+["FERULA DEDO TIPO SOMBRILLA MEDIANA",49.3,222.0,"Medicamento"],
+["FERULA MUÑECA/ANTEB DER CHI",265.65,1063.0,"Medicamento"],
+["FERULA MUÑECA/ANTEB DER GDE",513.5,1063.0,"Medicamento"],
+["FERULA MUÑECA/ANTEB DER MED",493.06,1200.0,"Medicamento"],
+["FERULA MUÑECA/ANTEB IZQ CHI",300.0,1200.0,"Medicamento"],
+["FERULA MUÑECA/ANTEB IZQ GDE",300.0,1200.0,"Medicamento"],
+["FERULA MUÑECA/ANTEB IZQ MED",265.65,1063.0,"Medicamento"],
+["FERULA P/PULGAR C/MUÑEQUERA DER M",285.18,1141.0,"Medicamento"],
+["FERULA P/PULGAR C/MUÑEQUERA IZQ M",285.18,1141.0,"Medicamento"],
+["FERULA P/RODILLA TRIPANEL UNIVER LARGA M",617.1,2160.0,"Medicamento"],
+["FERULA TIPO RANA CHICA",49.92,225.0,"Medicamento"],
+["FERULA TIPO RANA GRANDE",49.92,225.0,"Medicamento"],
+["FERULA TIPO RANA MEDIANA",49.92,225.0,"Medicamento"],
+["FIBRINOGENO HUMANO - RIASTAP -",9902.0,22000.0,"Medicamento"],
+["FIJACION P/TUBO ENDOTRAQ HOLLYSTER 9799",598.73,2610.0,"Material"],
+["FIJACION PARA SONDA FOLEY",110.0,415.0,"Material"],
+["FIJACION PARA SONDA NASOGASTRICA",98.82,261.0,"Material"],
+["FIJADOR CITO SPRAY",166.98,668.0,"Medicamento"],
+["FIJADOR TUBO ENDOTRAQUEAL SIMPLE",97.09,437.0,"Material"],
+["FILGASTRIM INY 300UG",700.0,2000.0,"Medicamento"],
+["FILTRO BACT P/VENT (AVEA) BLANCO",1500.0,4530.0,"Material"],
+["FILTRO BACTERIANO 28022",45.53,405.0,"Material"],
+["FILTRO FLURASORB",2221.0,6663.0,"Material"],
+["FILTRO PURITAN REDONDO CAFE",1100.0,2310.0,"Material"],
+["FITOESTIMULINA CREMA 30G",500.0,1800.0,"Medicamento"],
+["FITOMENADIONA 2MG/0.2ML INYECTABLE",32.0,107.0,"Medicamento"],
+["FLAGYL INY 500MG BOL C/100ML",398.5,1594.0,"Medicamento"],
+["FLEBOTEK 0-100 CON CLAVE",128.65,161.0,"Material"],
+["FLEBOTEK 0-150 CON CLAVE P/BOMBA",224.67,627.0,"Material"],
+["FLEBOTEK C/CLAVE P/BOMBA FPB",278.91,665.0,"Material"],
+["FLEBOTEK OPACO PARA BOMBA",277.83,995.0,"Material"],
+["FLEBOTEK P/MEDIR P.V.C",95.0,428.0,"Material"],
+["FLEBOTEK P/MEDIR P.V.C. FLEXIBLE",35.0,158.0,"Material"],
+["FLEBOTEK QUIRURGICO NB C/CLAVE",31.95,385.0,"Material"],
+["FLEBOTEQ MICROGOTERO P/VENOCLISIS",19.9,90.0,"Medicamento"],
+["FLEXIVER COMPUESTO CAP 15 / 215 MG C/10",45.0,248.0,"Medicamento"],
+["FLONORM 550 TABS",550.0,1650.0,"Medicamento"],
+["FLORATIL 300MG SOBRES",39.18,177.0,"Medicamento"],
+["FLORATIL CAPS 200MG",45.0,203.0,"Medicamento"],
+["FLOROGLUCINOL TRIMETILFLOROGLUCINOL CAPS",233.0,932.0,"Medicamento"],
+["FLUCONAZOL 150MG TAB",5.57,28.0,"Medicamento"],
+["FLUCONAZOL 2MG/ML INYECTABLE",53.52,293.0,"Medicamento"],
+["FLUOXETINA 20MG CAPS",3.5,18.0,"Medicamento"],
+["FLUTICASONA 27.5 MCG SUSP NASAL",550.0,1925.0,"Medicamento"],
+["FLUTICASONA 2MG/2ML INHALACION",42.31,191.0,"Medicamento"],
+["FLUTICASONA AEROSOL 50 MCG 120 DOSIS",792.0,2229.0,"Medicamento"],
+["FLUTICASONA SALMETEROL 25/125MCG",1100.0,3300.0,"Medicamento"],
+["FLUTICASONA SALMETEROL 25/250MCG",1215.0,3645.0,"Medicamento"],
+["FLUTICASONA SALMETEROL 25/50MCG",500.72,1753.0,"Medicamento"],
+["FLUVOXAMINA 100MG TAB -LUVOX-",190.0,760.0,"Medicamento"],
+["FOLEY 10FR 2VIA LATEX",41.64,188.0,"Material"],
+["FOLEY 12FR SILICON",52.0,234.0,"Material"],
+["FOLEY 2V 12FR LATEX",28.74,130.0,"Material"],
+["FOLEY 2V 14FR LATEX",25.88,103.0,"Material"],
+["FOLEY 2V 14FR SILICON",105.41,878.0,"Material"],
+["FOLEY 2V 16FR LATEX",36.84,103.0,"Material"],
+["FOLEY 2V 16FR SILICON",192.72,771.0,"Material"],
+["FOLEY 2V 18FR LATEX",26.25,157.0,"Material"],
+["FOLEY 2V 18FR SILICON",240.35,962.0,"Material"],
+["FOLEY 2V 20FR LATEX",28.31,128.0,"Material"],
+["FOLEY 2V 20FR SILICON",174.8,822.0,"Material"],
+["FOLEY 2V 22FR LATEX",28.74,130.0,"Material"],
+["FOLEY 2V 24FR LATEX",28.74,130.0,"Material"],
+["FOLEY 3V 20FR LATEX",93.45,878.0,"Material"],
+["FOLEY 3V 22FR LATEX",126.24,479.0,"Material"],
+["FOLEY 3V 24FR LATEX",119.65,479.0,"Material"],
+["FOLEY 8FR 2VIAS",41.64,188.0,"Material"],
+["FORMOL 1 LITRO",46.0,230.0,"Medicamento"],
+["FOSFANEMA 133ML Y CANULA RECTAL",55.0,274.0,"Material"],
+["FOSFATO DE POTASIO FP-20 IV",20.0,61.0,"Medicamento"],
+["FOSFATO DE TEDIZOLID 200MG INY",4300.0,12900.0,"Medicamento"],
+["FOSFOMICINA 1G INYECTABLE",270.0,1080.0,"Medicamento"],
+["FOSFOMICINA 3G GRANULADO",465.0,1080.0,"Medicamento"],
+["FOSFOMICINA 500MG CAPSULAS",33.95,153.0,"Medicamento"],
+["FRASCO IBUPROFENO 2G/100ML C/120ML",30.0,135.0,"Medicamento"],
+["FRESEKABI D 1KCAL/1ML",44.39,200.0,"Medicamento"],
+["FRESUBIN HPC 2KCAL 200ML",78.34,288.0,"Medicamento"],
+["FRISOLAC 1 0-6 MESES",50.0,225.0,"Medicamento"],
+["FUMARATO FERROSO TAB C/50",1.06,6.0,"Medicamento"],
+["FUNDA LOGRA",5.39,27.0,"Medicamento"],
+["FUNDA P/ BRAZO ROBOTIC ROSA",1656.4,4107.0,"Medicamento"],
+["FUNDA P/ MONITOR ROSA",177.6,587.0,"Medicamento"],
+["FUNDA P/LAPAROSCOPIA",65.0,1012.0,"Medicamento"],
+["FUNDA PARA ARCO EN C",450.0,1357.0,"Medicamento"],
+["FURACIN CREMA 85G",371.2,1067.0,"Medicamento"],
+["FUROSEMIDA 20MG/2ML INYECTABLE",7.0,16.0,"Medicamento"],
+["FUROSEMIDE 40 MG TABS",0.49,3.0,"Medicamento"],
+["GABAPENTINA 300MG VO",5.26,10.0,"Medicamento"],
+["GASA 10X10CM  S/TRAMA C/10",18.0,156.0,"Material"],
+["GASA 10X10CM C/TRAMA C/10",41.0,166.0,"Material"],
+["GASA 10X10CM C/TRAMA C/200",129.96,600.0,"Material"],
+["GASA 10X10CM S/TRAMA C/200",135.7,428.0,"Material"],
+["GASA ABSORBENTE EN ROLLO T20X12",511.5,1791.0,"Material"],
+["GASA ESTERIL 10X10 PROTEC C/10 C/T",25.65,116.0,"Material"],
+["GASA ESTERIL PROTEC 10X10 C/5 S/T",10.51,48.0,"Material"],
+["GASA FITOESTIMULINA",86.0,387.0,"Material"],
+["GASAS ITALDERMOL -TRITICUM VULGARE-",55.0,270.0,"Medicamento"],
+["GATORADE SIN AZUCAR 1LT",30.0,120.0,"Medicamento"],
+["GEL ANTIBACTERIAL 1 LT",65.61,250.0,"Medicamento"],
+["GEL ANTIBACTERIAL 20LTS",1049.0,3147.0,"Medicamento"],
+["GEL CONDUCTOR 250GRS",35.7,161.0,"Medicamento"],
+["GEL DESINFECTANTE 3.8L",295.0,1180.0,"Medicamento"],
+["GEL PARA ULTRASONIDO 4L",178.83,716.0,"Imagenologia"],
+["GELAFUNDIN 4  500ML SOL.INY.",300.0,1360.0,"Medicamento"],
+["GENTAMICINA 160MG/2ML INYECTABLE",16.0,70.0,"Medicamento"],
+["GENTAMICINA 80MG/2ML INYECTABLE",12.0,90.0,"Medicamento"],
+["GLIBENCLAMIDA 5MG",83.0,374.0,"Medicamento"],
+["GLICEROL SUPOCITORIOS ADULTO",71.0,320.0,"Medicamento"],
+["GLICEROL SUPOSITORIOS BEBE",5.61,29.0,"Medicamento"],
+["GLICINA1.5% 3000ML",150.0,600.0,"Medicamento"],
+["GLUCERNA 237ML",56.03,253.0,"Medicamento"],
+["GLUCONATO CAL 10% 10ML",13.82,47.0,"Medicamento"],
+["GLUCONATO DE POTASIO SOBRESCORPOTASIN GK",22.0,99.0,"Medicamento"],
+["GLUCOSA 50% 50ML",29.98,142.0,"Medicamento"],
+["GLUCOSA DX-10 1000ML",26.67,121.0,"Insumo"],
+["GLUCOSA DX-10 500ML",21.05,95.0,"Insumo"],
+["GLUCOSA DX-5 1000ML",14.75,121.0,"Insumo"],
+["GLUCOSA DX-5 100ML",14.75,92.0,"Insumo"],
+["GLUCOSA DX-5 250 ML",17.55,109.0,"Insumo"],
+["GLUCOSA DX-5 50 ML",16.68,76.0,"Insumo"],
+["GLUCOSA DX-5 500ML",21.89,95.0,"Insumo"],
+["GLUTAPAK SOBRE 15GR",71.3,321.0,"Medicamento"],
+["GOGGLES PARA PROTECCION",400.0,1600.0,"Medicamento"],
+["GORRO P/CIRUJANO PAQ. C/50",58.0,286.0,"Material"],
+["GORRO PLISADO P/PACIENTE PAQ. C/100",74.75,343.0,"Material"],
+["GRANEODIN F SPRAY",375.0,975.0,"Medicamento"],
+["GRANEODIN-B ORAL",56.0,252.0,"Medicamento"],
+["GRAPA TITANIO LIGACLIP LT300",716.64,2149.92,"Medicamento"],
+["GRAPAS HEMO LOCK XL",450.0,1875.0,"Medicamento"],
+["GRATEN 2.5MG/2.5ML",84.59,338.35,"Medicamento"],
+["GUANTE CIRUJANO 6.0 PROTEXIS",16.0,72.0,"Material"],
+["GUANTE DE CIRUJANO 6.5 LIBRE DE LATEX",54.65,246.0,"Material"],
+["GUANTE DE CIRUJANO 6.5 PROTEXIS",16.0,72.0,"Material"],
+["GUANTE DE CIRUJANO 7.0 LIBRE DE LATEX",54.65,246.0,"Material"],
+["GUANTE DE CIRUJANO 7.5 LIBRE DE LATEX",36.25,245.0,"Material"],
+["GUANTE DE CIRUJANO 8 LIBRE DE LATEX",36.25,145.0,"Material"],
+["GUANTE DE NITRILO CHICO",0.98,5.0,"Material"],
+["GUANTE DE NITRILO MEDIANO",0.83,6.0,"Material"],
+["GUANTE ESTERIL 6",4.6,23.0,"Material"],
+["GUANTE ESTERIL 6.5",4.7,32.0,"Material"],
+["GUANTE ESTERIL 7",4.78,32.0,"Material"],
+["GUANTE ESTERIL 7 .5",4.78,32.0,"Material"],
+["GUANTE ESTERIL 8",4.6,23.0,"Material"],
+["GUANTE ESTERIL 8.5",5.0,23.0,"Material"],
+["GUANTE ESTERIL MEDIANO",1.3,8.0,"Material"],
+["GUANTE NO ESTERIL MEDIANO",1.24,7.0,"Material"],
+["GUANTE ORTOPEDICO C/40 7",28.83,130.0,"Material"],
+["GUANTE ORTOPEDICO C/40 7.5",28.83,104.0,"Material"],
+["GUANTE ORTOPEDICO C/40 8",28.83,130.0,"Material"],
+["GUIA PARA COLOCACION DE CLAVO",1000.0,3500.0,"Medicamento"],
+["GUIA PARA JERINGA DE MEDIO DE CONTRASTE",140.0,560.0,"Material"],
+["HALOBETASOL 0.5%",410.0,1640.0,"Medicamento"],
+["HALOPERIDOL 2MG/ML 30ML SOL GTS",234.0,936.0,"Medicamento"],
+["HALOPERIDOL 5MG TAB",2.7,434.0,"Medicamento"],
+["HALOPERIDOL 5MG/ML INYECTABLE",66.67,667.0,"Medicamento"],
+["HARTMAN 1000ML - HT1000",41.52,114.0,"Insumo"],
+["HARTMAN 250 ML - HT250",18.32,89.0,"Insumo"],
+["HARTMAN 500 ML - HT500",28.56,99.0,"Insumo"],
+["HEDERA HELIX JARABE 0.7G/100ML",280.0,1120.0,"Medicamento"],
+["HEM PROT SUPLEMENTO ALIMENT",550.0,1925.0,"Medicamento"],
+["HEMOSIN K INY 10/10 MG C/ 3 AMP",138.3,516.0,"Medicamento"],
+["HEMOSIN-K TABLETAS",10.0,50.0,"Medicamento"],
+["HEMOTEK P/VENOCLISIS",30.75,131.0,"Medicamento"],
+["HEMOTEK PARA BOMBA",223.39,757.0,"Medicamento"],
+["HEPAMERZ GRANULADO 3GR SOBRES",34.2,154.0,"Medicamento"],
+["HEPARINA 1 000UI/ML INYECTABLE",130.0,439.0,"Medicamento"],
+["HEPARINA 5 000UI/ML INYECTABLE",176.54,920.0,"Medicamento"],
+["HESTAR 10G/100ML FLEXOVAL 500ML",406.62,1627.0,"Medicamento"],
+["HESTAR 6G/100ML FLEXOVAL 500ML",530.0,1363.0,"Medicamento"],
+["HIDRALAZINA 20MG/ML INYECTABLE",126.4,432.0,"Medicamento"],
+["HIDRALAZINA TAB 10MG",1.9,10.0,"Medicamento"],
+["HIDROCLOROTIAZIDA 25 MG TABS",1.83,10.0,"Medicamento"],
+["HIDROCORTISONA 100MG INYECTABLE",30.0,99.0,"Medicamento"],
+["HIDROCORTISONA 500MG INYECTABLE",49.82,205.0,"Medicamento"],
+["HIDROXICLOROQUINA 200MG TABS",38.81,175.0,"Medicamento"],
+["HIERRO ACIDO FOLICO 100MG/800MCG",0.48,3.0,"Medicamento"],
+["HIERRO DEXTRAN 100 MG AMP",23.33,105.0,"Medicamento"],
+["HIOCINA 10MG METAMIZOL 250 MG TABS",4.0,16.0,"Medicamento"],
+["HIOSCINA METAMIZOL 20MG/2.5G 5ML INY",50.0,221.0,"Medicamento"],
+["HIPROMELOSA 5MG/ML OFTALMICA",82.0,592.0,"Medicamento"],
+["HISTOACRYL ADHESIVO TISULAR",824.48,2886.0,"Medicamento"],
+["HOJA P/ BISTURI #10",1.46,8.0,"Material"],
+["HOJA P/ BISTURI #11",1.39,9.0,"Material"],
+["HOJA P/ BISTURI #12",1.27,7.0,"Material"],
+["HOJA P/ BISTURI #15",1.44,9.0,"Material"],
+["HOJA P/ BISTURI #20",1.55,9.0,"Material"],
+["HUMIDIFACADOR VACIO",47.0,185.0,"Medicamento"],
+["HYFIBER 473 ML FIBRA LIQUIDA",512.0,1792.0,"Medicamento"],
+["HYPAFIX 10 X10 X 1CM",0.4,1.0,"Medicamento"],
+["IALUMAR SPRAY",347.4,1390.0,"Medicamento"],
+["IBERSARTAN",10.35,47.0,"Medicamento"],
+["IBERSARTAN/HIDROCLOROTIZADA 150/12.5MG",3.15,16.0,"Medicamento"],
+["IBUPROFENO 200MG TABS",35.0,140.0,"Medicamento"],
+["IBUPROFENO 400MG TA B",2.8,11.0,"Medicamento"],
+["IBUPROFENO 600MG TABS",1.83,13.0,"Medicamento"],
+["IBUPROFENO 800MG CAP C/10",2.5,15.0,"Medicamento"],
+["IBUPROFENO SUSP 2G NFANTIL 2-12 AÑOS",25.0,180.0,"Medicamento"],
+["IBUPROFENO SUSP 40MG PED 6-24 MESES",40.32,182.0,"Medicamento"],
+["IBUPROFENO SUSP INFANTIL 6MESES-12 AÑOS",24.41,110.0,"Medicamento"],
+["ILOSONE SUS 250MG FCO 120ML",709.0,2481.0,"Medicamento"],
+["IMIPENEM/CILASTATINA 500MG/500MG INY",195.0,460.0,"Medicamento"],
+["INDOMETACINA 100MG SUPOSITORIO",22.57,58.0,"Medicamento"],
+["INDOMETACINA 25MG CAP C/30",2.51,13.0,"Medicamento"],
+["INFUSOMAT 250/150",1600.0,4800.0,"Medicamento"],
+["INFUSOR 125ML 5ML/H HOMEPUMP C",716.06,2172.0,"Medicamento"],
+["INFUSOR 60ML 2ML/H HOMEPUMP C",657.41,2301.0,"Medicamento"],
+["INFUSOR BAXTER 2ML",633.6,2218.0,"Medicamento"],
+["INHIBITRON 40 MG CAPSULA",100.0,450.0,"Medicamento"],
+["INMOVILIZADOR HOMBRO UNIVERSAL",178.66,1072.0,"Medicamento"],
+["INMOVILIZADOR P/ HOMBRO PEDIATRICO",192.2,769.0,"Medicamento"],
+["INMUNO GLOBULINA HUMANA 5% 120 ML",7500.0,18750.0,"Medicamento"],
+["INMUNOGLOBULINA ANITETANICA 250UI",714.36,2501.0,"Medicamento"],
+["INMUNOGLUBULINA 300MCG INY/IM",2400.0,7200.0,"Medicamento"],
+["INNEFOL 50 MG/ 4 ML ACIDO FOLINICO INY",387.88,1552.0,"Medicamento"],
+["INSPIROMETRO TRI-BALL",109.0,541.0,"Medicamento"],
+["INSTRUMENTAL INTERNAL BRACE TOBILLO",5500.0,6875.0,"Medicamento"],
+["INSTRUMENTAL P RECONS DE TENDON AQUILES",6500.0,8125.0,"Medicamento"],
+["INSULINA GLARGINA 100U/ML",350.0,2248.0,"Medicamento"],
+["INSULINA HUMANA 100UI/ML ACCION RAPIDA",140.0,1720.0,"Medicamento"],
+["INSULINA ISOFANA 100UI/ML ACCION INTER",207.0,828.0,"Medicamento"],
+["INSULINA LANTUS INY 100U/ML FCO10ML",1550.0,4650.0,"Medicamento"],
+["INSULINA LISPRO 100UI/100ML",845.0,2958.0,"Medicamento"],
+["INTEGRADIR TESTIGO DE PLASMA",230.0,920.0,"Medicamento"],
+["INTEGRADOR TESTIGO DE GAS",291.6,805.0,"Medicamento"],
+["INTEGRADOR TESTIGO DE VAPOR",310.0,994.0,"Medicamento"],
+["IOBAN 44X35CM 3M REF 6640",171.18,685.0,"Medicamento"],
+["IOBAN 56X45CM 3M REF: 6650",182.0,884.0,"Medicamento"],
+["IRRIGATEK DE 2 VIAS EN Y",161.81,484.0,"Medicamento"],
+["ISODINE BUCOFARINGEO 8GR   120 ML",183.0,732.0,"Insumo"],
+["ISOFLORANO 100ML",995.0,3448.0,"Medicamento"],
+["ISOSORBIDE 10 MG TAB",0.4,2.0,"Medicamento"],
+["ITALDERMOL CREMA 30G",601.3,2105.0,"Medicamento"],
+["ITOPRIDA 50 MG DAGLA TABLETA",485.0,840.0,"Medicamento"],
+["IVABRADUNA COMP. 5MG PROCORALAN",18.93,86.0,"Medicamento"],
+["JABON NEUTRO 100G",16.28,74.0,"Insumo"],
+["JABON QX ANTIBENZIL 3.85LTS",144.88,640.0,"Insumo"],
+["JBE INF METAMIZOL SODICO 250MG / 5ML",33.15,150.0,"Medicamento"],
+["JELONET 10CMX10CM R-7404",50.49,288.0,"Medicamento"],
+["JERINGA  ASEPTO 120 ML",193.3,738.0,"Material"],
+["JERINGA 50ML P/PERFUSOR J50",33.6,152.0,"Material"],
+["JERINGA DESECHABLE 10ML J10",2.59,11.0,"Material"],
+["JERINGA DESECHABLE 1ML J1",2.01,17.0,"Material"],
+["JERINGA DESECHABLE 20ML J20",3.37,16.0,"Material"],
+["JERINGA DESECHABLE 30ML J30",10.27,47.0,"Material"],
+["JERINGA DESECHABLE 3ML J3",1.49,8.0,"Material"],
+["JERINGA DESECHABLE 5ML J5",1.67,19.0,"Material"],
+["JERINGA DESECHABLE 60ML J60",10.58,46.0,"Material"],
+["JERINGA P/INYECTOR DE MEDIO DE CONTRASTE",697.0,2048.0,"Material"],
+["JERINGA PARA ANACONDA SJ22",165.0,660.0,"Material"],
+["KABIVEN 1400 KCAL CENTRAL",1197.7,3594.0,"Medicamento"],
+["KABIVEN 1400 KCAL PERIFERICO",1095.6,3287.0,"Medicamento"],
+["KABIVEN 1900 KCAL CENTRAL",2241.6,6725.0,"Medicamento"],
+["KABIVEN 2300KKCAL 2566ML",2367.85,7104.0,"Medicamento"],
+["KABIVEN 900 KCAL CENTRAL",1574.35,4724.0,"Medicamento"],
+["KARDIA ESPIRAL 24FR P/DRENAJE PLEURAL",674.14,2360.0,"Medicamento"],
+["KARDIA ESPIRAL 24FR SONDA P/DRE",1072.41,3218.0,"Material"],
+["KELEFUSIN 5 ML C/100",13.0,54.0,"Medicamento"],
+["KENEXIB 40MG INY PARECOXIB",116.66,582.75,"Medicamento"],
+["KETANSERINA -SUFREXAL- GEL TUBO C/78 G",1009.5,3120.0,"Medicamento"],
+["KETOPROFENO 100MG INYECTABLE",100.0,356.0,"Medicamento"],
+["KETOPROFENO 100MG TAB",2.18,11.0,"Medicamento"],
+["KETOROLACO 10MG TABS",2.0,5.0,"Medicamento"],
+["KETOROLACO 30MG SUBLINGUAL",5.0,14.0,"Medicamento"],
+["KETOROLACO 30MG/ML INYECTABLE",8.3,41.0,"Medicamento"],
+["KETOROLACO/TRAMADOL 10/25MG",55.0,248.0,"Medicamento"],
+["KI-CAB TABS 50 MG",668.0,1698.0,"Medicamento"],
+["KIT DE SUTURAS AQUILON",21010.0,26262.5,"Material"],
+["KIT DE VENOPUNCION CLORHEXIDINA",102.44,444.0,"Insumo"],
+["KIT DEL FILTRO FLURABSORB",276.0,1104.0,"Material"],
+["KIT MAHURKAR 10FR X 12 CM",1565.4,4697.0,"Medicamento"],
+["KIT MAHURKAR 11.5 FR X 20 CM",1566.3,4699.0,"Medicamento"],
+["KIT PALINDROME 14.5FR/CH (4.8MM) X 19CM",5737.75,14345.0,"Medicamento"],
+["KIT PALINDROME14.5FR X 23CM",5471.2,13678.0,"Medicamento"],
+["KIT RESPIRATORIO 1",600.0,2100.0,"Medicamento"],
+["KIT RESPIRATORIO 2 BIOMAN",450.0,1800.0,"Medicamento"],
+["L-ORNITINA/L-ASPARTATO5G/10ML(HEPA-MERZ)",148.6,556.0,"Medicamento"],
+["LABETALOL 100MG/200ML INY",900.0,3150.0,"Medicamento"],
+["LACTATO DE MAGNESIO 750MG",334.0,1336.0,"Medicamento"],
+["LACTEOL FORT 10MIL M POLVO",59.83,247.0,"Medicamento"],
+["LACTEOL FORT LACTOBACILLUS LB",751.0,2629.0,"Medicamento"],
+["LACTEOL FORT POL 340 MG C/ 6 SOBRES",369.0,1316.0,"Medicamento"],
+["LACTOBACILLUS LB CAPS",50.84,229.0,"Medicamento"],
+["LACTULAX 10GR SOBRE",20.65,93.0,"Medicamento"],
+["LACTULAX 250 ML JARABE",240.0,1536.0,"Medicamento"],
+["LACTULOSA 10G/15ML  JARABE",335.0,1340.0,"Medicamento"],
+["LACTULOSA JARABE FCO 125ML 10G/15ML",65.85,297.0,"Medicamento"],
+["LAGRICEL PF SOL 4MG/ML GOTERO",553.0,1933.5,"Medicamento"],
+["LAMOTRIGINA MAST 100 MG",7.78,39.0,"Medicamento"],
+["LANCETAS C/200 ACCU-CHEK SOFTCLIX",1.15,7.0,"Medicamento"],
+["LANCETAS ONE TOUCH ULTRA",2.33,12.0,"Medicamento"],
+["LAPIZ P/ELECTROCAUTERIO",37.5,197.0,"Material"],
+["LEMTRADA 12MG1.2ML",220000.0,330000.0,"Medicamento"],
+["LENTE FOTOTERAPIA GRANDE",95.0,428.0,"Medicamento"],
+["LENTE FOTOTERAPIA MEDIANO",75.0,338.0,"Medicamento"],
+["LERCANIDIPINO TAB 10MG",36.5,165.0,"Medicamento"],
+["LEUKOMED + PAD 10X20CM",124.09,497.0,"Medicamento"],
+["LEUKOMED T PLUS 8X15CM",25.79,117.0,"Medicamento"],
+["LEVAMIN NORMO 500ML",180.3,722.0,"Medicamento"],
+["LEVAMIN-GLE 3% 1000ML",424.25,1697.0,"Medicamento"],
+["LEVETIRACETAM 100MG/ML INYECTABLE",550.0,2030.0,"Medicamento"],
+["LEVETIRACETAM 500MG TABS -KEPPRA-",5.0,25.0,"Medicamento"],
+["LEVOCARNITINA 1G/5ML CARDISPAN",76.0,342.0,"Medicamento"],
+["LEVOCETIRIZINA 5MG",3.46,18.0,"Medicamento"],
+["LEVODROPROPIZINA",199.0,960.0,"Medicamento"],
+["LEVOFLOXACINO 500MG TAB",8.4,21.0,"Medicamento"],
+["LEVOFLOXACINO 500MG/100ML INYECTABLE",80.0,360.0,"Medicamento"],
+["LEVOFLOXACINO 750MG TABS",65.0,158.0,"Medicamento"],
+["LEVOFLOXACINO 750MG/150ML INYECTABLE",542.5,1899.0,"Medicamento"],
+["LEVOSIMENDAN 2.5MG/ML",11000.0,22000.0,"Medicamento"],
+["LEVOTIROXINA - LIOTIRONINA 100/20 MCG",8.0,40.0,"Medicamento"],
+["LEVOTIROXINA SODICA 100MCG TABS",1.73,8.0,"Medicamento"],
+["LEVOTIROXINA SODICA 25MCG -EUTIROX-",132.0,600.0,"Medicamento"],
+["LEXICOM 0.5MG/ML FCO 50ML",12000.0,19200.0,"Medicamento"],
+["LEXOTAN 3 MG TABS",517.77,1812.19,"Medicamento"],
+["LIBERTIM SDP SUSP 30ML",115.42,462.0,"Medicamento"],
+["LIBERTRIM ALFA COM 200/75/45/MG C/24 TAB",464.5,2170.0,"Medicamento"],
+["LIBERTRIM ALFA TAB",19.36,77.41,"Medicamento"],
+["LIDOCAINA /PRILOCAINA 30MG CREMA",321.0,1284.0,"Medicamento"],
+["LIDOCAINA C/ HIDROCORT 65/5 SUPOSITORIOS",56.0,252.0,"Medicamento"],
+["LIDOCAINA UNGUENTO 35GR",28.0,126.0,"Medicamento"],
+["LINCOMICINA 600MG AMP",9.12,46.0,"Medicamento"],
+["LINCOMICINA 600MG INY",126.7,507.0,"Medicamento"],
+["LINEA DE CAPNOGRAFIA",65.58,278.0,"Medicamento"],
+["LINEZOLID 600MG INY",400.0,1925.0,"Medicamento"],
+["LINEZOLID 600MG TABS C/10",148.24,593.0,"Medicamento"],
+["LIPOVENOES 20% 500ML LIPIDOS",319.7,1279.0,"Medicamento"],
+["LLAVE 3 VIAS C/EXTENSION",21.61,76.0,"Medicamento"],
+["LLAVE 3 VIAS S/EXTENSION",18.54,58.0,"Medicamento"],
+["LMOTRIGINA MAST 100MG C/28 TAB",15.6,39.0,"Medicamento"],
+["LOPERAMIDA 2MG TAB",1.66,7.0,"Medicamento"],
+["LORATADINA TAB 10MG",1.5,10.0,"Medicamento"],
+["LORAZEPAM 1MG TAB -LOZAM-",10.04,43.6,"Medicamento"],
+["LOSARTAN 50MG",1.0,9.0,"Medicamento"],
+["LOSARTAN/HIDROCLOROTIZADA 50/12.5 MG",7.9,40.0,"Medicamento"],
+["LOTRIMIN SPRAY 150ML",88.0,396.0,"Medicamento"],
+["LUBRICAINA 135G",46.43,215.0,"Medicamento"],
+["MACROGOL 3350 POLVO",29.33,125.0,"Medicamento"],
+["MAGALDRATO /DIMETICONA GEL SOBRES",15.0,33.0,"Medicamento"],
+["MAGALDRATO-DIMETICONA FCO 250ML",65.0,293.0,"Medicamento"],
+["MAGALDRATO/DOMPERIDONA 8GR/0.1GR SUSP",207.0,937.0,"Medicamento"],
+["MAGNEFUSIN 10% 10ML",15.0,61.0,"Medicamento"],
+["MAGNESIO 300MG SOBRE -DIASPORAL-",154.35,618.0,"Medicamento"],
+["MALLA DE PROLENE 30X30CM",1897.14,5692.0,"Medicamento"],
+["MALLA POLIPROPILENO 15X15CM",935.67,2899.0,"Medicamento"],
+["MALLA POLIPROPILENO 25X35",4200.0,12600.0,"Medicamento"],
+["MANITOL 20G/100ML   250ML",69.42,308.0,"Medicamento"],
+["MARCADOR DE PIEL",49.85,201.0,"Medicamento"],
+["MARIPOSA MINIVEN 25",10.0,50.0,"Medicamento"],
+["MASCARILLA  C/RESERV ADULTO",45.0,261.0,"Material"],
+["MASCARILLA  C/RESERV PEDIATRICA",45.0,259.0,"Material"],
+["MASCARILLA  LARINGEA I-GEL NO.3",1190.25,3571.0,"Material"],
+["MASCARILLA CPAP FULLFACE CHICA",1000.0,3500.0,"Material"],
+["MASCARILLA CPAP FULLFACE GRANDE",1126.47,3380.0,"Material"],
+["MASCARILLA CPAP FULLFACE MEDIANA",899.75,3150.0,"Material"],
+["MASCARILLA DE OXIGENO AD C/TUBO 1201",21.0,117.0,"Material"],
+["MASCARILLA DE OXIGENO PED C/TUBO 1260",44.85,174.0,"Material"],
+["MASCARILLA LARINGEA 3",254.95,1190.0,"Material"],
+["MASCARILLA LARINGEA 4",289.41,1190.0,"Material"],
+["MASCARILLA LARINGEA 5",289.41,1190.0,"Material"],
+["MASCARILLA LARINGEA I-GEL NO.2",1190.25,3571.0,"Material"],
+["MASCARILLA LARINGEA I-GEL NO.4",67.64,305.0,"Material"],
+["MASCARILLA LARINGEA I-GEL NO.5",1190.25,3571.0,"Material"],
+["MASCARILLA LARINGUEA 2",254.95,1190.0,"Material"],
+["MASCARILLA P ANEST NEONATAL BLANCA",75.67,262.0,"Material"],
+["MASCARILLA P ANESTESIA INFANTIL ROSA",58.05,262.0,"Material"],
+["MASCARILLA P/ ANESTESIA #2 PED",75.67,262.0,"Material"],
+["MASCARILLA P/ ANESTESIA #4 MED",50.0,292.0,"Material"],
+["MASCARILLA P/ ANESTESIA #5 GDE",64.25,296.0,"Material"],
+["MASCARILLA P/OXIGENO S/TUBO AD",31.8,144.0,"Material"],
+["MASCARILLA P/OXIGENO S/TUBO PED",46.16,208.0,"Material"],
+["MASCARILLA P/TRAQUEOSTOMIA",30.4,137.0,"Material"],
+["MECLIZINA/PIRIDOXINA   AMP",15.0,82.0,"Medicamento"],
+["MECLIZINA/PIRIDOXINA TAB",10.76,49.0,"Medicamento"],
+["MEDIAS ANTIEMBOLICAS CHICAS",241.5,680.0,"Medicamento"],
+["MEDIAS ANTIEMBOLICAS EXTRA GRANDE",254.1,680.0,"Medicamento"],
+["MEDIAS ANTIEMBOLICAS GRANDE",109.67,604.0,"Medicamento"],
+["MEDIAS ANTIEMBOLICAS MEDIANA",137.6,586.0,"Medicamento"],
+["MEDIO DE CONTRASTE FRASCO 100ML",500.0,2000.0,"Medicamento"],
+["MEDIO DE CONTRASTE OPTIRAY 320/200ML",1247.4,3743.0,"Medicamento"],
+["MELATONINA 3 MG TAB",5.64,29.0,"Medicamento"],
+["MELATONINA 5MG SUBLINGUAL",13.25,60.0,"Medicamento"],
+["MELOX PLUS 360ML SUSP",150.8,604.0,"Medicamento"],
+["MELOXICAM / METOCARBAMOL 15/250MG C/10",3.45,18.0,"Medicamento"],
+["MELOXICAM / METOCARBAMOL 15/250MG C/20",7.65,39.0,"Medicamento"],
+["MELOXICAM 15MG",2.0,10.0,"Medicamento"],
+["MELOXICAM/METACARBOMOL 7.5MG/215MG",9.8,49.0,"Medicamento"],
+["MEMANTINA 10MG TAB",13.79,24.0,"Medicamento"],
+["MEMANTINA 20MG",77.5,349.0,"Medicamento"],
+["MEROPENEM  500 MG AMPULA",145.0,560.0,"Medicamento"],
+["MEROPENEM 1G",109.57,580.0,"Medicamento"],
+["MESALAZINA 500MG",14.9,72.0,"Medicamento"],
+["METADOXINA 500 MG TAB -ABRIXONE-",531.0,2060.94,"Medicamento"],
+["METAMIZOL 500MG TABS",1.0,5.43,"Medicamento"],
+["METAMIZOL SODICO 1G/2ML",8.33,46.02,"Medicamento"],
+["METAMIZOL SODICO 300 MG SUPOSITORIO",29.93,162.63,"Medicamento"],
+["METAMIZOL SODICO JARABE 250MG INFANTIL",60.0,326.02,"Medicamento"],
+["METFORMINA 1000MG LIBERACION PROLONGADA",12.83,69.72,"Medicamento"],
+["METFORMINA 500 TAB",0.84,4.56,"Medicamento"],
+["METFORMINA 850MG",0.93,5.05,"Medicamento"],
+["METILFENIDATO 10MG TAB -TRADEA-",11.3,61.4,"Medicamento"],
+["METILPREDNISOLONA  500MG",100.0,573.43,"Medicamento"],
+["METILPREDNISOLONA 40MG/ML",80.0,275.49,"Medicamento"],
+["METOCARBAMOL/PARACETAMOL TAB",4.05,22.01,"Medicamento"],
+["METOCLOPRAMIDA 10MG TAB",0.5,2.55,"Medicamento"],
+["METOCLOPRAMIDA 10MG/2ML INY",5.83,29.94,"Medicamento"],
+["METOCLOPRAMIDA SOL 100MG FCO / 100ML",341.0,1364.0,"Medicamento"],
+["METOPROLOL 100 MG",3.04,7.61,"Medicamento"],
+["METOPROLOL 95MG TAB LIBERACIO PROLONGADA",315.89,1471.26,"Medicamento"],
+["METRONIDAZOL 250MG SUSP",151.0,703.28,"Medicamento"],
+["METRONIDAZOL 500MG INY",55.0,127.75,"Medicamento"],
+["METRONIDAZOL 500MG TABS",2.26,26.3,"Medicamento"],
+["METRONIDAZOL/DIYODO 400/200MG CAPS",156.0,726.57,"Medicamento"],
+["MICONAZOL 2% 20GR CREMA",12.94,70.31,"Medicamento"],
+["MICONAZOL GEL 2GR TUB 78ML",708.0,2747.92,"Medicamento"],
+["MICROBOMBA DE NEBULIZACION AEROGEN",1661.76,4260.0,"Medicamento"],
+["MICROCLAVE CLEAR",84.18,275.0,"Medicamento"],
+["MICROCLAVE CLEAR CON EXT 56CM 2 VÍAS C56",116.1,465.0,"Medicamento"],
+["MICROCLAVE CLEAR CON EXT MICRO 15CM 1VÍA",52.63,237.0,"Medicamento"],
+["MICROCLAVE CLEAR CON EXT MICRO 25CM 2VÍA",123.86,496.0,"Medicamento"],
+["MICROCLAVE CLEAR CON EXT MICRO 30CM 3VÍA",154.2,466.0,"Medicamento"],
+["MICROCLAVE CLEAR EXT CON VALVULA CHECK",80.0,360.0,"Medicamento"],
+["MICRODACYN 240 ML",248.65,1160.0,"Medicamento"],
+["MICRODACYN 5LTS",988.88,3169.0,"Medicamento"],
+["MICRODACYN BUCOFARINGEO",314.83,1260.0,"Medicamento"],
+["MICROLAX ENEMA 90/9 MG 5 ML C/4",177.0,708.0,"Medicamento"],
+["MICRONEBULIZADOR C/MASCARILLA ADULTO",52.62,135.0,"Material"],
+["MICRONEBULIZADOR C/MASCARILLA PEDIATRICO",65.61,296.0,"Material"],
+["MICRONEBULIZADOR EN T C/BOQUILLA ADULTO",27.87,126.0,"Medicamento"],
+["MICROPORE 15301 1 (2.5CM)  9.14 M",15.75,48.0,"Material"],
+["MICROPORE 15302 2 (5CM)  9.14 M",21.59,86.0,"Material"],
+["MICROPORE 15303 3 (7.5CM)  9.14 M",39.54,159.0,"Material"],
+["MICROPORE COLOR PIEL 15330 1/2 (1.25CM)",11.31,43.0,"Material"],
+["MICROPORE COLOR PIEL 15331 1    (2.5CM)",23.05,80.0,"Material"],
+["MICROPORE COLOR PIEL 15332 2    (5CM)",46.09,159.0,"Material"],
+["MIDAZOLAM 15MG/3ML SOL. INY.",47.62,890.28,"Medicamento"],
+["MIDAZOLAM 50MG/10ML SOL.INY.",177.06,2049.3,"Medicamento"],
+["MIDAZOLAM 5MG/5ML SOL. INY.",30.3,357.76,"Medicamento"],
+["MIRTAZAPINA 15MG",930.0,3609.56,"Medicamento"],
+["MISOPROSTOL  200MG C/28 TAB",30.11,65.59,"Medicamento"],
+["MIXTA 1000ML",31.56,211.59,"Medicamento"],
+["MIXTA 500ML",23.82,201.05,"Medicamento"],
+["MODAFINILO 200 MG",42.4,230.39,"Medicamento"],
+["MOMETASONA 0.05% SPRAY NASAL",303.0,1411.22,"Medicamento"],
+["MONOCRYL 0 CT1/ 36.4MM Y340H REDON",156.3,626.0,"Medicamento"],
+["MONOCRYL 1 CT1/ 36.4MM Y341H REDON",194.39,778.0,"Medicamento"],
+["MONOCRYL 2-0 CT1/ 36.4MM Y339H REDON",219.26,942.0,"Medicamento"],
+["MONOCRYL 2-0 SH /26MM Y317H REDON",151.0,604.0,"Medicamento"],
+["MONOCRYL 3-0 CT-1 /36.4MM Y338 REDOND",166.9,668.0,"Medicamento"],
+["MONOCRYL 3-0 PS-1 /24MM  Y936H CORT",332.28,1203.0,"Medicamento"],
+["MONOCRYL 3-0 SH /26MM Y316H REDON",202.22,809.0,"Medicamento"],
+["MONOCRYL 4-0 PS-2 /19MM  Y496G CORT",264.23,1057.0,"Medicamento"],
+["MONOCRYL 4-0 SH/26MM Y315H REDOND",150.83,604.0,"Medicamento"],
+["MONOCRYL 5-0 13MM",156.4,391.0,"Medicamento"],
+["MONOCRYL 5-0 P-1 /11MM  Y490G CORT",210.63,843.0,"Medicamento"],
+["MONOCRYL3-0 19MM INCOLORO Y427",282.91,1132.0,"Medicamento"],
+["MONTELUKAST TAB 10 MG",2.45,13.31,"Medicamento"],
+["MORFINA 10MG/10ML SOL.INY.",370.0,1369.3,"Medicamento"],
+["MORFINA 2.5 MG / 2.5 ML",110.0,350.0,"Medicamento"],
+["MOXIFLOXACINO 400MG INY",520.0,2678.06,"Medicamento"],
+["MOXIFLOXACINO 400MG TABS",652.0,2530.57,"Medicamento"],
+["MULETAS CHICAS",301.35,1206.0,"Medicamento"],
+["MULETAS GRANDES",301.35,1206.0,"Medicamento"],
+["MULETAS MEDIANAS",613.53,2148.0,"Medicamento"],
+["MULTICAMPO 50 X 50",60.0,150.0,"Medicamento"],
+["MUPIROCINA 2% UNG",100.0,489.04,"Medicamento"],
+["MVI ADULTO  INYECTABLE",140.0,551.45,"Medicamento"],
+["NALBUFINA 10MG/1ML SOL.INY.",78.0,456.44,"Medicamento"],
+["NALOXONA 0.40MG/1ML",667.5,2590.73,"Medicamento"],
+["NANDROLONA 50MG",475.0,2212.31,"Medicamento"],
+["NAPROXE PARACETAM 125/100MG 5 ML SUSP",80.0,812.0,"Medicamento"],
+["NAPROXENO 250MG TABS",1.25,6.79,"Medicamento"],
+["NAPROXENO 500MG TAB",3.0,36.41,"Medicamento"],
+["NAPROXENO 550MG TABS",3.05,16.57,"Medicamento"],
+["NARIZ FILTRO HUMIDI AZUL HUD REF19402",74.75,337.0,"Material"],
+["NATURALAG LUB 15ML GTS",220.0,1164.38,"Medicamento"],
+["NATURALAG UNG OFT",263.0,1164.38,"Medicamento"],
+["NAVITRACKER KT A KNEE & SPINE",2006.0,4971.0,"Medicamento"],
+["NEBAPOL UNG 30G",350.0,1620.81,"Medicamento"],
+["NEBIVOLOL 5MG -LOBIVON-",9.92,53.9,"Medicamento"],
+["NEBULIZADOR DE ALTO FLUJO PURITAN",82.8,425.0,"Medicamento"],
+["NELATON ROJA 22FR",19.61,89.0,"Medicamento"],
+["NEOMICINA GOTAS",55.0,298.86,"Medicamento"],
+["NEOMICINA/CAOLIN/ PECTINA 129/280/30 MG",60.0,376.67,"Medicamento"],
+["NEOSPORIN DERMO",350.0,1630.12,"Medicamento"],
+["NEOSTIGMINA .5MG/ML",30.0,163.01,"Medicamento"],
+["NEPRO HP VAINILLA 38GR LAT 237ML",85.0,461.87,"Medicamento"],
+["NEPRO-HP 286ML",71.0,385.8,"Medicamento"],
+["NIFEDIPINO 10MG CAPS",1.5,5.76,"Medicamento"],
+["NIFEDIPINO 30MG TABS",2.82,9.4,"Medicamento"],
+["NIFUROXAZIDA 400MG",131.75,613.63,"Medicamento"],
+["NIMODIPINO SOLUCION INYECTABLE",300.0,1124.79,"Insumo"],
+["NISTATINA SUP 1000000 UI/ML 24ML",580.0,1667.8,"Medicamento"],
+["NITROFURANTOINA 100 MG ORAL",3.0,16.3,"Medicamento"],
+["NITROPUSIATO DE SODIO (NUCATREX)",6500.0,15136.87,"Medicamento"],
+["NO CARGAR---",770.9,1311.6,"Medicamento"],
+["NO UTILIZAR",2.8,96.45,"Medicamento"],
+["NOREPINEFRINA 4MG/4ML",26.28,216.32,"Medicamento"],
+["NORFLEX PLUS 450/35 CAJA C/ 50 TABS",589.0,2062.0,"Medicamento"],
+["NORMOGOTERO",14.8,48.0,"Material"],
+["NOVAMIL AC 1 400G",220.0,1024.65,"Medicamento"],
+["NOVOSEVEN RT",25000.0,58218.75,"Medicamento"],
+["NOVOVARTALON 1500/150MG SOBRES",1550.5,4657.5,"Medicamento"],
+["NUCLEO CMP FORTE 5MG/3MG TAB",18.35,99.71,"Medicamento"],
+["NULYTELY ORAL",177.96,828.85,"Medicamento"],
+["NYLON 2-0 CE2442-75N/24MM CORT ATRAMAT",119.2,298.0,"Medicamento"],
+["NYLON 2-0 P2642-75N/26MM CORT ATRAMAT",63.33,198.0,"Medicamento"],
+["NYLON 2-0 PE1942-N/19MM CORT ATRAMAT",41.56,169.0,"Medicamento"],
+["NYLON 2-0 SC-20/19MM 14504T CORT ETHICON",41.56,208.0,"Medicamento"],
+["NYLON 2-0 SC-26/26MM 164T CORT ETHICON",39.02,176.0,"Medicamento"],
+["NYLON 2-0 SC24 24ML ETHICON",48.71,220.0,"Medicamento"],
+["NYLON 3-0 CE1943-75N/19MM CORT ATRAMAT",49.79,172.0,"Medicamento"],
+["NYLON 3-0 PE2443-N/24MM CORT ATRAMAT",50.18,202.0,"Medicamento"],
+["NYLON 3-0 SC-20/19MM 14503T CORT ETHICON",39.03,176.0,"Medicamento"],
+["NYLON 3-0 SC-24/24MM 163T CORT ETHICON",50.21,226.0,"Medicamento"],
+["NYLON 4-0 (SC-24) 24MM PE2444-N",44.7,202.0,"Medicamento"],
+["NYLON 4-0 12MM ATRAMAT",39.02,176.0,"Medicamento"],
+["NYLON 4-0 G-CE1944-N/19MM CORT ATRAMAT",51.27,198.0,"Medicamento"],
+["NYLON 4-0 PE2444-N/24MM CORT ATRAMAT",42.86,174.0,"Medicamento"],
+["NYLON 4-0 PS-2/12MM P1667T CORT ETHICON",63.33,285.0,"Medicamento"],
+["NYLON 4-0 SC-20/19MM 14502T CORT ETHICON",104.86,233.0,"Medicamento"],
+["NYLON 5-0 P-3/13MM P698T CORT ETHICON",63.15,285.0,"Medicamento"],
+["NYLON 5-0 P-PE1345-N/13MM CORT ATRAMAT",60.72,273.0,"Medicamento"],
+["NYLON 5-0 PE1945-N/19MM CORT ATRAMAT",52.99,190.0,"Medicamento"],
+["NYLON 5-0 SC-20/19MM 14501T CORT ETHICON",104.85,419.4,"Medicamento"],
+["NYLON 6-0 19MM  CE 1946",49.25,222.0,"Medicamento"],
+["NYLON 6-0 P-1/11MM P697T CORT ETHICON",79.0,356.0,"Medicamento"],
+["NYLON 6-0 P-PE1146-N/11MM CORT ATRAMAT",61.65,278.0,"Medicamento"],
+["NYLON 6-0 PE1646-N/16MM CORT ATRAMAT",42.0,198.0,"Medicamento"],
+["NYLON 6-0 PE1946-N/19MM CORT ATRAMAT",65.82,198.0,"Medicamento"],
+["NYLON 6-0 SC-16/16MM 160T CORT",52.66,237.0,"Medicamento"],
+["NYLON 8/0 E-SE6.5480-13N 13 CM 3/8",780.0,2730.0,"Medicamento"],
+["OCTAPRO SOL INY 500 UI COMPLEJO PROTOMBI",8500.0,21250.0,"Medicamento"],
+["OCTREOTIDA 0.5MG/ML INY -SANDOSTATINA-",5507.2,12824.89,"Medicamento"],
+["OCTROTIDA 1MG/5ML AMP",2452.98,7616.5,"Medicamento"],
+["OLANZAPINA 10MG IM",490.0,2002.73,"Medicamento"],
+["OLANZAPINA 5MG TAB",3.42,18.58,"Medicamento"],
+["OLANZAPINA TAB 10 MG",3.21,17.44,"Medicamento"],
+["OLIGOMENTALES ENDOVENOSOS 10ML",115.0,535.61,"Medicamento"],
+["OMEPRAZOL 20MG TAB",1.78,5.16,"Medicamento"],
+["OMEPRAZOL 40MG INYECTABLE",32.0,179.31,"Medicamento"],
+["OMEPRAZOL 40MG TABS",5.71,170.73,"Medicamento"],
+["ONDANSETRON 2 MG INY",26.66,112.8,"Medicamento"],
+["ONDANSETRON 4MG2ML AMPULA",250.0,1164.38,"Medicamento"],
+["ONDANSETRON 8 MG  TABS",19.0,86.0,"Medicamento"],
+["ONDANSETRON 8MG/4ML",23.84,142.2,"Medicamento"],
+["ONICIT 0.25 AMPULA 5ML",5640.0,13134.15,"Medicamento"],
+["OPERATIVAN 0.5 MG/ 10 ML AMP INY",200.0,800.0,"Medicamento"],
+["ORINAL DESECHABLE",23.0,101.0,"Medicamento"],
+["ORTHOZIME SOL. 4L",3506.26,10519.0,"Medicamento"],
+["OSELTAMIVIR 75MG",34.1,94.11,"Medicamento"],
+["OSELTAMIVIR SUSPENSION 6MG",415.0,1932.86,"Medicamento"],
+["OVEROL COMPLETO",250.0,1000.0,"Medicamento"],
+["OXIDO DE ETILENO BL20 PLUS",379.53,1593.0,"Medicamento"],
+["OXIDO DE ZINC CREMA 60GR",110.0,512.33,"Medicamento"],
+["OXIMETAZOLINA 0.025% -AFRIN INFANTIL-",40.0,198.66,"Medicamento"],
+["OXIMETAZOLINA SPRAY -AFRIN-",40.0,244.52,"Medicamento"],
+["OXIMETRO DE PULSO P/DEDO",736.0,2576.0,"Medicamento"],
+["OXITOCINA 5UI/1ML INY",6.79,32.6,"Medicamento"],
+["OXOLAMINA JARABE 100MG",75.0,407.53,"Medicamento"],
+["PALONOSETRON 0.25MG/5ML INY",2200.0,6831.0,"Medicamento"],
+["PANTOPRAZOL 40 MG TABLETA",100.0,543.38,"Medicamento"],
+["PANTOPRAZOL 40MG/10ML INYECTABLE",178.85,2184.37,"Medicamento"],
+["PANTOZOL 20 MG TABLETA",32.0,173.88,"Medicamento"],
+["PANTUFLA CON LOGO",38.5,174.0,"Medicamento"],
+["PAPEL 152MMX90MM TOCOCARD",40.0,1800.0,"Medicamento"],
+["PAPEL P/ARCO EN C SONY-UPP210HD",1604.82,4815.0,"Medicamento"],
+["PAPEL P/EKG MINDRAY 210MMX 295MM",580.0,2030.0,"Medicamento"],
+["PAPEL TÉRMICO EN Z PARA ELECTROCARDIÓGRA",1091.55,3275.0,"Medicamento"],
+["PAR DE GUANTE DE NITRILO ESTERIL",1.8,9.0,"Material"],
+["PARACETAMOL 1G INYECTABLE",60.4,516.21,"Medicamento"],
+["PARACETAMOL 325 /IBUPROFENO 200MG TABS",15.34,83.35,"Medicamento"],
+["PARACETAMOL 500MG INYECTABLE",10.8,58.68,"Medicamento"],
+["PARACETAMOL 500MG TABS",1.5,5.87,"Medicamento"],
+["PARACETAMOL 750 TAB C/10",2.0,14.94,"Medicamento"],
+["PARACETAMOL SOLUCION 100MG RECIEN NACIDO",170.0,791.77,"Insumo"],
+["PARACETAMOL SOLUCION 3.2G INFANTIL 2-11A",35.0,838.35,"Insumo"],
+["PARACETAMOL/NAPROXENO 100/125MG",155.0,721.91,"Medicamento"],
+["PARACETAMOL/NAPROXENO 200MG SUPOSI INF",32.88,178.66,"Medicamento"],
+["PARACETAMOL/NAPROXENO 300/275MG TAB",2.5,10.32,"Medicamento"],
+["PARACETAMOL/NAPROXENO 300MG SUPOSI ADUL",5.0,27.17,"Medicamento"],
+["PARACETAMOL/NAPROXENO300/250 TAB",5.75,31.24,"Medicamento"],
+["PARCHE APOSITO PARA SACRO",630.58,2208.0,"Material"],
+["PARCHE COLOIDE 10X10 RESTORE 9955",133.33,534.0,"Material"],
+["PARCHE COLOIDE 15X20 RESTORE 9954",598.14,2094.0,"Material"],
+["PARCHE COLOIDE 20X20 RESTORE 9953",489.85,1960.0,"Material"],
+["PARCHE DE NICOTINA ETAPA 1 21MG",231.0,1075.88,"Material"],
+["PAROXETINA 20 MG C/10 TAB",81.0,365.0,"Medicamento"],
+["PAÑAL ADULTO C/RESORTE",7.35,40.0,"Material"],
+["PAÑAL ADULTO S/RESORTE",7.5,40.0,"Material"],
+["PAÑAL ADULTO TENA PANTS MUJER GRANDE",118.8,297.0,"Material"],
+["PAÑAL DE RN",2.75,18.0,"Material"],
+["PDS 0 CT1/ 36MM Z340H REDON",247.0,988.0,"Medicamento"],
+["PDS 1 CT1/ 36MM Z341H REDON",115.6,463.0,"Medicamento"],
+["PDS 2-0 CT1/ 36MM Z3390H REDON",293.85,1108.0,"Medicamento"],
+["PDS 2-0 SH /26MM Z317H REDON",321.64,670.0,"Medicamento"],
+["PDS 3-0 SH /26MM Z316H REDON",351.29,1055.0,"Medicamento"],
+["PDS 5-0 PS-3/13MM Z493G CORT",300.0,1200.0,"Medicamento"],
+["PDS II 5-0 RB-1 17MM 1/2 70 CM Z303",318.33,1274.0,"Medicamento"],
+["PDX 0 SG3671/36MM REDONDA",191.6,479.0,"Medicamento"],
+["PDX 1-0 SG3678/36MM REDONDA",185.2,463.0,"Medicamento"],
+["PDX 2-0 SG3672/36MM REDONDA",185.2,463.0,"Medicamento"],
+["PDX 2-0 SR2672/26MM REDONDA",185.2,463.0,"Medicamento"],
+["PDX 3-0 SR2673/26MM REDONDA",185.2,463.0,"Medicamento"],
+["PDX 5-0 SR1775/17MM REDONDA",185.2,463.0,"Medicamento"],
+["PEDYALITE SR 60 500ML",30.0,130.41,"Medicamento"],
+["PEGFILGRASTIM 6MG0.60ML AMPOLLETA",35000.0,81506.25,"Medicamento"],
+["PENTOXIFILINA TAB",2.5,63.03,"Medicamento"],
+["PERA HULE #4",25.01,140.0,"Medicamento"],
+["PERFULINE 150CM LIBRE DE PVC P/PERFUSOR",179.78,528.0,"Medicamento"],
+["PERFULINE 150CM OPACA P/PERFUSOR",111.75,447.0,"Medicamento"],
+["PERIFIX #18 401",226.48,1080.0,"Medicamento"],
+["PERINDOPRIL/AMLODIPINO -VIALIBRAM- 7/5MG",698.5,2711.05,"Medicamento"],
+["PERINDOPRIL/AMLODIPINO 3.5MG/2.5",18.61,101.12,"Medicamento"],
+["PERISAFE IV AG TOUHY 18X31/2",395.93,1584.0,"Medicamento"],
+["PERNO DE BLOQUEO DE CLAVO CENTROMEDULAR",2500.0,7500.0,"Implante"],
+["PGA 0 SG36301/36MM REDONDA",63.58,287.0,"Medicamento"],
+["PGA 0 SR26301/26MM REDONDA",55.32,249.0,"Medicamento"],
+["PGA 0 UR-6/26MM REDONDA",55.32,249.0,"Medicamento"],
+["PGA 1-0 P36308/36MM CORT",157.44,630.0,"Medicamento"],
+["PGA 1-0 SG26308/26MM REDONDA",72.77,348.0,"Medicamento"],
+["PGA 1-0 SG36308/36MM REDONDA",79.86,360.0,"Medicamento"],
+["PGA 2-0 P22302/22MM CORTANTE",71.68,323.0,"Medicamento"],
+["PGA 2-0 P26302/26MM CORTANTE",77.0,323.0,"Medicamento"],
+["PGA 2-0 PE24302/24MM CORT",72.61,323.0,"Medicamento"],
+["PGA 2-0 SG36302/36MM REDONDA",72.02,348.0,"Medicamento"],
+["PGA 2-0 SR26302/26MM REDONDA",83.21,312.0,"Medicamento"],
+["PGA 3-0 P-PE24303-45B/24MM INCOLORA CORT",97.07,437.0,"Medicamento"],
+["PGA 3-0 P22303/22MM CORT",63.58,287.0,"Medicamento"],
+["PGA 3-0 PE-24303-90/24MM VIOLETA CORT",71.58,323.0,"Medicamento"],
+["PGA 3-0 SG36303/36MM REDONDA",70.08,277.0,"Medicamento"],
+["PGA 3-0 SR26303/26MM REDONDA",70.08,257.0,"Medicamento"],
+["PGA 4-0 P-PE19304-45B/19MM CORT",97.07,261.0,"Medicamento"],
+["PGA 4-0 R2694/26MM REDONDA",66.37,314.0,"Medicamento"],
+["PGA 5-0 CE1695-45B/16MM CORT",63.58,287.0,"Medicamento"],
+["PGA 5-0 P-PE13305-45B/13MM CORT",101.29,406.0,"Medicamento"],
+["PGA 5-0 SR17305/17MM REDONDA",73.96,314.0,"Medicamento"],
+["PGA 7-0 EE697/6MM DA",34.25,155.0,"Medicamento"],
+["PGC25 0 SG3601/36MM REDONDA",82.23,371.0,"Medicamento"],
+["PGC25 1-0 SG3608/36MM REDONDA",65.83,449.0,"Medicamento"],
+["PGC25 2-0 SG3602/36MM REDONDA",77.66,402.0,"Medicamento"],
+["PGC25 2-0 SR2602/26MM REDONDA",95.72,426.0,"Medicamento"],
+["PGC25 3-0 P-PE2403-B/24MM CORT",124.33,934.0,"Medicamento"],
+["PGC25 3-0 SG3603/36MM REDONDA",77.4,343.0,"Medicamento"],
+["PGC25 3-0 SR2603/26MM REDONDA",99.06,446.0,"Medicamento"],
+["PGC25 4-0 P-PE1904-B/19MM CORT",173.46,725.0,"Medicamento"],
+["PGC25 4-0 SR2604/26MM REDONDA",95.72,391.0,"Medicamento"],
+["PGC25 5-0 P-PE1105-45B/11MM CORT",86.7,391.0,"Medicamento"],
+["PGC25 5-0 P-PE1305-45B/13MM CORT",86.7,391.0,"Medicamento"],
+["PGLA90 2-0 22MM P22302 CORT",111.38,446.0,"Medicamento"],
+["PGLA90 2-0 26MM P26302 CORT",125.61,503.0,"Medicamento"],
+["PICOPREP POLVO",807.0,2334.57,"Medicamento"],
+["PICOSULFATO SODICO 5MG -ANARA-",11.3,28.26,"Medicamento"],
+["PIDOTIMOD 800MG TABS",1309.0,4064.44,"Medicamento"],
+["PIN CAS FIX 3.20X 80MM ROSA",374.0,1236.0,"Medicamento"],
+["PIN CAS FIX 3.2X 150 MM ROSA",401.0,1324.0,"Medicamento"],
+["PINAVERIO DIMETICONA 100/300 MG CAPS",14.8,80.42,"Medicamento"],
+["PINZA BIPOLAR DE IRRIGACION",7000.0,17500.0,"Material"],
+["PINZA LIGASURE IMPACT 36MM-18CM",16366.0,24549.0,"Material"],
+["PINZA UMBILICAL",8.98,47.0,"Material"],
+["PIPERACILINA,TAZOBACTAM 4G/0.5G",130.0,1630.12,"Medicamento"],
+["PIPERIDOLATO 100MG -DACTIL OB-",18.4,99.98,"Medicamento"],
+["PIRFENIDONA 600MG",124.8,581.26,"Medicamento"],
+["PISACAINA  10G/100ML SPRAY",160.0,745.2,"Medicamento"],
+["PISACAINA 1% .50 ML",75.0,365.69,"Medicamento"],
+["PISACAINA 2% 10ML",12.0,54.34,"Medicamento"],
+["PISACAINA 2% 50 ML",75.0,412.2,"Medicamento"],
+["PISACAINA 2% C/EPINEFRINA 50ML",85.0,321.9,"Medicamento"],
+["PLACA DESECHABLE PARA ELECTROCAUTERIO",52.35,275.0,"Implante"],
+["PLANTAGO PSYLLUIM 49.7 G  400GR",178.0,712.0,"Medicamento"],
+["PLUMEPEM ULTRA QUIRURGICO LAPIZ",1890.0,2362.5,"Medicamento"],
+["POLIPROPILENO 0 SG3661-75/36MM REDONDA",147.2,368.0,"Medicamento"],
+["POLIPROPILENO 0 SR2661-75/26MM REDONDA",151.2,378.0,"Medicamento"],
+["POLIPROPILENO 1-0 C3768/37MM CORT",171.6,429.0,"Medicamento"],
+["POLIPROPILENO 1-0 SG3668-75/36MM REDONDA",123.6,309.0,"Medicamento"],
+["POLIPROPILENO 2-0 PE2662/26MM CORT",123.6,309.0,"Medicamento"],
+["POLIPROPILENO 2-0 SG3662-75/36MM REDONDA",178.8,447.0,"Medicamento"],
+["POLIPROPILENO 2-0 SR2662-75/26MM REDONDA",123.6,309.0,"Medicamento"],
+["POLIPROPILENO 3-0 CVS2663/2 26MM DA",123.6,309.0,"Medicamento"],
+["POLIPROPILENO 3-0 P-PE2463/24MM PLASTICA",96.8,242.0,"Medicamento"],
+["POLIPROPILENO 3-0 PE2463/24MM CUTICULAR",96.8,242.0,"Medicamento"],
+["POLIPROPILENO 3-0 SG3663 ATRAMAT",94.11,250.0,"Medicamento"],
+["POLIPROPILENO 3-0 SR2663-75/26MM REDONDA",123.6,309.0,"Medicamento"],
+["POLIPROPILENO 4-0 CVS1764/2-75/17MM DA",96.8,242.0,"Medicamento"],
+["POLIPROPILENO 4-0 PE1964/19MM CORT",145.2,363.0,"Medicamento"],
+["POLIPROPILENO 5-0 CVS1765/2-75/17MM DA",96.4,241.0,"Medicamento"],
+["POLIPROPILENO 5-0 P-PE1365/13MM CORT",96.4,241.0,"Medicamento"],
+["POLIPROPILENO 5-0 PE1665/16MM CORT",193.6,484.0,"Medicamento"],
+["POLIPROPILENO 6-0 CVSE1366/2-75/13MM DA",774.96,1909.0,"Medicamento"],
+["POLIPROPILENO 6-0 P-PE1166/11MM CORT",173.6,434.0,"Medicamento"],
+["POLIPROPILENO 6-0 PE1666/16MM CORT",166.4,416.0,"Medicamento"],
+["POLIPROPILENO 7-0 CVSE9.367/2-60/9.3MM D",123.6,309.0,"Medicamento"],
+["POLYESTER 2-0 SG2652/26MM REDONDA",185.2,463.0,"Medicamento"],
+["PORTA OBJETOS 25X75 MM C/50 PZ",60.83,274.0,"Medicamento"],
+["PRAMIGEL 170ML SUSP",228.0,1061.91,"Medicamento"],
+["PRAMIGEL SUSP 180 ML",237.0,1103.83,"Medicamento"],
+["PRAMIPEXOL 1MG",378.75,1764.03,"Medicamento"],
+["PRAVASTATINA 10MG TABS",3.0,16.3,"Medicamento"],
+["PRAZOSINA 1MG",7.7,41.84,"Medicamento"],
+["PREDNISONA 20MG TAB (METICORTEN)",689.0,2674.18,"Medicamento"],
+["PREDNISONA 50MG TABS",1.39,3.48,"Medicamento"],
+["PREDNISONA 5MG TABS",1.9,16.3,"Medicamento"],
+["PREGABALINA 75",3.21,19.83,"Medicamento"],
+["PREMIXSLIP GALON",1703.37,3740.0,"Medicamento"],
+["PREPZYME XF, ESPUMA ENV 14 OZ",605.71,2120.0,"Medicamento"],
+["PROBIOLOG GG SBS 1 X 10 9UFC CAJ C/10",386.21,1120.0,"Medicamento"],
+["PROLENE 0 CT1/ 36.4MM 8424T REDON",139.0,556.0,"Medicamento"],
+["PROLENE 0 SH /26MM 8834T REDON",148.06,593.0,"Medicamento"],
+["PROLENE 1 CT1/ 36.4MM 8425T REDON",64.58,291.0,"Medicamento"],
+["PROLENE 2-0 CT1/ 36.4MM 8423T REDON",148.65,595.0,"Medicamento"],
+["PROLENE 2-0 SC-26/26MM 8185T CORT",115.63,463.0,"Medicamento"],
+["PROLENE 2-0 SH /26MM 8833T REDON",149.15,597.0,"Medicamento"],
+["PROLENE 3-0 DOBLE  ARMADA 2SH/26MM 85",215.08,861.0,"Medicamento"],
+["PROLENE 3-0 PS-1 /24MM  P8663T CORT",68.75,310.0,"Medicamento"],
+["PROLENE 3-0 SC-24/24MM 8184T CORT",115.63,463.0,"Medicamento"],
+["PROLENE 3-0 SH /26MM 8832T REDON",139.0,556.0,"Medicamento"],
+["PROLENE 4-0 DOBLE  ARMADA 2RB-1/17MM",217.3,870.0,"Medicamento"],
+["PROLENE 4-0 SC-20/19MM 8183T CORT",177.2,443.0,"Medicamento"],
+["PROLENE 5-0 13MM P8698T CORT",109.7,439.0,"Medicamento"],
+["PROLENE 5-0 DOBLE  ARMADA 2RB-1/17MM",205.42,822.0,"Medicamento"],
+["PROLENE 5-0 PS-3/16MM P8681 CORT",193.41,774.0,"Medicamento"],
+["PROLENE 5/0 P-3 13MM PLASTICA P8698T",199.11,797.0,"Medicamento"],
+["PROLENE 6-0 DOBLE  ARMADA 2C-1/13MM M",636.28,2227.0,"Medicamento"],
+["PROLENE 6-0 P-1/11MM P8697T CORT",179.0,716.0,"Medicamento"],
+["PROLENE 6-0 SC-16/16MM 8160 CORT",188.15,709.0,"Medicamento"],
+["PROLENE 7/0 BV-1 D/A C/12 M8702T",583.93,2044.0,"Medicamento"],
+["PROLIA DENOSUMAB 60MG/ML INY",9200.0,21250.0,"Medicamento"],
+["PROPAFENONA TAB 150MG",15.4,83.68,"Medicamento"],
+["PROPOFOL 1G/100ML",204.93,512.33,"Medicamento"],
+["PROPOFOL 20 ML",48.35,672.73,"Medicamento"],
+["PROPRANOLOL 10MG TABS",3.42,17.82,"Medicamento"],
+["PROPRANOLOL 40MG TABS",1.83,5.43,"Medicamento"],
+["PROTECTOR DE PUERTO CUROS ESTERIL",10.5,48.0,"Medicamento"],
+["PROTEINEX LATA",458.0,2133.13,"Medicamento"],
+["PRUCALOPRIDA 1MG C/14 COMPRIMIDOS",772.0,2126.93,"Medicamento"],
+["PRUCALOPRIDA 2MG TABS RESOTRANS",58.35,229.03,"Medicamento"],
+["PUNTA COLORADO MOD E1033 1CM",2237.4,6713.0,"Medicamento"],
+["PUNTA COLORADO MOD N103A",1274.65,3824.0,"Medicamento"],
+["PUNTA COLORADO MOD N104A",1556.06,4669.0,"Medicamento"],
+["PUNTA NASAL P/02 DE ALTO FLUJO CHICA",930.0,2573.0,"Medicamento"],
+["PUNTA NASAL P/02 DE ALTO FLUJO GRANDE",698.24,2625.0,"Medicamento"],
+["PUNTA NASAL P/02 DE ALTO FLUJO MEDIANA",800.0,2269.0,"Medicamento"],
+["PUNTAS NASALES ADULTO 1.8 M",10.0,50.0,"Material"],
+["PUNTAS NASALES ADULTO 7.5 M",16.42,74.0,"Material"],
+["PUNTAS NASALES NEONATALES",23.6,107.0,"Material"],
+["PUNTAS NASALES PEDIATRICAS",15.53,93.0,"Material"],
+["QUADRIDERM-NF CMA CAJA C/TBO C/40G",400.0,1863.0,"Medicamento"],
+["QUETIAPINA 100MG TABS",2.7,14.67,"Medicamento"],
+["QUETIAPINA 25MG TABS",10.63,103.3,"Medicamento"],
+["QUETIAPINA 50MG CAJA",2573.37,7990.31,"Medicamento"],
+["QUITA GRAPAS QUIRURGICO ESTERIL PARA PIE",377.12,1509.0,"Medicamento"],
+["RACECADOTRILIO 100 MG CAPS",34.44,211.26,"Medicamento"],
+["RACECADOTRILO 10MG GRANULADO",17.22,63.0,"Medicamento"],
+["RACECADOTRILO 30MG SOBRES",17.89,81.29,"Medicamento"],
+["RAQUIMIX II EQUIPO PARA BLOQUEO OBESOS",1051.7,3156.0,"Material"],
+["RAQUIMIX III EQUIPO MIXTO DE BLOQUEO",300.0,900.0,"Medicamento"],
+["RASTRILLO DESECHABLE",5.98,34.0,"Material"],
+["RECECADOTRILO 10MG GRANULADO",24.14,80.47,"Medicamento"],
+["RECIPIENTE PARA EGO",2.98,25.0,"Medicamento"],
+["RECOLECTOR DE ORINA 24 H",78.2,352.0,"Medicamento"],
+["RECOLECTOR DE PUNZOCORT 22.7 LT",246.8,988.0,"Medicamento"],
+["RECOLECTOR DE PUNZOCORTANTES 1.8 LT",52.17,207.0,"Medicamento"],
+["RECOLECTOR PUNZOCORTANTE 7.57L",79.84,528.0,"Medicamento"],
+["RED FRIA 2024",10.0,54.34,"Medicamento"],
+["RELOJ DE PRUEBA",350.0,1400.0,"Medicamento"],
+["REMDESIVIR 100MG 20ML",33254.0,77440.25,"Medicamento"],
+["REMDESIVIR 600MG -DOSIS-",199524.0,464641.52,"Medicamento"],
+["REMIFENTANILO 2MG INY",170.0,791.77,"Medicamento"],
+["REN NUT 1KG FRESA/VAINILLA",550.0,2134.69,"Medicamento"],
+["RENADYL  45MILMILLONES DE UND",38.33,208.28,"Medicamento"],
+["RENTA EQUIPO DE PODER",4500.0,5625.0,"Medicamento"],
+["RENTA INSTRUMENTAL DE APOYO RODILLA",5000.0,6250.0,"Medicamento"],
+["RENTA VICELAR EVACUADOR DE HUMO",3000.0,3750.0,"Medicamento"],
+["RESERVORIO J-VAC 100CC R-2160",282.0,3364.0,"Medicamento"],
+["RESERVORIO J-VAC 300CC R-2163",1056.79,3364.0,"Medicamento"],
+["RESPIRADOR PLEGABLE N95 3M-9010",10.25,47.0,"Medicamento"],
+["RESUCITADOR ADULTO",375.0,1494.0,"Medicamento"],
+["RESUCITADOR NEONATAL",301.0,1204.0,"Medicamento"],
+["RESUCITADOR PEDIATRICO",468.22,1873.0,"Medicamento"],
+["RETRACTOR ALEXIS CH",1300.0,2500.0,"Medicamento"],
+["RIFADIN RIFAMPICINA 300MG CAPS",870.0,2484.0,"Medicamento"],
+["RIFAXIMINA 200 MG TAB",41.43,225.12,"Medicamento"],
+["RIFAXIMINA 400 MGS TAB",48.21,213.55,"Medicamento"],
+["RIMANTADINA 100MG TABS",278.17,1295.58,"Medicamento"],
+["RIOPAN 80 MG MAGALDRATO",15.0,76.07,"Medicamento"],
+["RISPERIDONA 2MG",5.9,13.58,"Medicamento"],
+["RITUXIMAB  FCO AMP 500 MG50 ML AMPOLLETA",46000.0,107122.5,"Medicamento"],
+["RITUXIMAB FCO AMP 100 MG10 ML AMPOLLETA",19000.0,44246.25,"Medicamento"],
+["RIVAROXABAN 10MG TAB XARELTO",66.66,594.58,"Medicamento"],
+["RIVAROXABAN 20MG TAB",53.57,448.28,"Medicamento"],
+["RIÑON DESECHABLE",27.16,33.0,"Medicamento"],
+["ROACTEMRA TOCILIZUMAB 200MG 10ML",14500.0,33766.88,"Medicamento"],
+["ROCEPHIN 500 MG AMPULA",250.0,1164.38,"Medicamento"],
+["RODILLERA ELASTICA CHICA",50.0,225.0,"Medicamento"],
+["RODILLERA ELASTICA EXTRA GRANDE",50.0,225.0,"Medicamento"],
+["RODILLERA ELASTICA GRANDE",50.0,225.0,"Medicamento"],
+["RODILLERA ELASTICA MEDIANA",50.0,225.0,"Medicamento"],
+["RODILLERA POST OPERATORIA ROM CORTA",2403.39,7211.0,"Medicamento"],
+["RODILLERA POST OPERATORIA ROOM LARGA",2337.49,7013.0,"Medicamento"],
+["ROLLO DE BOLSA PARA ESTERILIZAR 10 X 200",408.38,1708.0,"Material"],
+["ROLLO DE BOLSA PARA ESTERILIZAR 15 X 200",707.39,2592.0,"Material"],
+["ROLLO DE BOLSA PARA ESTERILIZAR 20 X 200",961.4,3246.0,"Material"],
+["ROLLO DE BOLSA PARA ESTERILIZAR 25 X 200",1160.39,3482.0,"Material"],
+["ROLLO DE GASA 91 X91.44 MT 20X12",622.15,2273.0,"Material"],
+["ROLLO PELICULA DE EMPLAYE",235.0,940.0,"Medicamento"],
+["ROLLO TYVEK P/ESTERILIZAR 10CM X 70M",631.0,2209.0,"Medicamento"],
+["ROLLO TYVEK P/ESTERILIZAR 15 X 70M",880.0,3080.0,"Medicamento"],
+["ROLLO TYVEK P/ESTERILIZAR 20CM X 70M",1198.0,3594.0,"Medicamento"],
+["ROLLO TYVEK P/ESTERILIZAR 25CM X 70M",1474.0,4422.0,"Medicamento"],
+["ROPICONEST S.I. 2MG/ML 5 AMP PLAS20ML",180.0,726.57,"Medicamento"],
+["ROPICONEST S.I.7.5MG/ML 5 AMP PLAS20ML",274.0,740.54,"Medicamento"],
+["SACARATO FERRICO 100MG/5ML",350.0,1630.12,"Medicamento"],
+["SACUBITRILO, VALSARTAN",44.01,239.14,"Medicamento"],
+["SALBUTAMOL 5MG/ML P/NEBULIZAR",44.56,208.11,"Medicamento"],
+["SALBUTAMOL FSC P/INHALACION 10 ML",50.0,535.61,"Medicamento"],
+["SEDA 0 26MM K834H REDON ETHICON",44.46,201.0,"Medicamento"],
+["SEDA 0 SR2631/26MM REDONDA ATRAMAT",83.2,208.0,"Medicamento"],
+["SEDA 1 CT136.4MM REDON ETHICON",46.87,211.0,"Medicamento"],
+["SEDA 1 SH/26MM K835H REDON ETHICON",43.23,195.0,"Medicamento"],
+["SEDA 1-0 SG3638/36MM REDONDA ATRAMAT",91.6,229.0,"Medicamento"],
+["SEDA 1-0 SR2638/26MM REDONDA ATRAMAT",66.4,166.0,"Medicamento"],
+["SEDA 2-0 MH/ 36.4MM K843T REDON ETHICON",100.53,403.0,"Medicamento"],
+["SEDA 2-0 PE2632-45/26MM CORT ATRAMAT",68.0,170.0,"Medicamento"],
+["SEDA 2-0 SC-26/26MM 185T CORT ETHICON",122.54,491.0,"Medicamento"],
+["SEDA 2-0 SH /26MM K833H REDON ETHICON",104.86,420.0,"Medicamento"],
+["SEDA 2-0 SR2632/26MM REDON ATRAMAT",68.0,170.0,"Medicamento"],
+["SEDA 2-0 SR3632/36MM REDON ATRAMAT",92.0,230.0,"Medicamento"],
+["SEDA 3-0 SH /26MM K832H REDON ETHICON",47.91,216.0,"Medicamento"],
+["SEDA 3-0 SR2633/26MM REDON ATRAMAT",68.0,170.0,"Medicamento"],
+["SEDA LIBRE 0 EZ-SS1031 ATRAMAT",94.0,235.0,"Medicamento"],
+["SEDA LIBRE 0 SA86T ETHICON",139.05,557.0,"Medicamento"],
+["SEDA LIBRE 1 EZ-SS1038 ATRAMAT",136.0,340.0,"Medicamento"],
+["SEDA LIBRE 1 SA87T ETHICON",164.78,660.0,"Medicamento"],
+["SEDA LIBRE 2 EZ-SS1032 ATRAMAT",136.0,340.0,"Medicamento"],
+["SEDA LIBRE 2-0 SA85T ETHICON",54.16,244.0,"Medicamento"],
+["SEDA LIBRE 3-0 EZ-SS1033 ATRAMAT",112.0,280.0,"Medicamento"],
+["SEDA LIBRE 3-0 SA84T ETHICON",59.33,267.0,"Medicamento"],
+["SEDA LIBRE 4-0 EZ-SS1034 ATRAMAT",112.0,280.0,"Medicamento"],
+["SEDA LIBRE 4-0 SA83T ETHICON",134.76,540.0,"Medicamento"],
+["SENOSIDOS A-B 8.6MG",1.7,9.07,"Medicamento"],
+["SENSOR BIS REF: 1860106",904.19,3165.0,"Medicamento"],
+["SENSOR NEONATAL-ADULTO NELLCOR",438.93,2187.0,"Medicamento"],
+["SERONEX LP 60MG C/30 TAB DOMPERIDONA",904.0,2079.2,"Medicamento"],
+["SERRATIOPEPTIDASA 10MG TABS -DANZEN-",341.0,1588.21,"Medicamento"],
+["SERTRALINA 50 MG TAB",17.32,94.11,"Medicamento"],
+["SET ESPICAT PLUS 18G-FC",228.92,916.0,"Medicamento"],
+["SET TRAQUEOSTOMIA PERCUTANEA BLUE RINO C",9300.0,23250.0,"Medicamento"],
+["SEVOFLURANO FCO 250ML",2000.0,6210.0,"Medicamento"],
+["SHAMPOO CLORHEXIDINA 250ML",147.0,588.0,"Insumo"],
+["SHAMPOO MANZANILLA P/ BEBE 250ML",17.0,77.0,"Medicamento"],
+["SILDENAFIL 50MG",12.5,67.92,"Medicamento"],
+["SILIMARINA TABS 70 MG -LEGALON-",18.65,101.34,"Medicamento"],
+["SIMETICONA (ESPAVEN) PEDIATRICO",366.08,1220.27,"Medicamento"],
+["SIMETICONA 30ML SUSP PED -ESPAVEN-",295.0,1180.0,"Medicamento"],
+["SIMILAC TOTAL CONFORT",260.0,1210.95,"Medicamento"],
+["SISTEMA ANACONDA",3313.0,9939.0,"Medicamento"],
+["SMOFKABIVEN CENTRAL 1600KCAL 1477ML",1975.2,6133.0,"Medicamento"],
+["SOL P/DIALISIS 1.5% DOBLE PISA",90.3,490.67,"Medicamento"],
+["SOL PLASMA-LYTE A (ELECTROLITOS) 500ML",550.0,2134.69,"Laboratorio"],
+["SOLUCION MIXTA 250 ML",23.49,127.64,"Insumo"],
+["SOLUPREP SWABS 1.6ML SIN COLOR",15.9,72.0,"Medicamento"],
+["SOLUPREP SWABS CLEAR 5.2ML",27.25,123.0,"Medicamento"],
+["SONDA BILIAR EN T 12 FR",150.0,600.0,"Material"],
+["SONDA DE GASTROSTOMIA 18FR",2500.0,7500.0,"Material"],
+["SONDA DE GASTROSTOMIA 24FR",1698.76,4554.0,"Material"],
+["SONDA ENDO-BRONQUIAL 35FR DER",1973.96,5922.0,"Material"],
+["SONDA ENDO-BRONQUIAL 35FR IZQ",1955.0,5865.0,"Material"],
+["SONDA ENDO-BRONQUIAL 37FR DER",2550.0,7650.0,"Material"],
+["SONDA ENDO-BRONQUIAL 37FR IZQ",1955.0,5865.0,"Material"],
+["SONDA ENDO-BRONQUIAL 39FR DER",1955.0,5865.0,"Material"],
+["SONDA ENDO-BRONQUIAL 39FR IZQ",1381.74,4146.0,"Material"],
+["SONDA ENDOTRAQ C/ALMA  ACERO 6",142.18,460.0,"Material"],
+["SONDA ENDOTRAQ C/ALMA DE ACERO 6.5",142.18,480.0,"Material"],
+["SONDA ENDOTRAQ C/ALMA DE ACERO 7",142.18,480.0,"Material"],
+["SONDA ENDOTRAQ C/ALMA DE ACERO 7.5",142.18,882.0,"Material"],
+["SONDA ENDOTRAQ C/ALMA DE ACERO 8",142.18,461.0,"Material"],
+["SONDA ENDOTRAQ C/ALMA DE ACERO 8.5",142.18,480.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 3",34.16,157.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 3.5",34.16,126.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 4",25.41,154.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 4.5",34.16,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 5",34.16,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 5.5",25.41,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 6",27.0,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 6.5",32.8,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 7",25.37,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 7.5",25.37,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 8",27.0,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 8.5",25.37,111.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 9",33.25,150.0,"Material"],
+["SONDA ENDOTRAQ C/GLOBO 9.5",33.25,150.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 2.0",25.63,116.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 2.5",25.55,116.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 3",64.69,118.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 3.5",25.55,116.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 4",15.57,71.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 4.5",22.75,103.0,"Material"],
+["SONDA ENDOTRAQ S/GLOBO 5",25.5,123.0,"Material"],
+["SONDA ENDOTRAQUEAL S/ GLOBO 5.5",26.16,118.0,"Material"],
+["SONDA LEVIN 10FR",5.67,29.0,"Material"],
+["SONDA LEVIN 12FR",8.0,31.0,"Material"],
+["SONDA LEVIN 14FR",9.26,42.0,"Material"],
+["SONDA LEVIN 16FR",9.79,42.0,"Material"],
+["SONDA LEVIN 18FR",10.45,57.0,"Material"],
+["SONDA LEVIN 20FR",9.15,46.0,"Material"],
+["SONDA LEVIN 8FR",7.87,40.0,"Material"],
+["SONDA NASOYEYUNAL 14FR",1992.95,5979.0,"Material"],
+["SONDA NASOYEYUNAL 16FR",2466.2,7399.0,"Material"],
+["SONDA NASOYEYUNAL 18FR",2545.0,7635.0,"Material"],
+["SONDA NELATON 10 FR ROJA",17.65,80.0,"Material"],
+["SONDA NELATON 12 FR ROJA",16.75,76.0,"Material"],
+["SONDA NELATON 14 FR ROJA",17.58,69.0,"Material"],
+["SONDA NELATON 16 FR ROJA",17.58,69.0,"Material"],
+["SONDA NELATON 18 FR ROJA",19.62,72.0,"Material"],
+["SONDA NELATON 20 FR ROJA",14.34,65.0,"Material"],
+["SONDA NELATON 8FR ROJA",16.75,76.0,"Material"],
+["SONDA NELATON TRANSPARENTE 12FR",5.0,25.0,"Material"],
+["SONDA NELATON TRANSPARENTE 14FR",5.35,27.0,"Material"],
+["SONDA NELATON TRANSPARENTE 16FR",5.45,28.0,"Material"],
+["SONDA NELATON TRANSPARENTE 18FR",5.0,25.0,"Material"],
+["SONDA NELATON TRANSPARENTE 20FR",9.06,46.0,"Material"],
+["SONDA NELATON TRANSPARENTE 30FR",5.0,25.0,"Material"],
+["SONDA NELATON TRANSPARENTE 8FR",5.0,25.0,"Material"],
+["SONDA P/ALIMENTACION PEDIATRICA K31",6.75,34.0,"Material"],
+["SONDA P/ALIMENTACION PEDIATRICA K32",6.47,34.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 10FR",7.68,39.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 12FR",9.13,45.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 14FR",8.35,42.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 16FR",8.14,44.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 18FR",10.45,47.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 20FR",5.0,25.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 30FR",5.0,25.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 5FR",5.0,25.0,"Material"],
+["SONDA P/ASPIRACION DE SECRECIONES 8FR",7.21,37.0,"Material"],
+["SOPORTE CLAVICULAR GDE",270.4,1082.0,"Medicamento"],
+["SOPORTE CLAVICULAR MED",270.4,1082.0,"Medicamento"],
+["SPIRIVA SOL .0226 MG C/30 DOSIS",1508.0,4524.0,"Medicamento"],
+["SPONGOSTAN ANAL",1140.0,3420.0,"Medicamento"],
+["STERI STRIP AZUL R1547 1.2 X 10.0 CM",25.53,311.0,"Medicamento"],
+["STERI STRIP NARANJA R1546 0.6 X 10.0CM",37.5,169.0,"Medicamento"],
+["STERI STRIP ROJO",36.5,165.0,"Medicamento"],
+["STERIMAR AGUA/MAR NASAL 50ML",101.24,471.53,"Medicamento"],
+["STERIMAR NASAL SOL  FRA C /100ML",218.0,872.0,"Medicamento"],
+["STOCKINET 2 (5CM) 10CM",1.4,7.0,"Medicamento"],
+["STOCKINET 3 (7.5CM) 10CM",1.09,6.0,"Medicamento"],
+["STOCKINET 4 (10CM) 10CM",2.33,12.0,"Medicamento"],
+["STRESSTABS CON HIERRO 30 TABS",194.0,903.55,"Medicamento"],
+["SUBSALICILATO DE BISMUTO SUSP PEPTO-BISM",109.99,800.0,"Medicamento"],
+["SUBSALICILATO DE BISMUTO TAB (PEPTOBIS)",40.0,217.35,"Medicamento"],
+["SUCRALFATO 1G/5ML SUSP",428.0,1699.99,"Medicamento"],
+["SUCRALFATO 1GR TABS",4.3,23.37,"Medicamento"],
+["SUFENTANILO(ZUFTIL) 0.25MG / 5ML",282.94,1317.79,"Medicamento"],
+["SUFREXAL CONBI OVULOS VAG",928.0,3248.0,"Medicamento"],
+["SUGAMMADEX 100MG/ML 2ML -BRIDION-",1000.0,6520.5,"Medicamento"],
+["SUJETADOR P/TRAQUEOSTOMIA",114.84,460.0,"Medicamento"],
+["SULFADIAZINA DE PLATA 1G CREMA",40.0,369.5,"Medicamento"],
+["SULFATO DE BARIO 340 ORAL",330.0,1320.0,"Medicamento"],
+["SULODEXINA CAPS",18.0,97.81,"Medicamento"],
+["SULPIRIDA 50MG -PONTIRIDE-",223.0,1038.62,"Medicamento"],
+["SUPPORTAN DKN 200ML",87.52,535.22,"Medicamento"],
+["SURGICEL 5.1CMX35.6CM",982.6,3440.0,"Medicamento"],
+["SURGICEL FIBRILAR 10.2X10.2 CM",5920.0,14800.0,"Medicamento"],
+["SURGICEL FIBRILAR 2.5X5.1CM",3587.3,10762.0,"Medicamento"],
+["SURGICEL FIBRILAR 5.1X10.2 CM REF 411962",3482.0,10446.0,"Medicamento"],
+["SURGICEL HEMOSTATICO 10.2X20.3CM REF1952",856.52,3077.0,"Medicamento"],
+["SURGISTAIN GALON",1739.5,5219.0,"Medicamento"],
+["SUSPENSORIO TESTICULAR GRANDE",325.87,1304.0,"Medicamento"],
+["SUSPENSORIO TESTICULAR MEDIANO",325.87,1304.0,"Medicamento"],
+["SUTURA V-LOC 90 2-0 6 15CM GS-22",484.9,1940.0,"Material"],
+["SUTURA V-LOC 90 3-0 23 58CM P-12",1150.0,3450.0,"Material"],
+["TAMSULOSINA 0.4MG",7.73,19.02,"Medicamento"],
+["TAPETE BIOSANITARIO DEGASA CAJA C/5",988.98,3299.0,"Material"],
+["TAPON NASAL 8CM TIPO MEROCEL",360.18,1441.0,"Medicamento"],
+["TAPON NASAL DOYLE",1046.15,3492.0,"Medicamento"],
+["TAPON PARA SONDA FOLEY",6.95,59.0,"Material"],
+["TAPONES PARA OIDOS",26.48,120.0,"Medicamento"],
+["TEGADERM + PAD 3582     5 CM X 7 CM",26.6,140.0,"Material"],
+["TEGADERM + PAD 3589     9 CM X 15 CM",63.85,312.0,"Material"],
+["TEGADERM + PAD 3591     9 CM X 25 CM",91.45,412.0,"Material"],
+["TEGADERM CHG 1659R     10X15.5 CM",321.06,1285.0,"Material"],
+["TEGADERM FILM 1624W 6 X  7 CM",3.7,18.0,"Material"],
+["TEGADERM FILM 1626W 10 X 12 CM",10.5,31.0,"Material"],
+["TEGADERM FILM 1627 10 X 25 CM",49.8,225.0,"Material"],
+["TEGADERM I.V 1610 PEDIÁTRICO 5X5.7 CM",13.84,70.0,"Material"],
+["TEGADERM I.V. ADVD 1683 6.5 X 7CM",14.81,75.0,"Material"],
+["TELA ADHESIVA 10CM",121.47,486.0,"Medicamento"],
+["TELA ADHESIVA 2.5CM",25.45,129.0,"Medicamento"],
+["TELA ADHESIVA 5.0CM",62.5,257.0,"Medicamento"],
+["TELA ADHESIVA 7.5CM",125.06,385.0,"Medicamento"],
+["TELMISARTAN HIDROCLOTIAZIDA 80/12.5 MG",13.21,71.78,"Medicamento"],
+["TELMISARTAN TABS 40 MGS",4.28,15.49,"Medicamento"],
+["TEMPRA 100MG 30ML GOTERO",150.0,698.62,"Medicamento"],
+["TEMPRA 3.2 G 120 ML JARABE",160.0,745.2,"Medicamento"],
+["TEMPRA 500 MG 50 ML AMPULA",120.0,558.9,"Medicamento"],
+["TEMPRA FORTE 650 MG TABLETA",100.0,543.38,"Medicamento"],
+["TENECTEPLASA 50MG INYECTABLE",67189.45,156467.43,"Medicamento"],
+["TERFAMEX 30 MG CAPS",250.0,1164.38,"Medicamento"],
+["TERLIPRESINA SOLUCION 1MG INY",1400.0,4999.05,"Insumo"],
+["TERMOMETRO CLINICO DE MERCURIO",45.15,204.0,"Medicamento"],
+["TERMOMETRO DIGITAL",46.35,136.0,"Medicamento"],
+["TETRACAINA GTS OFT (PONTI)",170.0,791.77,"Medicamento"],
+["TIAMAZOL 5MG TABS",2.65,14.4,"Medicamento"],
+["TIENDA FACIAL ADULTO",66.7,301.0,"Medicamento"],
+["TIGECICLINA 50MG INY (TYGACIL)",1519.01,4716.53,"Medicamento"],
+["TIGECICLINA 50MG INY LINICETIL",840.85,3263.55,"Medicamento"],
+["TIGECICLINA SOL 50MG GI",900.0,3493.12,"Medicamento"],
+["TIOPENTAL SODICO 0.5/20ML",81.4,442.31,"Medicamento"],
+["TIRAS REACTIVAS ACCU-CHEK INSTANT C/50",4.83,24.0,"Medicamento"],
+["TIRAS REACTIVAS ONE TOUCH ULTRA",7.2,36.0,"Medicamento"],
+["TIROFIBAN 12.5MG/50ML SOL INY",11865.85,27632.6,"Medicamento"],
+["TISSEEL 4ML",7566.24,17619.88,"Medicamento"],
+["TIZANIDINA 2MG TAB",210.0,1956.15,"Medicamento"],
+["TOALLA FEMENINA",35.0,158.0,"Medicamento"],
+["TOALLAS DESINF OXIVIR BRANDS",375.45,1502.0,"Medicamento"],
+["TOALLITAS HUMEDAS",35.5,253.0,"Medicamento"],
+["TOBILLERA CRUZADA IZQ/CH",180.0,720.0,"Medicamento"],
+["TOBILLERA DE NEOPRENO G",300.0,1200.0,"Medicamento"],
+["TOBILLERA DE NEOPRENO M",300.0,1200.0,"Medicamento"],
+["TOBRAMICINA GOTAS 5ML",237.0,1103.83,"Medicamento"],
+["TOBRAMICINA/DEXAMENTASONA 3MG/1MG OFTENO",97.81,326.02,"Medicamento"],
+["TOCILIZUMAB 200MG/10ML",11283.05,26275.4,"Medicamento"],
+["TOCILIZUMAB 600MG -DOSIS-",29754.0,69289.63,"Medicamento"],
+["TOCOCARDIOGRAMA",150.0,500.0,"Medicamento"],
+["TORNILLO INTERENFERENCIAL",10000.0,13000.0,"Implante"],
+["TORRE DE ARTROSCOPIA",16000.0,20800.0,"Medicamento"],
+["TORUNDAS DE ALGODON 500G",70.45,318.0,"Material"],
+["TRACEFUSIN 20ML INY",280.0,1304.1,"Medicamento"],
+["TRAMADOL 100MG TABS",6.3,34.23,"Medicamento"],
+["TRAMADOL 100MG/2ML INY",14.0,54.34,"Medicamento"],
+["TRAMADOL 50MG TAB",7.8,42.38,"Medicamento"],
+["TRAMADOL/PARACETAMOL 37.5/325MG",6.5,21.73,"Medicamento"],
+["TRAMPA DE AGUA WATERLOCK DRAGER",192.61,771.0,"Medicamento"],
+["TRAMPA P/RECOLECCION DE SECRECIONES",60.96,275.0,"Medicamento"],
+["TRANSDUCTOR DESECHABLE",481.79,1928.0,"Medicamento"],
+["TRANSPORE 15271 1 (2.5CM)   9.14 M",14.96,73.0,"Medicamento"],
+["TRANSPORE 15272 2 (5CM)      9.14 M",33.0,145.0,"Medicamento"],
+["TRANSPORE 15273 3 (7.5CM)    9.14 M",51.87,218.0,"Medicamento"],
+["TREDA 129/280/30MG TABS",13.1,71.18,"Medicamento"],
+["TREXEN DUO 100/400 MG",527.0,1845.0,"Medicamento"],
+["TRIMEBUTINA 200MG TABS",21.71,21.73,"Medicamento"],
+["TRIMEBUTINA 50MG/5ML INY",131.52,659.78,"Medicamento"],
+["TRIMETIZADINA 80MG IDAPTAN OD",655.0,2542.22,"Medicamento"],
+["TRIMETO, SULFAMETOXAZOL 160/800 INY",49.41,259.3,"Medicamento"],
+["TRIMETOPRIMA-SULFAMETOXAZOL 160/800MG",61.0,331.46,"Medicamento"],
+["TRIMETROPRIMA/SULFASMETOXAZOL160MG//800",2.15,11.68,"Medicamento"],
+["TRINITRATO DE GLICERILO",515.0,1998.84,"Medicamento"],
+["TRITICUM VULGARE GASAS ITALDERMOL",550.0,2134.69,"Medicamento"],
+["TROCAR  5MM",1200.0,3000.0,"Medicamento"],
+["TROCAR EXCEL 12MM",1750.0,4375.0,"Medicamento"],
+["TROMPETA CORE PARA SUCCION 5 MM",1366.9,4101.0,"Medicamento"],
+["TUBO CORRUGADO 15CM",1.8,9.0,"Medicamento"],
+["TUBO DICLOFENACO 1% C/60 G CREMA",30.0,163.01,"Medicamento"],
+["TUBO EN ROLLO P/ASPI TRANS 30.5MTS",565.42,2276.0,"Medicamento"],
+["TUBO P/SUCCION C/ADAPTADOR 3 MTS ESTERIL",37.64,226.0,"Material"],
+["TUBO P/SUMINISTRO DE OXIGENO",8.9,47.0,"Medicamento"],
+["TUBO PENROSE 1",18.72,85.0,"Medicamento"],
+["TUBO PENROSE 1/2",23.12,102.0,"Medicamento"],
+["TUBO PENROSE 1/4",24.84,102.0,"Medicamento"],
+["TUBO PENROSE 3/4",22.5,102.0,"Medicamento"],
+["TUBO TORACICO 16 FR",102.21,409.0,"Medicamento"],
+["TUBO TORACICO 20FR",135.97,544.0,"Medicamento"],
+["TUBO TORACICO 24 FR",135.97,544.0,"Medicamento"],
+["TUBO TORACICO PVC CAL. 22 FR",167.9,672.0,"Medicamento"],
+["TUBO VACUTAINER LILA 4ML EDTA C/100",336.3,1346.0,"Medicamento"],
+["TUBO VACUTAINERROJO 6ML C/100",319.3,1278.0,"Medicamento"],
+["TURAZIVE 80 MG TABS",383.0,1783.82,"Medicamento"],
+["ULCODERMA UNGÜENTO",430.5,2005.05,"Medicamento"],
+["ULTRASONIDO P NERVIOS PERIFERICO",6000.0,7500.0,"Imagenologia"],
+["UNIFORME QX DESECHABLE",70.55,689.0,"Medicamento"],
+["UNOKAVI 10MG / 1 ML  FITOMENADIONA",37.0,166.5,"Medicamento"],
+["UREOPLAS BOLSA RECOLECTORA DE ORINA",33.28,180.0,"Material"],
+["UREOTEK 2 LTS",33.28,339.0,"Medicamento"],
+["USO DE CANULA DE SUCCION AMEU",175.0,750.0,"Material"],
+["USO DE PINZA ABSORBATACK 5.0 MM",560.0,1400.0,"Material"],
+["V-LOC 2-0 15 CM",950.0,2565.0,"Medicamento"],
+["VAGITROL V -OVULOS-",5.8,31.52,"Medicamento"],
+["VALPROATO DE MAGNESIO 200MG",5.95,32.33,"Medicamento"],
+["VALPROATO DE MAGNESIO 400MG TAB",7.0,38.04,"Medicamento"],
+["VALPROATO SODICO 250MG",253.0,4093.01,"Medicamento"],
+["VALPROSTO SODICO FRASCO IV 100MG/5ML",2220.0,6893.1,"Medicamento"],
+["VALSARTAN HIDROCLOTIAZIDA 160/12.5 MG",34.06,185.07,"Medicamento"],
+["VALSARTAN TABS 80MG",6.19,15.49,"Medicamento"],
+["VALVULA DE FONACION ORATOR",332.7,1331.0,"Medicamento"],
+["VALVULA LOPEZ",85.32,284.0,"Medicamento"],
+["VANCOCIN 1GR AMPULA",215.83,539.57,"Medicamento"],
+["VANCOMICINA 500 MG",80.0,434.7,"Medicamento"],
+["VANTAL BUCOFARINGEO 360ML",319.0,1116.5,"Medicamento"],
+["VANTAL SPRAY 40ML",410.0,1630.12,"Medicamento"],
+["VASCUFLOW 250/225/25MG TABS 60",1385.0,4155.0,"Medicamento"],
+["VASELINA BLANCA 60G",92.25,428.0,"Medicamento"],
+["VASOPRESINA 20UI/ML",492.0,2235.6,"Medicamento"],
+["VENDA ADHESIVA TENSOPLAST 10CM X 4.5MT",348.44,1518.0,"Material"],
+["VENDA COBAN 10CM",105.0,407.0,"Material"],
+["VENDA COBAN 15CM",149.07,597.0,"Material"],
+["VENDA COBAN 5CM",64.69,252.0,"Material"],
+["VENDA COBAN 7.5CM",93.1,419.0,"Material"],
+["VENDA ELASTICA  7 CM",4.89,26.0,"Material"],
+["VENDA ELASTICA 10CMX5M V10",6.1,32.0,"Material"],
+["VENDA ELASTICA 15CMX5M V15",8.72,49.0,"Material"],
+["VENDA ELASTICA 20CMX5M V20",18.39,83.0,"Material"],
+["VENDA ELASTICA 30CMX5M V30",16.8,79.0,"Material"],
+["VENDA ELASTICA 5CMX5M V5",3.81,20.0,"Material"],
+["VENDA ELASTOMEDIC 10CM ALTA COMPRESION",95.73,431.0,"Material"],
+["VENDA ELASTOMEDIC 15CM ALTA COMPRESION",102.3,426.0,"Material"],
+["VENDA ELASTOMEDIC 5CM ALTA COMPRESION",55.0,248.0,"Material"],
+["VENDA FIBRA VIDRIO 2 5CM",80.0,448.0,"Material"],
+["VENDA FIBRA VIDRIO 3 7.5CM",223.52,895.0,"Material"],
+["VENDA FIBRA VIDRIO 4 10CM",143.75,504.0,"Material"],
+["VENDA FIBRA VIDRIO 5 12.5CM",187.15,749.0,"Material"],
+["VENDA HUATA 10CM",12.25,56.0,"Material"],
+["VENDA HUATA 15CM",8.85,45.0,"Material"],
+["VENDA HUATA 5CM",8.0,40.0,"Material"],
+["VENDA HUATA SINTETICA 10CM",14.03,74.0,"Material"],
+["VENDA HUATA SINTETICA 15CM",19.0,86.0,"Material"],
+["VENDA HUATA SINTETICA 5CM",14.1,64.0,"Material"],
+["VENDA HUATA SINTETICA 7.5CM",9.87,50.0,"Material"],
+["VENDA SMARCH 10CM",251.28,1625.0,"Material"],
+["VENDA SMARCH 15CM",415.62,1408.0,"Material"],
+["VENDA TENSOPLAST 5CMX4.5CM",182.86,732.0,"Material"],
+["VENDA YESO 10CM",25.39,157.0,"Material"],
+["VENDA YESO 15CM",21.95,221.0,"Material"],
+["VENDA YESO 5CM",17.15,78.0,"Material"],
+["VERAPAMILO 5MG/2ML INY",585.0,2270.53,"Medicamento"],
+["VERAPAMILO 80 MG TABS",29.0,157.58,"Medicamento"],
+["VICRYL 0 CT1/ 36MM J340H REDON",143.53,575.0,"Material"],
+["VICRYL 0 SH /26MM J318H REDON",61.85,279.0,"Material"],
+["VICRYL 0 UR-6 /26MM J603H REDON",148.0,592.0,"Material"],
+["VICRYL 1 CP-35 /36MM J168 H CORT",166.39,666.0,"Material"],
+["VICRYL 1 CT1/ 36MM J341H REDON",181.03,725.0,"Material"],
+["VICRYL 1 CT2/ 26MM J335H REDON",55.45,250.0,"Material"],
+["VICRYL 2-0 CT1/ 36MM J339H REDON",155.97,588.0,"Material"],
+["VICRYL 2-0 SH /26MM J317H REDON",68.75,310.0,"Material"],
+["VICRYL 2-0 X-20 /22MM  J161H CORT",77.52,349.0,"Material"],
+["VICRYL 3-0 CT1/ 36MM J338H REDON",71.77,323.0,"Material"],
+["VICRYL 3-0 PS-1 /24MM  JP683G CORT",198.81,796.0,"Material"],
+["VICRYL 3-0 SH /26MM J316H REDON",72.67,328.0,"Material"],
+["VICRYL 3-0 X-20 /22MM J160H CORT",111.66,447.0,"Material"],
+["VICRYL 4-0 PS-2 /19MM JP496G CORT",98.96,446.0,"Material"],
+["VICRYL 4-0 SH / 26MM J315H REDON",62.5,282.0,"Material"],
+["VICRYL 5-0  P-3 / 13MM JP493G CORT",177.45,710.0,"Material"],
+["VICRYL 5-0 17MM RB1 VCP303 REDON",145.8,584.0,"Material"],
+["VICRYL 5/0 PS-3 16MM JP500G CORT",248.54,761.0,"Material"],
+["VICRYL 6-0 S14 8MM J570G",348.0,1392.0,"Material"],
+["VICRYL 6-0P3 JP 492",150.0,600.0,"Material"],
+["VICRYL 7-0 6.5MM J546G",411.0,1644.0,"Material"],
+["VIOLETA DE GENCIANA 40ML",10.84,112.0,"Medicamento"],
+["VITAFUSIN 5ML ADULTO INY",220.0,551.45,"Medicamento"],
+["VITAFUSIN MULTIVINATMINICO PEDIATRICO",109.16,508.41,"Medicamento"],
+["VITAMINA D ONE DROP D3 3ML FGO",876.0,3066.0,"Medicamento"],
+["VORICONAZOL 200MG INYECTABLE",3200.0,9936.0,"Medicamento"],
+["VORICONAZOL 200MG TAB",631.15,2449.65,"Medicamento"],
+["YERVOY AMP 50 MG10 ML",85000.0,197943.75,"Medicamento"],
+["ZAPATO P/REHABILITACION",444.6,1779.0,"Rehabilitacion"],
+["ZIR FOS  POL 0.39 GR CJ / 12 SOBR",461.0,1844.0,"Medicamento"],
+["ZOLMITRIPTANO 2.5 MG TABS",436.0,1250.0,"Medicamento"],
+["ZYVOXAM 600MG TABLETA",1100.0,3415.5,"Medicamento"],
+["ÁCIDO ZOLEDRÓNICO (ACLASTA) 5MG/100ML",14500.0,29000.0,"Medicamento"],
+["HONORARIOS CONSULTA",500,1500,"Honorario"],
+["HONORARIOS QUIRURGICOS",5000,25000,"Honorario"],
+["HONORARIOS ANESTESIOLOGO",3000,15000,"Honorario"],
+["HONORARIOS AYUDANTE CIRUGIA",1500,7500,"Honorario"],
+["HONORARIOS ESPECIALISTA",2000,10000,"Honorario"],
+["CUARTO ESTANDAR/DIA",800,4500,"Hospitalizacion"],
+["CUARTO PRIVADO/DIA",1200,7500,"Hospitalizacion"],
+["TERAPIA INTENSIVA/DIA",3500,18000,"Hospitalizacion"],
+["QUIROFANO/HR",2000,12000,"Hospitalizacion"],
+["SALA RECUPERACION/HR",500,3000,"Hospitalizacion"],
+["URGENCIAS/ATENCION",400,2500,"Hospitalizacion"],
+["HABITACION HOSPITALIZACION",800,2500,"Hospitalizacion"],
+["BIOMETRIA HEMATICA",45,350,"Laboratorio"],
+["QUIMICA SANGUINEA 6",80,550,"Laboratorio"],
+["QUIMICA SANGUINEA 12",120,750,"Laboratorio"],
+["ELECTROLITOS SERICOS",60,400,"Laboratorio"],
+["TIEMPOS DE COAGULACION",55,380,"Laboratorio"],
+["EXAMEN GENERAL ORINA",30,250,"Laboratorio"],
+["HEMOCULTIVO",120,850,"Laboratorio"],
+["GASOMETRIA ARTERIAL",80,500,"Laboratorio"],
+["GRUPO SANGUINEO Y RH",50,350,"Laboratorio"],
+["PERFIL TIROIDEO",150,900,"Laboratorio"],
+["RADIOGRAFIA SIMPLE",80,450,"Imagenologia"],
+["TOMOGRAFIA SIMPLE",800,4500,"Imagenologia"],
+["TOMOGRAFIA CONTRASTADA",1200,7000,"Imagenologia"],
+["ULTRASONIDO",300,1800,"Imagenologia"],
+["RESONANCIA MAGNETICA SIMPLE",2500,12000,"Imagenologia"],
+["RESONANCIA MAGNETICA CONTRASTADA",3500,16000,"Imagenologia"],
+["PROTESIS TOTAL RODILLA",15000,65000,"Implante"],
+["PROTESIS TOTAL CADERA",18000,75000,"Implante"],
+["PLACA OSTEOSINTESIS",3000,15000,"Implante"],
+["TORNILLO PEDICULAR C/U",2500,12000,"Implante"],
+["ANCLA ARTROSCOPICA",4000,18000,"Implante"],
+["CLAVO CENTROMEDULAR",5000,22000,"Implante"],
+["MALLA HERNIOPLASTIA",1500,7000,"Implante"],
+["TERAPIA FISICA/SESION",200,1200,"Rehabilitacion"],
+["TERAPIA OCUPACIONAL/SESION",250,1400,"Rehabilitacion"],
+["INTERCONSULTA ESPECIALIDAD",400,2500,"Interconsulta"],
+["INTERCONSULTA URGENTE",600,3500,"Interconsulta"]
+];
+var PR=CAT.map(function(r){return{n:r[0],c:r[1],p:r[2],cat:r[3]};});
+var PM={};PR.forEach(function(x){PM[x.n]=x;});
+
+/* ====== STATE ====== */
+var cart=[];var clN=1;var pendingFile=null;var dirty=false;
+var verMajor=1;var verMinor=0;
+var versions=JSON.parse(localStorage.getItem('ca_vers')||'[]');
+function $(id){return document.getElementById(id);}
+
+/* ====== LOGIN (Supabase Auth + respaldo local) ====== */
+var caCloudAuth=false; // true cuando la sesion de Supabase esta activa (permite guardar en la nube)
+
+function entrarApp(nombre,perfil){
+  $('login-screen').style.display='none';
+  $('app-root').classList.remove('app-hidden');
+  if(perfil)$('sel-perfil').value=perfil;
+  if(nombre)$('h-user').value=nombre;
+  $('login-error').style.display='none';
+}
+
+/* Revisa si ya hay sesion de Supabase activa (te deja entrar sin re-escribir contrasena) */
+async function checkLoginCloud(){
+  if(!caSupa)return false;
+  try{
+    var r=await caSupa.auth.getSession();
+    if(r&&r.data&&r.data.session){
+      caCloudAuth=true;
+      var email=r.data.session.user.email||'Usuario';
+      entrarApp(email,'admin');
+      caCloudArranque();
+      return true;
+    }
+  }catch(e){console.warn('checkLoginCloud',e);}
+  return false;
+}
+
+/* Login principal: correo + contrasena contra Supabase */
+async function doLogin(){
+  var email=$('login-user').value.trim();
+  var pass=$('login-pass').value;
+  if(!email||!pass){return;}
+  if(!caSupa){return doLoginLocal('Sin conexion a la nube');}
+  $('login-error').style.display='none';
+  $('login-btn').textContent='Entrando...';
+  try{
+    var r=await caSupa.auth.signInWithPassword({email:email,password:pass});
+    if(r.error){
+      console.log('SUPABASE LOGIN ERROR:',r.error);
+      var msg=r.error.message||'Error desconocido';
+      var code=r.error.code?(' ['+r.error.code+']'):'';
+      $('login-error').textContent='Error: '+msg+code;
+      $('login-error').style.display='block';
+      $('login-pass').focus();
+    }else{
+      caCloudAuth=true;
+      entrarApp(email,'admin');
+      caCloudArranque();
+    }
+  }catch(e){
+    console.log('LOGIN EXCEPTION:',e);
+    $('login-error').textContent='No se pudo conectar: '+(e&&e.message?e.message:e);
+    $('login-error').style.display='block';
+  }
+  $('login-btn').textContent='Entrar';
+}
+
+/* Respaldo: entrar en modo LOCAL (sin nube) para no quedar bloqueado nunca */
+function doLoginLocal(){
+  caCloudAuth=false;
+  entrarApp('Modo local','admin');
+}
+
+// Listeners del login (siempre activos, no dependen de la nube)
+$('login-btn').addEventListener('click',doLogin);
+$('login-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+$('login-user').addEventListener('keydown',function(e){if(e.key==='Enter'){$('login-pass').focus();}});
+// boton de respaldo "entrar local"
+try{
+  var lb=document.createElement('button');
+  lb.textContent='Entrar en modo local (sin nube)';
+  lb.style.cssText='width:100%;margin-top:10px;padding:9px;font-size:12px;background:#eef2f6;color:#5a6474;border:1px solid #dce2e8;border-radius:8px;cursor:pointer';
+  lb.addEventListener('click',doLoginLocal);
+  $('login-btn').parentNode.appendChild(lb);
+}catch(e){}
+// Revisa si ya hay sesion en la nube, SIN bloquear el arranque de la app
+checkLoginCloud();
+
+function fmt(n){return'$'+n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fz(q,n){var a=q.toUpperCase().trim(),b=n.toUpperCase();if(!a)return false;return b.indexOf(a)>=0||a.split(/\s+/).every(function(w){return b.indexOf(w)>=0;});}
+function gc(){return'CA-'+String(clN++).padStart(4,'0');}
+function ivaR(){return+$('sl-iva').value/100;}
+function descR(){return+$('sl-desc').value/100;}
+function uminR(){return+$('sl-umin').value/100;}
+function honR(){return+$('sl-hon').value/100;}
+function verStr(){return'v'+verMajor+'.'+verMinor;}
+function bumpVer(){verMinor++;$('h-ver').textContent=verStr();$('sb-ver').textContent=verStr();dirty=true;}
+
+/* ====== FOLIO ====== */
+var fk='ca_folio_seq';var folioN=parseInt(localStorage.getItem(fk)||'0')+1;
+localStorage.setItem(fk,folioN);
+var folioStr='COT-'+new Date().getFullYear()+'-'+String(folioN).padStart(6,'0');
+$('h-folio').textContent=folioStr;$('ff').value=folioStr;$('sb-folio').textContent=folioStr;
+$('h-fecha').textContent=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'})+' '+new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+$('fd').value=new Date().toISOString().split('T')[0];
+$('h-ver').textContent=verStr();$('sb-ver').textContent=verStr();
+
+/* ====== NUBE: guardar / cargar cotizaciones en Supabase ====== */
+var caCloudUlt=0;
+
+/* Reune el estado actual de la cotizacion mapeado a las columnas reales */
+function caCloudPayload(){
+  function val(id){var e=$(id);return e?e.value:'';}
+  var iva=ivaR(),desc=descR(),hon=honR();
+  var tCost=0,tPrecio=0,tDesc=0,tSub=0,tIVA=0,tTotal=0,tUtil=0;
+  cart.forEach(function(it){
+    var cT=it.c*it.q;
+    var precioT=it.p*it.q;
+    var descT=Math.round(precioT*desc*100)/100;
+    var subT=precioT-descT;
+    var uT=subT-cT;
+    var ivT=Math.round(subT*iva*100)/100;
+    var totT=subT+ivT;
+    tCost+=cT;tPrecio+=precioT;tDesc+=descT;tSub+=subT;tIVA+=ivT;tTotal+=totT;tUtil+=uT;
+  });
+  var margen=tCost>0?((tUtil/tCost)*100):0;
+  function r2(n){return Math.round(n*100)/100;}
+  return {
+    folio: folioStr,
+    version: verStr(),
+    estado: 'borrador',
+    paciente_nombre: val('fn'),
+    edad: val('fage'),
+    sexo: val('fsex'),
+    diagnostico: val('fdx'),
+    procedimiento: val('fproc'),
+    poliza: val('fpo'),
+    siniestro: val('fsi'),
+    aseguradora: val('fseg'),
+    medico: val('fmd'),
+    hospital: val('fhosp'),
+    vigencia: val('fvig'),
+    fecha_ingreso: val('fdin')||null,
+    fecha_egreso: val('fdout')||null,
+    observaciones: val('fobs'),
+    descuento_pct: r2(desc*100),
+    iva_pct: r2(iva*100),
+    total_precio: r2(tPrecio),
+    total_descuento: r2(tDesc),
+    total_subtotal: r2(tSub),
+    total_iva: r2(tIVA),
+    total_final: r2(tTotal),
+    total_costo: r2(tCost),
+    total_utilidad: r2(tUtil),
+    margen_global: r2(margen)
+  };
+}
+
+
+/* Sube/actualiza la cotizacion + su detalle de productos en la nube (por folio). */
+async function caCloudGuardar(){
+  if(!caSupa||!caCloudAuth)return;
+  try{
+    var p=caCloudPayload();
+    var u=await caSupa.auth.getUser();
+    if(u&&u.data&&u.data.user)p.usuario=u.data.user.email||'';
+    // 1) Guardar el encabezado y recuperar su id
+    var r=await caSupa.from('cotizaciones').upsert(p,{onConflict:'folio'}).select('id').single();
+    if(r.error){console.warn('Nube guardar:',r.error.message);return;}
+    var cotId=r.data&&r.data.id;
+    if(!cotId){caCloudUlt=Date.now();return;}
+    // 2) Reemplazar el detalle: borrar el viejo e insertar el actual
+    await caSupa.from('cotizacion_detalle').delete().eq('cotizacion_id',cotId);
+    var iva=ivaR(),desc=descR();
+    var filas=cart.map(function(it){
+      var cT=it.c*it.q, precioT=it.p*it.q;
+      var descT=Math.round(precioT*desc*100)/100;
+      var subT=precioT-descT, uT=subT-cT;
+      var ivT=Math.round(subT*iva*100)/100, totT=subT+ivT;
+      var marg=cT>0?((uT/cT)*100):0;
+      function r2(n){return Math.round(n*100)/100;}
+      return {
+        cotizacion_id: cotId,
+        clave: it.cl,
+        nombre: it.n,
+        categoria: it.cat,
+        cantidad: it.q,
+        costo_unitario: r2(it.c),
+        precio_unitario: r2(it.p),
+        precio_total: r2(precioT),
+        descuento: r2(descT),
+        subtotal: r2(subT),
+        iva: r2(ivT),
+        total: r2(totT),
+        utilidad: r2(uT),
+        margen: r2(marg),
+        protegido: !!it.locked
+      };
+    });
+    if(filas.length){
+      var ri=await caSupa.from('cotizacion_detalle').insert(filas);
+      if(ri.error){console.warn('Nube detalle:',ri.error.message);}
+    }
+    caCloudUlt=Date.now();
+  }catch(e){console.warn('caCloudGuardar',e);}
+}
+
+/* Trae una cotizacion + su detalle de productos de la nube y los restaura */
+async function caCloudCargar(folio){
+  if(!caSupa||!caCloudAuth)return;
+  try{
+    var r=await caSupa.from('cotizaciones').select('*').eq('folio',folio).single();
+    if(r.error||!r.data){alert('No se encontro en la nube');return;}
+    var d=r.data;
+    folioStr=d.folio;
+    function set(id,v){var e=$(id);if(e&&v!=null)e.value=v;}
+    set('fn',d.paciente_nombre);set('fage',d.edad);set('fsex',d.sexo);
+    set('fdx',d.diagnostico);set('fproc',d.procedimiento);
+    set('fpo',d.poliza);set('fsi',d.siniestro);set('fseg',d.aseguradora);
+    set('fmd',d.medico);set('fhosp',d.hospital);set('fvig',d.vigencia);
+    set('fdin',d.fecha_ingreso);set('fdout',d.fecha_egreso);set('fobs',d.observaciones);
+    if($('h-folio'))$('h-folio').textContent=folioStr;
+    // Traer el detalle de productos y reconstruir el carrito
+    var rd=await caSupa.from('cotizacion_detalle').select('*').eq('cotizacion_id',d.id);
+    if(rd.error){console.warn('Nube detalle cargar:',rd.error.message);}
+    if(rd.data&&rd.data.length){
+      cart=rd.data.map(function(x){
+        return {n:x.nombre,c:Number(x.costo_unitario),p:Number(x.precio_unitario),cat:x.categoria,q:x.cantidad,cl:x.clave||gc(),locked:!!x.protegido};
+      });
+    }else{cart=[];}
+    render();
+    alert('Cotizacion '+folioStr+' cargada de la nube ('+cart.length+' productos).');
+  }catch(e){console.warn('caCloudCargar',e);alert('Error al cargar de la nube');}
+}
+
+/* Lista las cotizaciones recientes y deja elegir una */
+async function caCloudListar(){
+  if(!caSupa||!caCloudAuth){alert('Inicia sesion en la nube para ver cotizaciones guardadas');return;}
+  try{
+    var r=await caSupa.from('cotizaciones').select('folio,paciente_nombre,total_final,created_at').order('created_at',{ascending:false}).limit(30);
+    if(r.error){alert('Error: '+r.error.message);return;}
+    if(!r.data||!r.data.length){alert('Aun no hay cotizaciones en la nube');return;}
+    var lista=r.data.map(function(x,i){return (i+1)+') '+x.folio+'  -  '+(x.paciente_nombre||'sin nombre')+'  -  $'+(x.total_final||0);}).join('\n');
+    var sel=prompt('Cotizaciones en la nube:\n\n'+lista+'\n\nEscribe el FOLIO que quieres cargar:');
+    if(sel)caCloudCargar(sel.trim());
+  }catch(e){console.warn('caCloudListar',e);}
+}
+
+/* Al iniciar sesion: agrega el boton flotante de nube */
+function caCloudArranque(){
+  if(document.getElementById('ca-cloud-fab'))return;
+  var bar=document.createElement('div');
+  bar.id='ca-cloud-fab';
+  bar.style.cssText='position:fixed;bottom:16px;right:16px;z-index:9000;display:flex;gap:8px;align-items:center';
+  bar.innerHTML='<span style="background:#1b7a5a;color:#fff;font-size:10px;padding:3px 8px;border-radius:10px">&#9729; Nube activa</span>';
+  var bG=document.createElement('button');
+  bG.textContent='Guardar en nube';
+  bG.style.cssText='padding:8px 12px;font-size:12px;font-weight:600;background:#1a3a5c;color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+  bG.addEventListener('click',async function(){bG.textContent='Guardando...';await caCloudGuardar();bG.textContent='Guardado \u2713';setTimeout(function(){bG.textContent='Guardar en nube';},1500);});
+  var bC=document.createElement('button');
+  bC.textContent='Cargar de nube';
+  bC.style.cssText='padding:8px 12px;font-size:12px;font-weight:600;background:#2a6cb0;color:#fff;border:none;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)';
+  bC.addEventListener('click',caCloudListar);
+  bar.appendChild(bG);bar.appendChild(bC);
+  document.body.appendChild(bar);
+}
+
+/* ====== AUTOSAVE ====== */
+var lastSave=0;
+setInterval(function(){
+  if(!dirty)return;
+  var data={cart:cart,clN:clN,verMajor:verMajor,verMinor:verMinor,folio:folioStr};
+  localStorage.setItem('ca_autosave',JSON.stringify(data));
+  lastSave=Date.now();dirty=false;
+  $('save-msg').textContent='Guardado automaticamente hace 1 segundo';
+  caCloudGuardar(); // <-- ademas del navegador, sube a la nube
+},5000);
+setInterval(function(){
+  if(!lastSave)return;
+  var sec=Math.round((Date.now()-lastSave)/1000);
+  if(sec<60)$('save-msg').textContent='Guardado hace '+sec+' segundos';
+  else $('save-msg').textContent='Guardado hace '+Math.round(sec/60)+' min';
+},3000);
+
+/* ====== SLIDERS ====== */
+['sl-hon','sl-rent','sl-adm','sl-iva','sl-desc','sl-umin'].forEach(function(id){
+  $(id).addEventListener('input',function(){$('v-'+id.replace('sl-','')).textContent=this.value+'%';render();dirty=true;});
+});
+
+/* ====== PROFILE ====== */
+$('sel-perfil').addEventListener('change',function(){render();});
+
+/* ====== SEARCH ====== */
+var sc=$('sc'),ddm=$('ddm');
+sc.addEventListener('input',function(){
+  var q=this.value.trim();if(q.length<2){ddm.style.display='none';return;}
+  var m=PR.filter(function(x){return fz(q,x.n)||fz(q,x.cat);}).slice(0,25);
+  if(!m.length){ddm.style.display='none';return;}ddm.innerHTML='';
+  m.forEach(function(x){var d=document.createElement('div');d.className='ddi';d.innerHTML='<span>'+x.n+' <span class="cat">'+x.cat+'</span></span><span class="ddp">C:'+fmt(x.c)+' V:'+fmt(x.p)+'</span>';d.addEventListener('click',function(){addItem(x.n);});ddm.appendChild(d);});
+  ddm.style.display='block';
+});
+document.addEventListener('click',function(e){if(!sc.contains(e.target)&&!ddm.contains(e.target))ddm.style.display='none';});
+
+/* ====== FILE ====== */
+var dz=$('dz'),fi=$('fi');
+dz.addEventListener('click',function(){fi.click();});
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.style.borderColor='var(--pri2)';});
+dz.addEventListener('dragleave',function(){dz.style.borderColor='';});
+dz.addEventListener('drop',function(e){e.preventDefault();dz.style.borderColor='';if(e.dataTransfer.files[0])fileReady(e.dataTransfer.files[0]);});
+fi.addEventListener('change',function(){if(fi.files[0])fileReady(fi.files[0]);});
+function fileReady(f){pendingFile=f;$('fname').textContent=f.name;$('fbar').classList.add('show');dz.style.display='none';$('lg').style.display='none';}
+$('btn-az').addEventListener('click',function(){
+  if(!pendingFile){alert('No hay archivo cargado');return;}
+  saveVersion('Pre-importacion');
+  var f=pendingFile,nm=f.name.toLowerCase(),lg=$('lg');
+  lg.style.display='block';
+  lg.innerHTML='<p>&#128270; Analizando <b>'+f.name+'</b>...</p>';
+
+  try{
+    if(nm.endsWith('.csv')||nm.endsWith('.txt')){
+      var r=new FileReader();
+      r.onerror=function(){lg.innerHTML+='<p class="wn">&#9888; Error al leer el archivo</p>';};
+      r.onload=function(e){
+        try{pTxt(e.target.result,lg);}
+        catch(err){lg.innerHTML+='<p class="wn">&#9888; Error procesando: '+err.message+'</p>';}
+      };
+      r.readAsText(f,'UTF-8');
+
+    }else if(nm.endsWith('.xlsx')||nm.endsWith('.xls')){
+      if(typeof XLSX==='undefined'){
+        lg.innerHTML+='<p class="wn">&#9888; La libreria de Excel no cargo. Verifica tu conexion a internet y recarga la pagina, o convierte el archivo a CSV.</p>';
+        return;
+      }
+      var r2=new FileReader();
+      r2.onerror=function(){lg.innerHTML+='<p class="wn">&#9888; Error al leer el archivo Excel</p>';};
+      r2.onload=function(e){
+        try{
+          lg.innerHTML+='<p>Leyendo hojas del Excel...</p>';
+          var wb=XLSX.read(e.target.result,{type:'array'});
+          var sheetName=wb.SheetNames[0];
+          lg.innerHTML+='<p>Procesando hoja: <b>'+sheetName+'</b> ('+wb.SheetNames.length+' hojas detectadas)...</p>';
+          var data=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:''});
+          lg.innerHTML+='<p>'+data.length+' filas encontradas. Cruzando con catalogo...</p>';
+          pRows(data,lg);
+        }catch(err){
+          lg.innerHTML+='<p class="wn">&#9888; Error al procesar Excel: '+err.message+'</p>';
+          lg.innerHTML+='<p class="wn">Intenta convertir el archivo a CSV y vuelve a importar.</p>';
+        }
+      };
+      r2.readAsArrayBuffer(f);
+
+    }else if(nm.endsWith('.pdf')){
+      if(typeof pdfjsLib==='undefined'){
+        lg.innerHTML+='<p class="wn">&#9888; La libreria de PDF no cargo. Verifica tu conexion a internet y recarga la pagina.</p>';
+        return;
+      }
+      var r3=new FileReader();
+      r3.onerror=function(){lg.innerHTML+='<p class="wn">&#9888; Error al leer el PDF</p>';};
+      r3.onload=function(e){
+        lg.innerHTML+='<p>Leyendo PDF...</p>';
+        var typedArray=new Uint8Array(e.target.result);
+        pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
+          lg.innerHTML+='<p>PDF cargado: <b>'+pdf.numPages+' paginas</b>. Extrayendo texto...</p>';
+          var allText=[];
+          var processed=0;
+          function processPage(pageNum){
+            pdf.getPage(pageNum).then(function(page){
+              page.getTextContent().then(function(content){
+                var pageText=content.items.map(function(item){return item.str;}).join(' ');
+                allText.push(pageText);
+                processed++;
+                if(processed===pdf.numPages){
+                  var fullText=allText.join('\n');
+                  lg.innerHTML+='<p>Texto extraido ('+fullText.length+' caracteres). Analizando contenido...</p>';
+                  if(fullText.length<20){lg.innerHTML+='<p class="wn">&#9888; El PDF no contiene texto seleccionable. Usa la opcion de pegar texto manualmente.</p>';return;}
+                  parsePdfText(fullText,lg);
+                }else{
+                  processPage(pageNum+1);
+                }
+              });
+            });
+          }
+          processPage(1);
+        }).catch(function(err){
+          lg.innerHTML+='<p class="wn">&#9888; Error al leer PDF: '+err.message+'</p>';
+          lg.innerHTML+='<p>Si es un PDF escaneado (imagen), no se puede extraer texto. Usa un PDF digital.</p>';
+        });
+      };
+      r3.readAsArrayBuffer(f);
+
+    }else{
+      lg.innerHTML+='<p class="wn">&#9888; Formato no soportado: '+nm.split(".").pop()+'</p>';
+      lg.innerHTML+='<p>Formatos aceptados: .xlsx, .xls, .csv, .txt, .pdf</p>';
+    }
+  }catch(err){
+    lg.innerHTML+='<p class="wn">&#9888; Error inesperado: '+err.message+'</p>';
+  }
+});
+$('btn-ch').addEventListener('click',function(){pendingFile=null;fi.value='';$('fbar').classList.remove('show');dz.style.display='';});
+
+/* ====== PASTE TEXT HANDLER ====== */
+$('btn-paste').addEventListener('click',function(){
+  var text=$('paste-area').value.trim();
+  if(!text||text.length<10){alert('Pega el contenido del documento primero');return;}
+  saveVersion('Pre-importacion texto');
+  var lg=$('lg');
+  lg.style.display='block';
+  lg.innerHTML='<p>&#128270; Analizando texto pegado ('+text.length+' caracteres)...</p>';
+  // Detect if tab-separated (Excel paste) or free text (PDF paste)
+  var hasTab=text.indexOf('\t')>=0;
+  if(hasTab){
+    var rows=text.split(/[\n\r]+/).map(function(l){return l.split('\t');});
+    lg.innerHTML+='<p>Detectado formato Excel ('+rows.length+' filas)</p>';
+    pRows(rows,lg);
+  }else{
+    parsePdfText(text,lg);
+  }
+  $('paste-area').value='';
+});
+function pTxt(t,lg){pRows(t.split(/\r?\n/).filter(function(l){return l.trim();}).map(function(l){var p=l.split(/[,;\t|]/);return p.length>=2?p:[l.trim(),'1'];}),lg);}
+function pRows(rows,lg){
+  var ok=0,wn=0,nc=0,qc=1;
+  // Scan first 10 rows for header
+  var headerRow=-1;
+  for(var hi=0;hi<Math.min(10,rows.length);hi++){
+    var hd=rows[hi].map(function(c){return String(c).toUpperCase();});
+    var ni=hd.findIndex(function(x){return x.indexOf('PRODUCT')>=0||x.indexOf('DESCRIP')>=0||x.indexOf('NOMBRE')>=0||x.indexOf('CONCEPTO')>=0||x.indexOf('ARTICULO')>=0;});
+    if(ni>=0){
+      nc=ni;
+      var qi=hd.findIndex(function(x){return x.indexOf('CANT')>=0;});
+      if(qi>=0)qc=qi;
+      headerRow=hi;
+      break;
+    }
+  }
+  if(headerRow>=0){rows=rows.slice(headerRow+1);}
+  rows.forEach(function(row){var raw=String(row[nc]||'').trim();if(!raw||raw.length<3)return;var qty=parseInt(row[qc])||1,x=PM[raw];
+    if(x){addToCart(x,qty);lg.innerHTML+='<p class="ok">&#10003; '+x.n+'</p>';ok++;}
+    else{var b=PR.filter(function(p){return fz(raw,p.n);});if(b.length){addToCart(b[0],qty);lg.innerHTML+='<p class="ok">&#10003; '+raw+' &#8594; '+b[0].n+'</p>';ok++;}else{lg.innerHTML+='<p class="wn">&#9888; '+raw+'</p>';wn++;}}
+  });
+  lg.innerHTML+='<p style="margin-top:3px;border-top:1px solid #ddd;padding-top:3px"><b>'+ok+' agregados</b>'+(wn?' | '+wn+' no encontrados':'')+'</p>';
+  bumpVer();render();
+}
+
+/* ====== PDF PARSER ====== */
+function parsePdfText(text,lg){
+  // Clean the full text
+  var lines=text.split(/[\n\r]+/);
+  var found=[];
+  var skipped=0;
+  var totalLines=lines.length;
+
+  // Patterns to remove noise
+  var pricePattern=/\$[\d,]+\.?\d*/g;
+  var datePattern=/\d{1,2}\/\w+\.?\/\d{2,4}/g;
+  var timePattern=/\d{1,2}:\d{2}/g;
+  var refPattern=/\d{8,}/g;
+  var pagePattern=/pagina|ver:|estado de cuenta|folio|nombre|tabulador|fecha de ingreso|articulo|alm\.|cant\.|pza\.|p\.u\.|importe|hora|ref\.|operador|cargos a facturar|subtotal|anticipos|saldo|cantidad|desc\.|total|iva/i;
+  var headerPattern=/clinica|s\.a\. de c\.v|expediente|medico|obligado/i;
+
+  lines.forEach(function(rawLine){
+    var line=rawLine.trim();
+    if(line.length<4)return;
+
+    // Skip headers, footers, page info
+    if(pagePattern.test(line))return;
+    if(headerPattern.test(line))return;
+    if(/^\d+$/.test(line.trim()))return;
+    if(line.indexOf('Página')>=0||line.indexOf('pagina')>=0)return;
+
+    // Remove prices, dates, times, reference numbers
+    var cleaned=line;
+    cleaned=cleaned.replace(pricePattern,'');
+    cleaned=cleaned.replace(datePattern,'');
+    cleaned=cleaned.replace(timePattern,'');
+    cleaned=cleaned.replace(refPattern,'');
+
+    // Extract quantity - look for patterns like "1.00 PZ" or "2.00 CJ" or just standalone numbers
+    var qty=1;
+    var qtyMatch=cleaned.match(/(\d+)\.00\s*(PZ|CJ|pz|cj)/);
+    if(qtyMatch){
+      qty=parseInt(qtyMatch[1]);
+      cleaned=cleaned.replace(qtyMatch[0],'');
+    }
+    // Also check for standalone small numbers at start that could be ALM
+    cleaned=cleaned.replace(/^\s*\d\s+/,'');
+    // Remove trailing numbers
+    cleaned=cleaned.replace(/\s+\d{1,2}\s*$/,'');
+
+    // Clean up extra spaces and special chars
+    cleaned=cleaned.replace(/[ª°]/g,'');
+    cleaned=cleaned.replace(/\s+/g,' ').trim();
+
+    // Skip if too short after cleaning
+    if(cleaned.length<3)return;
+
+    // Skip pure number lines
+    if(/^[\d\s\.\-,]+$/.test(cleaned))return;
+
+    // Now try to match against catalog
+    var upper=cleaned.toUpperCase();
+    var match=null;
+    var matchScore=0;
+
+    // 1. Exact match
+    for(var i=0;i<PR.length;i++){
+      if(PR[i].n===upper){match=PR[i];matchScore=1;break;}
+    }
+
+    // 2. Catalog name contained in line or line contained in catalog name
+    if(!match){
+      for(var i=0;i<PR.length;i++){
+        var pn=PR[i].n;
+        if(upper.indexOf(pn)>=0||pn.indexOf(upper)>=0){
+          if(pn.length>3){match=PR[i];matchScore=0.9;break;}
+        }
+      }
+    }
+
+    // 3. Word-based fuzzy match - at least 60% of significant words match
+    if(!match){
+      var words=upper.split(/\s+/).filter(function(w){return w.length>2&&!/^(DE|LA|EL|EN|CON|POR|PARA|INY|TAB|SOL|CAP|MG|ML|PZ|CJ|CM)$/.test(w);});
+      if(words.length>=1){
+        var bestScore=0;var bestM=null;
+        for(var i=0;i<PR.length;i++){
+          var pn=PR[i].n;
+          var matched=words.filter(function(w){return pn.indexOf(w)>=0;}).length;
+          var score=words.length>0?matched/words.length:0;
+          // Also check reverse - how many catalog words are in the line
+          var catWords=pn.split(/\s+/).filter(function(w){return w.length>2;});
+          var revMatched=catWords.filter(function(w){return upper.indexOf(w)>=0;}).length;
+          var revScore=catWords.length>0?revMatched/catWords.length:0;
+          var combinedScore=Math.max(score,revScore);
+          if(combinedScore>bestScore&&combinedScore>=0.5){bestScore=combinedScore;bestM=PR[i];}
+        }
+        if(bestM){match=bestM;matchScore=bestScore;}
+      }
+    }
+
+    if(match&&matchScore>=0.5){
+      var already=found.find(function(f2){return f2.name===match.n;});
+      if(already){already.qty+=qty;}
+      else{found.push({name:match.n,qty:qty,cat:match.cat,original:cleaned});}
+    }else if(cleaned.length>5){
+      skipped++;
+    }
+  });
+
+  // Show results
+  if(found.length>0){
+    lg.innerHTML='<p style="font-size:13px;font-weight:700;color:var(--pri)">&#128196; Analisis del PDF completado</p>';
+
+    // Group by category and count
+    var byCat={};var totalQty=0;
+    found.forEach(function(f2){
+      if(!byCat[f2.cat])byCat[f2.cat]={count:0,qty:0,items:[]};
+      byCat[f2.cat].count++;
+      byCat[f2.cat].qty+=f2.qty;
+      byCat[f2.cat].items.push(f2);
+      totalQty+=f2.qty;
+    });
+
+    lg.innerHTML+='<p style="margin:4px 0">Detecte <b>'+found.length+' conceptos</b> ('+totalQty+' unidades):</p>';
+
+    Object.keys(byCat).sort().forEach(function(cat){
+      var c=byCat[cat];
+      lg.innerHTML+='<p style="font-weight:600;color:var(--pri2);margin-top:2px">'+c.count+' '+cat+' ('+c.qty+' uds)</p>';
+      c.items.forEach(function(item){
+        lg.innerHTML+='<p class="ok" style="font-size:10px">&nbsp;&nbsp;&#10003; '+item.name+' x'+item.qty+'</p>';
+      });
+    });
+
+    if(skipped>0){
+      lg.innerHTML+='<p style="color:var(--warn);margin-top:3px;font-size:10px">'+skipped+' lineas no coincidieron con el catalogo</p>';
+    }
+
+    lg.innerHTML+='<p style="margin-top:6px;border-top:1px solid #ddd;padding-top:6px;font-size:12px;font-weight:700">&#10004; '+found.length+' conceptos agregados a la cotizacion</p>';
+
+    // Add to cart
+    found.forEach(function(f2){
+      var prod=PM[f2.name];
+      if(prod)addToCart(prod,f2.qty);
+    });
+    bumpVer();render();
+  }else{
+    lg.innerHTML='<p class="wn" style="font-size:12px">&#9888; No se encontraron productos del catalogo en este PDF.</p>';
+    lg.innerHTML+='<p style="font-size:11px;margin-top:4px">Posibles causas:</p>';
+    lg.innerHTML+='<p style="font-size:11px">&nbsp;&nbsp;- El PDF es imagen escaneada (no tiene texto seleccionable)</p>';
+    lg.innerHTML+='<p style="font-size:11px">&nbsp;&nbsp;- Los nombres de productos son muy diferentes al catalogo</p>';
+    if(skipped>0)lg.innerHTML+='<p style="font-size:11px">&nbsp;&nbsp;- Se encontraron '+skipped+' lineas pero ninguna coincidio</p>';
+  }
+}
+
+/* ====== CART ====== */
+function addItem(n){var x=PM[n];if(x){addToCart(x,1);bumpVer();}sc.value='';ddm.style.display='none';render();}
+function addToCart(x,q){var e=cart.find(function(c){return c.n===x.n;});if(e)e.q+=q;else cart.push({n:x.n,c:x.c,p:x.p,cat:x.cat,q:q,cl:gc(),locked:false});dirty=true;}
+
+/* ====== RENDER ====== */
+function render(){
+  var tb=$('tbody'),tf=$('tfoot'),emp=$('empty-t');
+  var iva=ivaR(),desc=descR(),hon=honR();
+  var perfil=$('sel-perfil').value;
+  var hideCost=(perfil==='capturista'||perfil==='medico');
+
+  if(!cart.length){tb.innerHTML='';tf.style.display='none';emp.style.display='';updateSidebar(0,0,0,0,0,0,0,0);return;}
+  emp.style.display='none';tf.style.display='';
+
+  var tQ=0,tCost=0,tPrecio=0,tDesc=0,tSub=0,tIVA=0,tTotal=0,tUtil=0,tHon=0;
+  tb.innerHTML='';
+  cart.forEach(function(it){
+    var cU=it.c,cT=cU*it.q;
+    var precioU=it.p;
+    var precioT=precioU*it.q;
+    var descT=Math.round(precioT*desc*100)/100;
+    var subT=precioT-descT;
+    var uT=subT-cT;
+    var marg=cT>0?((uT/cT)*100):0;
+    var ivT=Math.round(subT*iva*100)/100;
+    var totT=subT+ivT;
+    var honT=(it.cat==='Honorario')?subT:Math.round(uT*honR()*100)/100;
+
+    tQ+=it.q;tCost+=cT;tPrecio+=precioT;tDesc+=descT;tSub+=subT;tIVA+=ivT;tTotal+=totT;tUtil+=uT;tHon+=honT;
+
+    var mc=marg>=25?'m-ok':marg>=10?'m-wn':'m-err';
+    var mC=marg>=25?'var(--accent)':marg>=10?'var(--warn)':'var(--err)';
+    var uC=uT>=0?'var(--accent)':'var(--err)';
+
+    var tr=document.createElement('tr');tr.className=mc;
+    var h='';
+    h+='<td class="no-print c"><button class="td-lock'+(it.locked?' on':'')+'" data-cl="'+it.cl+'">'+(it.locked?'&#128274;':'&#128275;')+'</button></td>';
+    h+='<td class="no-print" style="font-size:9px;color:#888">'+it.cl+'</td>';
+    h+='<td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+it.n+'">'+it.n+'</td>';
+    h+='<td class="no-print"><span class="cat">'+it.cat+'</span></td>';
+    h+='<td class="c"><input class="tq no-print" type="number" min="1" value="'+it.q+'" data-cl="'+it.cl+'"><span class="print-only">'+it.q+'</span></td>';
+    h+='<td class="r no-print">'+fmt(precioU)+'</td>';
+    h+='<td class="r">'+fmt(precioT)+'</td>';
+    h+='<td class="r" style="color:var(--err)">-'+fmt(descT)+'</td>';
+    h+='<td class="r no-print" style="font-weight:600;color:var(--pri2)">'+fmt(subT)+'</td>';
+    h+='<td class="r">'+fmt(ivT)+'</td>';
+    h+='<td class="r" style="font-weight:700">'+fmt(totT)+'</td>';
+    h+='<td class="r cost-col no-print"'+(hideCost?' style="display:none"':'')+'>'+fmt(cT)+'</td>';
+    h+='<td class="r cost-col no-print" style="color:'+uC+'"'+(hideCost?' style="display:none"':'')+'>'+fmt(uT)+'</td>';
+    h+='<td class="r cost-col no-print" style="font-weight:700;color:'+mC+'"'+(hideCost?' style="display:none"':'')+'>'+marg.toFixed(1)+'%</td>';
+    h+='<td class="no-print c"><button class="td-btn" data-cl="'+it.cl+'">&times;</button></td>';
+    tr.innerHTML=h;
+
+    var qi=tr.querySelector('.tq');
+    if(qi)qi.addEventListener('change',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.q=Math.max(1,parseInt(this.value)||1);bumpVer();render();}});
+    var db=tr.querySelector('.td-btn');
+    if(db)db.addEventListener('click',function(){cart=cart.filter(function(c){return c.cl!==this.dataset.cl;}.bind(this));bumpVer();render();});
+    var lb=tr.querySelector('.td-lock');
+    if(lb)lb.addEventListener('click',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f)f.locked=!f.locked;render();});
+    tb.appendChild(tr);
+  });
+
+  var tMarg=tCost>0?((tUtil/tCost)*100):0;
+  var tRent=tSub>0?((tUtil/tSub)*100):0;
+  $('tf-q').textContent=tQ;
+  $('tf-precio').textContent='';$('tf-preciotot').textContent=fmt(tPrecio);
+  $('tf-descuento').textContent='-'+fmt(tDesc);$('tf-subtotal').textContent=fmt(tSub);
+  $('tf-iva').textContent=fmt(tIVA);$('tf-total').textContent=fmt(tTotal);
+  $('tf-costo').textContent=fmt(tCost);$('tf-util').textContent=fmt(tUtil);$('tf-marg').textContent=tMarg.toFixed(1)+'%';
+
+  if(hideCost)document.querySelectorAll('.cost-col').forEach(function(el){el.style.display='none';});
+  updateSidebar(cart.length,tPrecio,tDesc,tSub,tIVA,tHon,tUtil,tMarg,tTotal,tRent);
+  // Update PDF summary
+  if($('pdf-precio')){$('pdf-precio').textContent=fmt(tPrecio);$('pdf-desc').textContent='-'+fmt(tDesc);$('pdf-sub').textContent=fmt(tSub);$('pdf-iva').textContent=fmt(tIVA);$('pdf-total').textContent=fmt(tTotal);}
+}
+
+function updateSidebar(n,precio,descuento,sub,iva,hon,util,marg,total,rent){
+  $('sb-n').textContent=n;
+  $('sb-precio').textContent=fmt(precio);
+  $('sb-desc').textContent='-'+fmt(descuento)+' ('+$('sl-desc').value+'%)';
+  $('sb-sub').textContent=fmt(sub);
+  $('sb-iva').textContent=fmt(iva);
+  $('sb-hon').textContent=fmt(hon);
+  $('sb-util').textContent=fmt(util);
+  var me=$('sb-marg');me.textContent=marg.toFixed(1)+'%';me.className='sv '+(marg>=25?'sv-green':marg>=10?'sv-amber':'');
+  $('sb-rent').textContent=(rent||0).toFixed(1)+'%';
+  $('sb-total').textContent=fmt(total);
+}
+
+/* ====== OPTIMIZER ====== */
+$('btn-opt').addEventListener('click',function(){
+  var target=parseFloat($('opt-monto').value);
+  if(!target||target<=0){alert('Ingresa un monto objetivo valido');return;}
+  if(!cart.length){alert('Agrega conceptos primero');return;}
+  saveVersion('Pre-optimizacion');
+  var iva=ivaR(),desc=descR(),umin=uminR();
+  var currentTotal=0;cart.forEach(function(it){currentTotal+=it.p*(1-desc)*it.q*(1+iva);});
+  if(target>=currentTotal){$('opt-res').style.display='block';$('opt-res').innerHTML='<b style="color:var(--accent)">&#10004;</b> Objetivo ('+fmt(target)+') >= actual ('+fmt(currentTotal)+'). Sin ajuste.';return;}
+  var reduction=currentTotal-target,adjusted=0;
+  var priority=['Hospitalizacion','Material','Insumo','Medicamento','Laboratorio','Imagenologia','Rehabilitacion','Interconsulta'];
+  for(var pi=0;pi<priority.length;pi++){if(adjusted>=reduction)break;
+    for(var ci=0;ci<cart.length;ci++){if(adjusted>=reduction)break;var it=cart[ci];
+      if(it.locked||it.cat!==priority[pi])continue;
+      var minP=it.c*(1+umin),curSU=it.p*(1-desc);if(curSU<=minP)continue;
+      var can=(curSU-minP)*it.q*(1+iva),need=reduction-adjusted,red=Math.min(can,need);
+      var prU=red/(it.q*(1+iva));it.p=Math.round(((curSU-prU)/(1-desc))*100)/100;
+      if(it.p<Math.ceil(minP/(1-desc)*100)/100)it.p=Math.ceil(minP/(1-desc)*100)/100;
+      adjusted+=red;
+  }}
+  bumpVer();render();
+  var newT=0;cart.forEach(function(it){newT+=it.p*(1-desc)*it.q*(1+iva);});
+  $('opt-res').style.display='block';
+  $('opt-res').innerHTML='<b>&#9889; Optimizacion completada</b><br>Original: '+fmt(currentTotal)+' &#8594; <b>'+fmt(newT)+'</b> (Obj: '+fmt(target)+')<br>Reduccion: <b>'+fmt(currentTotal-newT)+'</b><br>'+(newT<=target*1.02?'<span style="color:var(--accent)">&#10004; Objetivo alcanzado.</span>':'<span style="color:var(--warn)">&#9888; Margenes minimos impiden alcanzar el objetivo.</span>');
+});
+
+/* ====== VERSIONS ====== */
+function saveVersion(action){
+  if(!cart.length)return;var iva=ivaR(),desc=descR(),tot=0;
+  cart.forEach(function(it){tot+=it.p*(1-desc)*it.q*(1+iva);});
+  versions.unshift({ts:new Date().toLocaleString('es-MX'),action:action,ver:verStr(),items:cart.length,total:tot,snap:JSON.parse(JSON.stringify(cart)),clN:clN});
+  if(versions.length>20)versions.pop();
+  localStorage.setItem('ca_vers',JSON.stringify(versions));renderVer();
+}
+function renderVer(){
+  var vl=$('ver-list');if(!versions.length){vl.innerHTML='<div style="text-align:center;padding:8px;font-size:11px;color:#999">Sin versiones</div>';return;}
+  vl.innerHTML='';
+  versions.forEach(function(v){
+    var d=document.createElement('div');d.className='ver-item';
+    d.innerHTML='<span><b>'+v.ver+'</b> '+v.ts+' - '+v.action+' ('+v.items+' items, '+fmt(v.total)+')</span>';
+    var btn=document.createElement('button');btn.className='btn-rest';btn.textContent='Restaurar';
+    btn.addEventListener('click',function(){if(!confirm('Restaurar '+v.ver+'?'))return;cart=JSON.parse(JSON.stringify(v.snap));clN=v.clN||cart.length+1;render();});
+    d.appendChild(btn);vl.appendChild(d);
+  });
+}
+
+/* ====== PDF ====== */
+$('btn-pdf').addEventListener('click',function(){
+  if(!cart.length){alert('Agrega al menos un concepto');return;}
+  $('print-user').textContent=$('h-user').value;
+  var np=document.querySelectorAll('.no-print'),po=document.querySelectorAll('.print-only'),tqi=document.querySelectorAll('.tq'),sb=$('sidebar');
+  np.forEach(function(e){e.style.display='none';});po.forEach(function(e){e.style.display='block';});tqi.forEach(function(e){e.style.display='none';});sb.style.display='none';
+  var root=$('app-root');root.style.display='block';root.classList.add('pdf-fit');
+  var pn=$('fn').value||'Paciente';
+  html2pdf().set({margin:[6,6,6,6],filename:'Cotizacion_'+folioStr+'_'+pn.replace(/\s+/g,'_')+'.pdf',image:{type:'jpeg',quality:0.95},html2canvas:{scale:2,useCORS:true,scrollY:0},jsPDF:{unit:'mm',format:'letter',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(root).save().then(function(){
+    root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';
+  }).catch(function(){root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';});
+});
+
+/* ====== PRINT ====== */
+$('btn-printd').addEventListener('click',function(){if(!cart.length){alert('Agrega al menos un concepto');return;}$('print-user').textContent=$('h-user').value;window.print();});
+
+/* ====== CSV ====== */
+$('btn-csv').addEventListener('click',function(){
+  if(!cart.length)return;var desc=descR(),iva=ivaR(),pn=$('fn').value||'Paciente';
+  var csv='Clinica Alejandria - '+folioStr+' '+verStr()+'\nPaciente: '+pn+'\nDiagnostico: '+($('fdx').value||'')+'\nProcedimiento: '+($('fproc').value||'')+'\n\nClave,Concepto,Categoria,Cant,Precio U,Precio Tot,Descuento,Subtotal,IVA,Total,Costo,Utilidad,Margen%\n';
+  cart.forEach(function(it){var cT=it.c*it.q,pT=it.p*it.q,dT=Math.round(pT*desc*100)/100,sT=pT-dT,uT=sT-cT,m=cT>0?((uT/cT)*100).toFixed(1):'0',iv=Math.round(sT*iva*100)/100,tt=sT+iv;
+    csv+='"'+it.cl+'","'+it.n+'","'+it.cat+'",'+it.q+','+it.p.toFixed(2)+','+pT.toFixed(2)+','+dT.toFixed(2)+','+sT.toFixed(2)+','+iv.toFixed(2)+','+tt.toFixed(2)+','+cT.toFixed(2)+','+uT.toFixed(2)+','+m+'%\n';});
+  var url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));var a=document.createElement('a');a.href=url;a.download='Cotizacion_'+folioStr+'.csv';a.click();URL.revokeObjectURL(url);
+});
+
+/* ====== EXCEL COMPLETO (.xlsx) ====== */
+$('btn-excel').addEventListener('click',function(){
+  if(!cart.length){alert('Agrega al menos un concepto');return;}
+  if(typeof XLSX==='undefined'){alert('No se pudo cargar la libreria de Excel. Abre el archivo con internet.');return;}
+  var desc=descR(),iva=ivaR(),pn=$('fn').value||'Paciente';
+  // Encabezado con datos del paciente
+  var rows=[
+    ['CLINICA ALEJANDRIA - COTIZACION (DETALLE INTERNO COMPLETO)'],
+    ['Folio',folioStr,'Version',verStr()],
+    ['Paciente',pn,'Sexo',$('fsex')?$('fsex').value:''],
+    ['Edad',$('fage')?$('fage').value:'','Fecha',$('fd')?$('fd').value:''],
+    ['Diagnostico',$('fdx')?$('fdx').value:''],
+    ['Procedimiento',$('fproc')?$('fproc').value:''],
+    [],
+    ['Clave','Concepto','Categoria','Cant','Precio U','Precio Tot','Descuento','Subtotal','IVA','Total','Costo','Utilidad','Margen %']
+  ];
+  var TQ=0,TpT=0,TdT=0,TsT=0,Tiv=0,Ttt=0,TcT=0,TuT=0;
+  cart.forEach(function(it){
+    var cT=it.c*it.q, pT=it.p*it.q, dT=Math.round(pT*desc*100)/100, sT=pT-dT,
+        uT=sT-cT, m=cT>0?((uT/cT)*100):0, iv=Math.round(sT*iva*100)/100, tt=sT+iv;
+    TQ+=it.q;TpT+=pT;TdT+=dT;TsT+=sT;Tiv+=iv;Ttt+=tt;TcT+=cT;TuT+=uT;
+    rows.push([it.cl,it.n,it.cat,it.q,
+      +it.p.toFixed(2),+pT.toFixed(2),+dT.toFixed(2),+sT.toFixed(2),
+      +iv.toFixed(2),+tt.toFixed(2),+cT.toFixed(2),+uT.toFixed(2),+m.toFixed(1)]);
+  });
+  var Tm=TcT>0?((TuT/TcT)*100):0;
+  rows.push(['','TOTALES','',TQ,'',+TpT.toFixed(2),+TdT.toFixed(2),+TsT.toFixed(2),+Tiv.toFixed(2),+Ttt.toFixed(2),+TcT.toFixed(2),+TuT.toFixed(2),+Tm.toFixed(1)]);
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:10},{wch:38},{wch:12},{wch:6},{wch:10},{wch:11},{wch:11},{wch:11},{wch:10},{wch:11},{wch:10},{wch:10},{wch:9}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Cotizacion');
+  XLSX.writeFile(wb,'Cotizacion_'+folioStr+'_'+pn.replace(/\s+/g,'_')+'_COMPLETO.xlsx');
+});
+
+/* ====== INIT ====== */
+renderVer();render();
+})();
+</script>
+</body>
+</html>
