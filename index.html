@@ -184,6 +184,35 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
   .sl input[type=range]{display:none!important}
   .sl{background:transparent!important;padding:1px 0!important}
 }
+
+/* ====== EXPEDIENTE CLINICO (modulo nuevo, aditivo) ====== */
+#exp-fab{position:fixed;right:18px;bottom:18px;z-index:9000;background:linear-gradient(135deg,#1a3a5c,#2a6cb0);color:#fff;border:none;border-radius:30px;padding:12px 18px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#exp-fab:hover{opacity:.92}
+#exp-overlay{display:none;position:fixed;inset:0;background:rgba(15,25,40,.55);z-index:9500;align-items:flex-start;justify-content:center;overflow:auto;padding:24px}
+#exp-overlay.show{display:flex}
+.exp-panel{background:#fff;border-radius:14px;width:100%;max-width:860px;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;margin:auto}
+.exp-hd{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #dce2e8;background:#f7f9fb}
+.exp-hd h2{font-size:16px;color:#1a3a5c;margin:0;flex:1}
+.exp-x{background:none;border:none;font-size:24px;cursor:pointer;color:#5a6474;line-height:1}
+.exp-pac{font-size:12px;color:#5a6474;padding:8px 18px;background:#eef4fb;border-bottom:1px solid #dce2e8}
+.exp-pac b{color:#1a3a5c}
+.exp-tabs{display:flex;gap:4px;padding:8px 18px 0;border-bottom:1px solid #dce2e8;flex-wrap:wrap}
+.exp-tab{padding:8px 12px;font-size:12px;border:none;background:none;cursor:pointer;color:#5a6474;border-bottom:2px solid transparent}
+.exp-tab.active{color:#1a3a5c;font-weight:700;border-bottom-color:#2a6cb0}
+.exp-body{padding:18px}
+.exp-g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.exp-f{display:flex;flex-direction:column;gap:4px;margin-bottom:4px}
+.exp-f label{font-size:11px;font-weight:600;color:#5a6474}
+.exp-f input,.exp-f select{padding:9px 11px;font-size:13px;border:1.5px solid #dce2e8;border-radius:8px;outline:none;font-family:inherit}
+.exp-f input:focus,.exp-f select:focus{border-color:#2a6cb0}
+.exp-ft{display:flex;gap:10px;align-items:center;padding:14px 18px;border-top:1px solid #dce2e8;background:#f7f9fb;flex-wrap:wrap}
+.exp-btn{padding:10px 16px;font-size:13px;font-weight:700;border:none;border-radius:8px;cursor:pointer}
+.exp-btn-pri{background:linear-gradient(135deg,#1a3a5c,#2a6cb0);color:#fff}
+.exp-btn-sec{background:#eef2f6;color:#1a3a5c;border:1px solid #dce2e8}
+.exp-msg{font-size:12px;margin-left:auto;font-weight:600}
+.exp-soon{padding:40px 20px;text-align:center;color:#8a95a3;font-size:13px}
+@media print{#exp-fab,#exp-overlay{display:none!important}}
+@media(max-width:600px){.exp-g2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -358,6 +387,16 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 
 /* ====== CATALOGO ====== */
 var CAT=[
+["AMBULANCIA TRASLADO BASICO - ZONA METROPOLITANA QRO",1400.0,1680.0,"Ambulancia"],
+["AMBULANCIA TRASLADO CON OXIGENO - ZONA METROPOLITANA QRO",1900.0,2280.0,"Ambulancia"],
+["AMBULANCIA TRASLADO BASICO - FORANEO AMEALCO",4000.0,4800.0,"Ambulancia"],
+["AMBULANCIA TRASLADO CON OXIGENO - FORANEO AMEALCO",4500.0,5400.0,"Ambulancia"],
+["AMBULANCIA TRASLADO BASICO - FORANEO SAN JUAN DEL RIO",3500.0,4200.0,"Ambulancia"],
+["AMBULANCIA TRASLADO CON OXIGENO - FORANEO SAN JUAN DEL RIO",4000.0,4800.0,"Ambulancia"],
+["AMBULANCIA TRASLADO BASICO - FORANEO CDMX",6000.0,7200.0,"Ambulancia"],
+["AMBULANCIA TRASLADO CON OXIGENO - FORANEO CDMX",7000.0,8400.0,"Ambulancia"],
+["AMBULANCIA HORA EXTRA DE ESPERA",400.0,480.0,"Ambulancia"],
+["AMBULANCIA HORA EXTRA DE ESPERA CON OXIGENO",480.0,576.0,"Ambulancia"],
 ["ABATELENGUAS DE MADERA",0.4,1.0,"Material"],
 ["ABINTRA 27G SOBRE",188.0,752.0,"Medicamento"],
 ["ACCIOGEN SUSP 100/125 MG",241.0,964.0,"Medicamento"],
@@ -3034,6 +3073,137 @@ $('btn-excel').addEventListener('click',function(){
 
 /* ====== INIT ====== */
 renderVer();render();
+})();
+</script><script>
+/* ================= MODULO EXPEDIENTE CLINICO (aditivo) =================
+   No toca el cotizador. Solo agrega un boton y un panel que usa la
+   misma conexion a la nube (caSupa) y la tabla "expedientes".
+   ====================================================================== */
+(function(){
+  function el(id){return document.getElementById(id);}
+  function v(id){var e=el(id);return e?String(e.value||'').trim():'';}
+
+  var fab=document.createElement('button');
+  fab.id='exp-fab';fab.className='no-print';fab.type='button';
+  fab.innerHTML='\uD83D\uDCCB Expediente';
+  document.body.appendChild(fab);
+
+  var ov=document.createElement('div');
+  ov.id='exp-overlay';
+  ov.innerHTML=`
+    <div class="exp-panel">
+      <div class="exp-hd">
+        <h2>Expediente clinico</h2>
+        <button class="exp-x" id="exp-close" type="button" title="Cerrar">&times;</button>
+      </div>
+      <div class="exp-pac">Paciente: <b id="exp-pac-nombre">--</b></div>
+      <div class="exp-tabs">
+        <button class="exp-tab active" data-t="ficha" type="button">Ficha</button>
+        <button class="exp-tab" data-t="antecedentes" type="button">Antecedentes</button>
+        <button class="exp-tab" data-t="consulta" type="button">Consulta</button>
+        <button class="exp-tab" data-t="consentimientos" type="button">Consentimientos</button>
+      </div>
+      <div class="exp-body">
+        <div data-p="ficha">
+          <div class="exp-g2">
+            <div class="exp-f"><label>Folio del expediente</label><input id="exp-folio" placeholder="EXP-0001"></div>
+            <div class="exp-f"><label>Contacto de emergencia</label><input id="exp-contacto" placeholder="Nombre y telefono"></div>
+            <div class="exp-f"><label>Apellido paterno</label><input id="exp-appat"></div>
+            <div class="exp-f"><label>Apellido materno</label><input id="exp-apmat"></div>
+            <div class="exp-f"><label>Fecha de nacimiento</label><input id="exp-fnac" type="date"></div>
+            <div class="exp-f"><label>Estado civil</label><select id="exp-edocivil"><option value="">--</option><option>Casado(a)</option><option>Soltero(a)</option><option>Union libre</option><option>Viudo(a)</option><option>Divorciado(a)</option></select></div>
+            <div class="exp-f"><label>Diagnostico principal</label><input id="exp-dx"></div>
+            <div class="exp-f"><label>Medico tratante</label><input id="exp-medico"></div>
+          </div>
+        </div>
+        <div data-p="antecedentes" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
+        <div data-p="consulta" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
+        <div data-p="consentimientos" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
+      </div>
+      <div class="exp-ft">
+        <button class="exp-btn exp-btn-sec" id="exp-buscar" type="button">Buscar por folio</button>
+        <button class="exp-btn exp-btn-pri" id="exp-guardar" type="button">Guardar expediente</button>
+        <span class="exp-msg" id="exp-msg"></span>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+
+  function msg(t,c){var m=el('exp-msg');if(!m)return;m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}
+
+  function openExp(){
+    var f=el('exp-folio');
+    if(f && !f.value){
+      var cf=(el('ff')&&el('ff').value)||(el('h-folio')&&el('h-folio').textContent)||'';
+      f.value = cf ? ('EXP-'+cf) : 'EXP-0001';
+    }
+    var pac=el('fn');
+    el('exp-pac-nombre').textContent = (pac && pac.value) ? pac.value : '(sin nombre en la cotizacion)';
+    if(el('exp-dx') && !el('exp-dx').value && el('fdx')) el('exp-dx').value=el('fdx').value;
+    if(el('exp-medico') && !el('exp-medico').value && el('fmd')) el('exp-medico').value=el('fmd').value;
+    msg('');
+    ov.classList.add('show');
+  }
+  function closeExp(){ov.classList.remove('show');}
+
+  fab.addEventListener('click',openExp);
+  el('exp-close').addEventListener('click',closeExp);
+  ov.addEventListener('click',function(e){if(e.target===ov)closeExp();});
+
+  var tabs=ov.querySelectorAll('.exp-tab');
+  tabs.forEach(function(tb){
+    tb.addEventListener('click',function(){
+      tabs.forEach(function(x){x.classList.remove('active');});
+      tb.classList.add('active');
+      ov.querySelectorAll('[data-p]').forEach(function(p){p.style.display=(p.getAttribute('data-p')===tb.getAttribute('data-t'))?'':'none';});
+    });
+  });
+
+  async function guardar(){
+    if(!window.caSupa){msg('Sin conexion a la nube (modo local). Inicia sesion para guardar.','err');return;}
+    var folio=v('exp-folio');
+    if(!folio){msg('Escribe un folio para el expediente.','err');return;}
+    var payload={
+      folio:folio,
+      apellido_paterno:v('exp-appat')||null,
+      apellido_materno:v('exp-apmat')||null,
+      fecha_nacimiento:v('exp-fnac')||null,
+      estado_civil:v('exp-edocivil')||null,
+      contacto_emergencia:v('exp-contacto')||null,
+      diagnostico_principal:v('exp-dx')||null,
+      medico_tratante:v('exp-medico')||null,
+      modificado_en:new Date().toISOString()
+    };
+    var b=el('exp-guardar');b.textContent='Guardando...';
+    try{
+      var r=await window.caSupa.from('expedientes').upsert(payload,{onConflict:'folio'}).select('id').single();
+      if(r.error)throw r.error;
+      msg('Expediente guardado \u2713','ok');
+    }catch(e){msg('No se pudo guardar: '+(e.message||e),'err');}
+    b.textContent='Guardar expediente';
+  }
+
+  async function buscar(){
+    if(!window.caSupa){msg('Sin conexion a la nube.','err');return;}
+    var folio=v('exp-folio');
+    if(!folio){msg('Escribe un folio para buscar.','err');return;}
+    try{
+      var r=await window.caSupa.from('expedientes').select('*').eq('folio',folio).maybeSingle();
+      if(r.error)throw r.error;
+      if(!r.data){msg('No existe ese folio todavia. Puedes crearlo con Guardar.','warn');return;}
+      var d=r.data;
+      el('exp-appat').value=d.apellido_paterno||'';
+      el('exp-apmat').value=d.apellido_materno||'';
+      el('exp-fnac').value=d.fecha_nacimiento||'';
+      el('exp-edocivil').value=d.estado_civil||'';
+      el('exp-contacto').value=d.contacto_emergencia||'';
+      el('exp-dx').value=d.diagnostico_principal||'';
+      el('exp-medico').value=d.medico_tratante||'';
+      msg('Expediente cargado \u2713','ok');
+    }catch(e){msg('No se pudo buscar: '+(e.message||e),'err');}
+  }
+
+  el('exp-guardar').addEventListener('click',guardar);
+  el('exp-buscar').addEventListener('click',buscar);
 })();
 </script>
 </body>
