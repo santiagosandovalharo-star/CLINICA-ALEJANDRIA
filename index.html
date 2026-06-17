@@ -4499,7 +4499,13 @@ renderVer();render();
           <button type="button" id="exp-dx-guardar" class="exp-btn exp-btn-pri" style="margin-top:8px">Aplicar y guardar diagnosticos</button>
           <span class="exp-msg" id="exp-dx-msg"></span>
           <div class="ant-h">Plan y tratamiento</div>
-          <div class="exp-f"><label>Plan / indicaciones / tratamiento</label><textarea id="nota-plan" rows="3"></textarea></div>
+          <label style="font-size:12px;color:#1a3a5c;font-weight:700">Medicamentos e insumos (de tu catalogo)</label>
+          <input id="tx-search" placeholder="Escribe: paracetamol, jeringa, suero, gasa..." autocomplete="off" style="width:100%;padding:8px;border:1px solid #cfd8e0;border-radius:8px;margin:4px 0 6px;box-sizing:border-box">
+          <div id="tx-results" class="exp-dx-results"></div>
+          <div class="exp-dx-banner">No esta en tu catalogo? <button type="button" id="tx-addcustom" class="exp-dx-link">+ Agregar manual</button></div>
+          <div id="tx-customform" style="display:none" class="exp-dx-custom"><input id="tx-cnombre" placeholder="Nombre del medicamento o insumo"><button type="button" id="tx-csave" class="exp-btn exp-btn-sec">Agregar</button></div>
+          <div id="tx-sel" style="margin-top:6px"></div>
+          <div class="exp-f" style="margin-top:8px"><label>Plan / indicaciones / tratamiento (texto libre)</label><textarea id="nota-plan" rows="3"></textarea></div>
           <div class="exp-f"><label>Pronostico</label><input id="nota-pronostico" placeholder="Ej. Bueno para la vida y la funcion"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
             <button type="button" id="nota-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button>
@@ -4848,6 +4854,34 @@ renderVer();render();
     function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
     function fechaTxt(){var v=gv('nota-fecha');if(!v)return '';try{var d=new Date(v);return d.toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return v;}}
 
+    // ----- Medicamentos e insumos (del catalogo) -----
+    var TXCATS=['Medicamento','Material','Insumo','Implante'];
+    var TXALL=(window.CAT||[]).filter(function(r){return TXCATS.indexOf(r[3])>=0;}).map(function(r){return {nombre:r[0],categoria:r[3]};});
+    function txNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+    function txYa(n){var it=elx('tx-sel').querySelectorAll('.tx-item');for(var i=0;i<it.length;i++){if(decodeURIComponent(it[i].getAttribute('data-n'))===n)return true;}return false;}
+    function txAdd(n,c){
+      if(!n||txYa(n))return;
+      var it=document.createElement('div');it.className='tx-item';it.setAttribute('data-n',encodeURIComponent(n));it.setAttribute('data-c',encodeURIComponent(c||''));
+      it.style.cssText='background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:7px;margin-bottom:6px';
+      it.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:13px">'+esc(n)+'</b><button type="button" class="ant-del" title="Quitar" style="background:none;border:none;color:#b83232;font-weight:700;font-size:16px;cursor:pointer">&times;</button></div><input class="tx-ind" placeholder="Via, dosis, frecuencia y duracion (ej. 1 tableta VO cada 8 h por 5 dias)" style="width:100%;margin-top:5px;padding:6px;border:1px solid #cfd8e0;border-radius:6px;font-size:13px;box-sizing:border-box">';
+      it.querySelector('.ant-del').onclick=function(){it.remove();};
+      elx('tx-sel').appendChild(it);
+    }
+    function txRender(q){
+      var box=elx('tx-results');if(!box)return;
+      if(!q||q.length<2){box.className='exp-dx-results';box.innerHTML='';return;}
+      var nq=txNorm(q),hits=[];
+      for(var i=0;i<TXALL.length&&hits.length<40;i++){if(txNorm(TXALL[i].nombre).indexOf(nq)>=0)hits.push(TXALL[i]);}
+      if(!hits.length){box.className='exp-dx-results show';box.innerHTML='<div class="exp-dx-row" style="cursor:default;color:#9aa4b0">Sin resultados &mdash; agregalo manual.</div>';return;}
+      box.innerHTML=hits.map(function(d){return '<div class="exp-dx-row" data-n="'+encodeURIComponent(d.nombre)+'" data-c="'+encodeURIComponent(d.categoria)+'"><b>'+esc(d.categoria)+'</b> '+esc(d.nombre)+'</div>';}).join('');
+      box.className='exp-dx-results show';
+      box.querySelectorAll('.exp-dx-row[data-n]').forEach(function(row){row.addEventListener('click',function(){txAdd(decodeURIComponent(row.getAttribute('data-n')),decodeURIComponent(row.getAttribute('data-c')));elx('tx-search').value='';txRender('');});});
+    }
+    function txGather(){return Array.prototype.slice.call(elx('tx-sel').querySelectorAll('.tx-item')).map(function(it){return {nombre:decodeURIComponent(it.getAttribute('data-n')),categoria:decodeURIComponent(it.getAttribute('data-c')),indicacion:(it.querySelector('.tx-ind')||{}).value||''};});}
+    if(elx('tx-search'))elx('tx-search').addEventListener('input',function(){txRender(this.value);});
+    if(elx('tx-addcustom'))elx('tx-addcustom').onclick=function(){var f=elx('tx-customform');f.style.display=(f.style.display==='none')?'flex':'none';};
+    if(elx('tx-csave'))elx('tx-csave').onclick=function(){var n=gv('tx-cnombre');if(!n)return;txAdd(n,'Manual');elx('tx-cnombre').value='';elx('tx-customform').style.display='none';};
+
     function buildHTML(){
       var sv=[];
       function add(l,val){if(val)sv.push('<b>'+l+':</b> '+esc(val));}
@@ -4871,6 +4905,8 @@ renderVer();render();
       h+=sec('Padecimiento actual',gv('nota-padecimiento'));
       h+=sec('Exploracion fisica',gv('nota-ef'));
       if(dx.length)h+=sec('Diagnostico(s)',dx.join('\n'));
+      var meds=txGather();
+      if(meds.length){h+='<div style="margin-top:10px"><div style="font-size:12px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.4px">Tratamiento (medicamentos e insumos)</div><table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:3px"><thead><tr style="background:#eef5fc"><th style="border:1px solid #cfd8e0;padding:4px;width:22px">#</th><th style="border:1px solid #cfd8e0;padding:4px;text-align:left">Medicamento / insumo</th><th style="border:1px solid #cfd8e0;padding:4px;text-align:left">Indicaciones</th></tr></thead><tbody>'+meds.map(function(m,i){return '<tr><td style="border:1px solid #cfd8e0;padding:4px;text-align:center">'+(i+1)+'</td><td style="border:1px solid #cfd8e0;padding:4px">'+esc(m.nombre)+'</td><td style="border:1px solid #cfd8e0;padding:4px">'+esc(m.indicacion)+'</td></tr>';}).join('')+'</tbody></table></div>';}
       h+=sec('Plan y tratamiento',gv('nota-plan'));
       h+=sec('Pronostico',gv('nota-pronostico'));
       h+='<div style="margin-top:46px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:4px;font-weight:700">'+esc(medico())+'</div><div style="font-size:11px;color:#5a6474">Medico responsable</div></div>';
@@ -4891,7 +4927,7 @@ renderVer();render();
       var contenido={
         motivo:gv('nota-motivo'),padecimiento:gv('nota-padecimiento'),
         signos:{ta:gv('nota-ta'),fc:gv('nota-fc'),fr:gv('nota-fr'),temp:gv('nota-temp'),sat:gv('nota-sat'),peso:gv('nota-peso'),talla:gv('nota-talla'),imc:gv('nota-imc')},
-        exploracion:gv('nota-ef'),diagnosticos:dxList(),plan:gv('nota-plan'),pronostico:gv('nota-pronostico')
+        exploracion:gv('nota-ef'),diagnosticos:dxList(),medicamentos:txGather(),plan:gv('nota-plan'),pronostico:gv('nota-pronostico')
       };
       if(!window.caSupa){nmsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
       var b=elx('nota-guardar');b.textContent='Guardando...';
