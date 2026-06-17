@@ -164,7 +164,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 .print-only{display:none}
 /* Ajuste para que la tabla quepa completa en el PDF (se activa solo al generarlo) */
 .pdf-fit .tw{overflow:visible!important}
-.pdf-fit table{width:100%!important;table-layout:fixed!important;font-size:8.5px!important}
+.pdf-fit table{width:100%!important;min-width:0!important;table-layout:fixed!important;font-size:8.5px!important}
 .pdf-fit table th,.pdf-fit table td{padding:3px 3px!important;white-space:normal!important;word-break:break-word!important;overflow:visible!important;text-overflow:clip!important;max-width:none!important}
 @media print{
   body{background:#fff!important;padding:0!important;font-size:9px!important}
@@ -4014,18 +4014,19 @@ function renderVer(){
 /* ====== PDF ====== */
 $('btn-pdf').addEventListener('click',function(){
   if(!cart.length){alert('Agrega al menos un concepto');return;}
-  $('print-user').textContent=$('h-user').value;
+  if(typeof html2pdf==='undefined'){alert('No se pudo cargar la libreria para generar el PDF. Revisa tu internet, recarga la pagina con Cmd+Shift+R e intenta de nuevo. Mientras tanto puedes usar el boton "Imprimir" y elegir "Guardar como PDF".');return;}
+  $('print-user').textContent=($('fmd').value||$('h-user').value||'');
   var np=document.querySelectorAll('.no-print'),po=document.querySelectorAll('.print-only'),tqi=document.querySelectorAll('.tq'),sb=$('sidebar');
   np.forEach(function(e){e.style.display='none';});po.forEach(function(e){e.style.display='block';});tqi.forEach(function(e){e.style.display='none';});sb.style.display='none';
   var root=$('app-root');root.style.display='block';root.classList.add('pdf-fit');
   var pn=$('fn').value||'Paciente';
   html2pdf().set({margin:[6,6,6,6],filename:'Cotizacion_'+folioStr+'_'+pn.replace(/\s+/g,'_')+'.pdf',image:{type:'jpeg',quality:0.95},html2canvas:{scale:2,useCORS:true,scrollY:0},jsPDF:{unit:'mm',format:'letter',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(root).save().then(function(){
     root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';
-  }).catch(function(){root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';});
+  }).catch(function(err){root.classList.remove('pdf-fit');np.forEach(function(e){e.style.display='';});po.forEach(function(e){e.style.display='none';});tqi.forEach(function(e){e.style.display='';});sb.style.display='';root.style.display='flex';alert('Hubo un problema al generar el PDF: '+((err&&err.message)?err.message:err)+'\nIntenta de nuevo, o usa el boton "Imprimir" para guardar como PDF.');});
 });
 
 /* ====== PRINT ====== */
-$('btn-printd').addEventListener('click',function(){if(!cart.length){alert('Agrega al menos un concepto');return;}$('print-user').textContent=$('h-user').value;window.print();});
+$('btn-printd').addEventListener('click',function(){if(!cart.length){alert('Agrega al menos un concepto');return;}$('print-user').textContent=($('fmd').value||$('h-user').value||'');window.print();});
 
 /* ====== CSV ====== */
 $('btn-csv').addEventListener('click',function(){
