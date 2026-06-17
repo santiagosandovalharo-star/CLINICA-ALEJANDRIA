@@ -3534,7 +3534,7 @@ var CAT=[
 ["INTERCONSULTA ESPECIALIDAD",400,2500,"Interconsulta"],
 ["INTERCONSULTA URGENTE",600,3500,"Interconsulta"]
 ];
-var PR=CAT.map(function(r){return{n:r[0],c:r[1],p:r[2],cat:r[3]};});
+var PR=CAT.map(function(r){return{n:r[0],c:r[1],p:r[2],cat:r[3]};});try{window.CAT=CAT;}catch(e){}
 var PM={};PR.forEach(function(x){PM[x.n]=x;});
 
 /* ====== STATE ====== */
@@ -4354,6 +4354,7 @@ renderVer();render();
         <button class="exp-tab" data-t="antecedentes" type="button">Antecedentes</button>
         <button class="exp-tab" data-t="consulta" type="button">Consulta</button>
         <button class="exp-tab" data-t="consentimientos" type="button">Consentimientos</button>
+        <button class="exp-tab" data-t="solicitudes" type="button">Solicitudes</button>
       </div>
       <div class="exp-body">
         <div data-p="ficha">
@@ -4507,6 +4508,29 @@ renderVer();render();
           <span class="exp-msg" id="nota-msg"></span>
         </div>
         <div data-p="consentimientos" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
+        <div data-p="solicitudes" style="display:none">
+          <div class="ant-h">Solicitud de estudios (laboratorio / imagen)</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Fecha</label><input id="sol-fecha" type="datetime-local"></div>
+            <div class="exp-f"><label>Prioridad</label><select id="sol-prioridad"><option>Rutina</option><option>Urgente</option></select></div>
+          </div>
+          <label style="font-size:12px;color:#1a3a5c;font-weight:700">Buscar estudio en tu catalogo</label>
+          <input id="sol-search" placeholder="Escribe: biometria, radiografia, TAC, ultrasonido..." autocomplete="off" style="width:100%;padding:8px;border:1px solid #cfd8e0;border-radius:8px;margin:4px 0 6px;box-sizing:border-box">
+          <div id="sol-results" class="exp-dx-results"></div>
+          <div class="exp-dx-banner">No esta en tu catalogo? <button type="button" id="sol-addcustom" class="exp-dx-link">+ Agregar estudio manual</button></div>
+          <div id="sol-customform" style="display:none" class="exp-dx-custom">
+            <input id="sol-cnombre" placeholder="Nombre del estudio">
+            <button type="button" id="sol-csave" class="exp-btn exp-btn-sec">Agregar</button>
+          </div>
+          <div style="margin-top:10px"><label style="font-size:12px;color:#1a3a5c;font-weight:700">Estudios solicitados</label></div>
+          <div id="sol-sel"></div>
+          <div class="exp-f" style="margin-top:6px"><label>Observaciones para el laboratorio o gabinete</label><textarea id="sol-obs" rows="2"></textarea></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button type="button" id="sol-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button>
+            <button type="button" id="sol-guardar" class="exp-btn exp-btn-pri">Guardar solicitud</button>
+          </div>
+          <span class="exp-msg" id="sol-msg"></span>
+        </div>
       </div>
       <div class="exp-ft">
         <button class="exp-btn exp-btn-sec" id="exp-buscar" type="button">Buscar por folio</button>
@@ -4877,6 +4901,87 @@ renderVer();render();
         if(r.error)throw r.error;nmsg('Nota guardada \u2713','ok');
       }catch(e){nmsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar nota';
+    };
+  })();
+
+  /* ===== Solicitud de estudios (usa el catalogo) (aditivo) ===== */
+  (function initSol(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function enc(s){return encodeURIComponent(String(s==null?'':s));}
+    function dec(s){return decodeURIComponent(String(s||''));}
+    function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+
+    var DIAG=['Laboratorio','Tomografia','Tomografía','Ultrasonido','Mastografia','Mastografía','Densitometria','Densitometría','Fluoroscopia','Estudios externos','Imagenologia intrahospitalaria','Imagenología intrahospitalaria','Imagenologia','Imagenología'];
+    function catEstudios(){var c=(window.CAT||[]);var out=[];for(var i=0;i<c.length;i++){var cat=c[i][3]||'';if(DIAG.indexOf(cat)>=0){out.push({nombre:c[i][0],categoria:cat});}}return out;}
+    var ALL=catEstudios();
+
+    function smsg(t,c){var m=elx('sol-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    (function(){var f=elx('sol-fecha');if(f&&!f.value){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());f.value=d.toISOString().slice(0,16);}})();
+
+    function yaEsta(nom){var items=elx('sol-sel').querySelectorAll('.sol-item');for(var i=0;i<items.length;i++){if(dec(items[i].getAttribute('data-nom'))===nom)return true;}return false;}
+    function addItem(nom,cat){
+      if(!nom||yaEsta(nom))return;
+      var it=document.createElement('div');it.className='sol-item';it.setAttribute('data-nom',enc(nom));it.setAttribute('data-cat',enc(cat||''));
+      it.style.cssText='background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:7px;margin-bottom:6px';
+      it.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:13px">'+esc(nom)+'</b><button type="button" class="ant-del" title="Quitar">&times;</button></div><input class="sol-just" placeholder="Sospecha clinica / justificacion (opcional)" style="width:100%;margin-top:5px;padding:6px;border:1px solid #cfd8e0;border-radius:6px;font-size:13px;box-sizing:border-box">';
+      it.querySelector('.ant-del').onclick=function(){it.remove();};
+      elx('sol-sel').appendChild(it);
+    }
+
+    function renderRes(q){
+      var box=elx('sol-results');if(!box)return;
+      if(!q||q.length<2){box.className='exp-dx-results';box.innerHTML='';return;}
+      var nq=norm(q),hits=[];
+      for(var i=0;i<ALL.length&&hits.length<40;i++){if(norm(ALL[i].nombre).indexOf(nq)>=0)hits.push(ALL[i]);}
+      if(!hits.length){box.className='exp-dx-results show';box.innerHTML='<div class="exp-dx-row" style="cursor:default;color:#9aa4b0">Sin resultados &mdash; agregalo manual abajo.</div>';return;}
+      box.innerHTML=hits.map(function(d){return '<div class="exp-dx-row" data-n="'+enc(d.nombre)+'" data-c="'+enc(d.categoria)+'"><b>'+esc(d.categoria)+'</b> '+esc(d.nombre)+'</div>';}).join('');
+      box.className='exp-dx-results show';
+      box.querySelectorAll('.exp-dx-row[data-n]').forEach(function(row){row.addEventListener('click',function(){addItem(dec(row.getAttribute('data-n')),dec(row.getAttribute('data-c')));elx('sol-search').value='';renderRes('');});});
+    }
+    if(elx('sol-search'))elx('sol-search').addEventListener('input',function(){renderRes(this.value);});
+    if(elx('sol-addcustom'))elx('sol-addcustom').onclick=function(){var f=elx('sol-customform');f.style.display=(f.style.display==='none')?'flex':'none';};
+    if(elx('sol-csave'))elx('sol-csave').onclick=function(){var n=gv('sol-cnombre');if(!n){smsg('Escribe el nombre del estudio.','err');return;}addItem(n,'Manual');elx('sol-cnombre').value='';elx('sol-customform').style.display='none';};
+
+    function gather(){
+      var items=Array.prototype.slice.call(elx('sol-sel').querySelectorAll('.sol-item'));
+      return items.map(function(it){return {nombre:dec(it.getAttribute('data-nom')),categoria:dec(it.getAttribute('data-cat')),justificacion:(it.querySelector('.sol-just')||{}).value||''};});
+    }
+    function edadDe(){var f=elx('exp-fnac');if(!f||!f.value)return '';var b=new Date(f.value),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return isNaN(a)?'':a;}
+    function paciente(){return (elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||gv('fn')||'(sin nombre)';}
+    function medico(){return gv('exp-medico')||gv('fmd')||'';}
+    function fechaTxt(){var v=gv('sol-fecha');if(!v)return '';try{return new Date(v).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return v;}}
+
+    function buildHTML(){
+      var est=gather();
+      var rows=est.map(function(e,i){return '<tr><td style="border:1px solid #cfd8e0;padding:5px;text-align:center">'+(i+1)+'</td><td style="border:1px solid #cfd8e0;padding:5px">'+esc(e.nombre)+'</td><td style="border:1px solid #cfd8e0;padding:5px;font-size:11px;color:#5a6474">'+esc(e.categoria)+'</td><td style="border:1px solid #cfd8e0;padding:5px">'+esc(e.justificacion)+'</td></tr>';}).join('');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:13px;line-height:1.4">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:12px"><div style="font-size:20px;font-weight:800;color:#1a3a5c">Clinica Alejandria</div><div style="font-size:11px;color:#5a6474">Salud &middot; Confianza &middot; Compromiso</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:15px;font-weight:700;text-align:center;margin-bottom:10px">SOLICITUD DE ESTUDIOS</div>';
+      h+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:8px"><tr><td style="padding:2px"><b>Folio:</b> '+esc(gv('exp-folio'))+'</td><td style="padding:2px"><b>Fecha:</b> '+esc(fechaTxt())+'</td></tr><tr><td style="padding:2px"><b>Paciente:</b> '+esc(paciente())+'</td><td style="padding:2px"><b>Edad:</b> '+esc(edadDe())+'</td></tr><tr><td style="padding:2px"><b>Prioridad:</b> '+esc(gv('sol-prioridad'))+'</td><td style="padding:2px"></td></tr></table>';
+      h+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#eef5fc"><th style="border:1px solid #cfd8e0;padding:5px;width:28px">#</th><th style="border:1px solid #cfd8e0;padding:5px;text-align:left">Estudio</th><th style="border:1px solid #cfd8e0;padding:5px;text-align:left">Tipo</th><th style="border:1px solid #cfd8e0;padding:5px;text-align:left">Justificacion / sospecha</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" style="border:1px solid #cfd8e0;padding:8px;text-align:center;color:#9aa4b0">Sin estudios</td></tr>')+'</tbody></table>';
+      if(gv('sol-obs'))h+='<div style="margin-top:8px;font-size:12px"><b>Observaciones:</b> '+esc(gv('sol-obs'))+'</div>';
+      h+='<div style="margin-top:46px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:4px;font-weight:700">'+esc(medico())+'</div><div style="font-size:11px;color:#5a6474">Medico solicitante</div></div></div>';
+      return h;
+    }
+
+    if(elx('sol-pdf'))elx('sol-pdf').onclick=function(){
+      var pc=elx('nota-print');if(!pc){smsg('No se pudo preparar el PDF.','err');return;}
+      pc.innerHTML=buildHTML();document.body.classList.add('printing-nota');
+      function done(){document.body.classList.remove('printing-nota');window.removeEventListener('afterprint',done);}
+      window.addEventListener('afterprint',done);setTimeout(function(){window.print();},60);
+    };
+    if(elx('sol-guardar'))elx('sol-guardar').onclick=async function(){
+      var folio=gv('exp-folio');if(!folio){smsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      var est=gather();if(!est.length){smsg('Agrega al menos un estudio.','err');return;}
+      if(!window.caSupa){smsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('sol-guardar');b.textContent='Guardando...';
+      try{
+        var r=await window.caSupa.from('solicitudes').insert({folio:folio,tipo:'estudios',fecha:(gv('sol-fecha')?new Date(gv('sol-fecha')).toISOString():new Date().toISOString()),prioridad:gv('sol-prioridad'),medico:medico(),contenido:{estudios:est,observaciones:gv('sol-obs')}});
+        if(r.error)throw r.error;smsg('Solicitud guardada \u2713','ok');
+      }catch(e){smsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar solicitud';
     };
   })();
 })();
