@@ -4454,6 +4454,36 @@ renderVer();render();
           <span class="exp-msg" id="ant-msg"></span>
         </div>
         <div data-p="consulta" style="display:none">
+          <div class="ant-h">Nota de consulta / evolucion</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Fecha y hora</label><input id="nota-fecha" type="datetime-local"></div>
+            <div class="exp-f"><label>Tipo de nota</label><select id="nota-tipo"><option>Consulta</option><option>Evolucion</option></select></div>
+          </div>
+          <div class="exp-f"><label>Motivo de consulta</label><input id="nota-motivo" placeholder="Motivo principal de la visita"></div>
+          <div class="exp-f"><label>Padecimiento actual</label><textarea id="nota-padecimiento" rows="3" placeholder="Inicio, evolucion, sintomas..."></textarea></div>
+          <div class="ant-h">Signos vitales</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>T/A (mmHg)</label><input id="nota-ta" placeholder="120/80"></div>
+            <div class="exp-f"><label>FC (lpm)</label><input id="nota-fc" type="number" min="0"></div>
+            <div class="exp-f"><label>FR (rpm)</label><input id="nota-fr" type="number" min="0"></div>
+            <div class="exp-f"><label>Temp (C)</label><input id="nota-temp" type="number" step="0.1"></div>
+            <div class="exp-f"><label>SatO2 (%)</label><input id="nota-sat" type="number" min="0" max="100"></div>
+            <div class="exp-f"><label>Peso (kg)</label><input id="nota-peso" type="number" step="0.1"></div>
+            <div class="exp-f"><label>Talla (m)</label><input id="nota-talla" type="number" step="0.01"></div>
+            <div class="exp-f"><label>IMC</label><input id="nota-imc" readonly placeholder="auto"></div>
+          </div>
+          <div class="exp-f"><label>Exploracion fisica</label><textarea id="nota-ef" rows="3"></textarea></div>
+          <div style="margin:4px 0 8px"><button type="button" id="nota-gl-btn" class="exp-btn exp-btn-sec">Calculadora Glasgow</button></div>
+          <div id="nota-gl-panel" style="display:none;background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:8px;margin-bottom:8px">
+            <div class="exp-g2">
+              <div class="exp-f"><label>Apertura ocular</label><select id="gl-ojo"><option value="4">4 - Espontanea</option><option value="3">3 - A la voz</option><option value="2">2 - Al dolor</option><option value="1">1 - Ninguna</option></select></div>
+              <div class="exp-f"><label>Respuesta verbal</label><select id="gl-verbal"><option value="5">5 - Orientado</option><option value="4">4 - Confuso</option><option value="3">3 - Palabras inapropiadas</option><option value="2">2 - Sonidos incomprensibles</option><option value="1">1 - Ninguna</option></select></div>
+              <div class="exp-f"><label>Respuesta motora</label><select id="gl-motor"><option value="6">6 - Obedece ordenes</option><option value="5">5 - Localiza el dolor</option><option value="4">4 - Retira al dolor</option><option value="3">3 - Flexion anormal</option><option value="2">2 - Extension anormal</option><option value="1">1 - Ninguna</option></select></div>
+            </div>
+            <div style="font-weight:700;color:#1a3a5c;margin:6px 0" id="gl-result">Glasgow: 15/15 - Leve</div>
+            <button type="button" id="gl-insert" class="exp-btn exp-btn-sec">Insertar en exploracion fisica</button>
+          </div>
+          <div class="ant-h">Diagnosticos</div>
           <label style="font-size:12px;color:#1a3a5c;font-weight:700">Buscar diagnostico (CIE-10)</label>
           <input id="exp-dx-search" placeholder="Escribe: diabetes, lumbalgia, J45..." autocomplete="off" style="width:100%;padding:8px;border:1px solid #cfd8e0;border-radius:8px;margin:4px 0 6px;box-sizing:border-box">
           <div id="exp-dx-results" class="exp-dx-results"></div>
@@ -4467,6 +4497,14 @@ renderVer();render();
           <div id="exp-dx-sel" class="exp-dx-sel"></div>
           <button type="button" id="exp-dx-guardar" class="exp-btn exp-btn-pri" style="margin-top:8px">Aplicar y guardar diagnosticos</button>
           <span class="exp-msg" id="exp-dx-msg"></span>
+          <div class="ant-h">Plan y tratamiento</div>
+          <div class="exp-f"><label>Plan / indicaciones / tratamiento</label><textarea id="nota-plan" rows="3"></textarea></div>
+          <div class="exp-f"><label>Pronostico</label><input id="nota-pronostico" placeholder="Ej. Bueno para la vida y la funcion"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button type="button" id="nota-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button>
+            <button type="button" id="nota-guardar" class="exp-btn exp-btn-pri">Guardar nota</button>
+          </div>
+          <span class="exp-msg" id="nota-msg"></span>
         </div>
         <div data-p="consentimientos" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
       </div>
@@ -4619,6 +4657,7 @@ renderVer();render();
     });
     renderSel();
     window.expCargarDx=function(a){sel=Array.isArray(a)?a.map(function(d){return {clave:d.clave||'',nombre:d.nombre||'',custom:!!d.custom};}):[];renderSel();};
+    window.expGetDx=function(){return sel.map(function(d){return {clave:d.clave,nombre:d.nombre,custom:d.custom};});};
   })();
 
   /* ===== Modulo Antecedentes (aditivo) ===== */
@@ -4749,6 +4788,96 @@ renderVer();render();
     };
 
     aplicarCond();
+  })();
+
+  /* ===== Nota de consulta/evolucion + Glasgow + PDF (aditivo) ===== */
+  (function initNota(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    var st=document.createElement('style');
+    st.textContent="#nota-print{display:none}@media print{body.printing-nota *{visibility:hidden!important}body.printing-nota #nota-print,body.printing-nota #nota-print *{visibility:visible!important}body.printing-nota #nota-print{display:block!important;position:absolute;left:0;top:0;width:100%;padding:20px;box-sizing:border-box}}";
+    document.head.appendChild(st);
+    var pc=document.createElement('div');pc.id='nota-print';pc.className='no-screen';document.body.appendChild(pc);
+
+    function nmsg(t,c){var m=elx('nota-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+
+    // fecha por defecto = ahora
+    (function(){var f=elx('nota-fecha');if(f&&!f.value){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());f.value=d.toISOString().slice(0,16);}})();
+
+    // IMC automatico
+    function calcIMC(){var p=parseFloat(gv('nota-peso'))||0,t=parseFloat(gv('nota-talla'))||0;var o=elx('nota-imc');if(!o)return;o.value=(p>0&&t>0)?(p/(t*t)).toFixed(1):'';}
+    if(elx('nota-peso'))elx('nota-peso').addEventListener('input',calcIMC);
+    if(elx('nota-talla'))elx('nota-talla').addEventListener('input',calcIMC);
+
+    // Glasgow
+    function glTotal(){return (parseInt(gv('gl-ojo'))||0)+(parseInt(gv('gl-verbal'))||0)+(parseInt(gv('gl-motor'))||0);}
+    function glClas(t){return t>=13?'Leve':(t>=9?'Moderado':'Grave');}
+    function glUpd(){var t=glTotal();var r=elx('gl-result');if(r)r.textContent='Glasgow: '+t+'/15 - '+glClas(t);}
+    ['gl-ojo','gl-verbal','gl-motor'].forEach(function(id){var e=elx(id);if(e)e.addEventListener('change',glUpd);});
+    if(elx('nota-gl-btn'))elx('nota-gl-btn').onclick=function(){var p=elx('nota-gl-panel');p.style.display=(p.style.display==='none')?'':'none';glUpd();};
+    if(elx('gl-insert'))elx('gl-insert').onclick=function(){var t=glTotal();var ef=elx('nota-ef');var txt='Glasgow: '+t+'/15 ('+glClas(t)+') [O'+gv('gl-ojo')+' V'+gv('gl-verbal')+' M'+gv('gl-motor')+']';ef.value=(ef.value?ef.value+'\n':'')+txt;nmsg('Glasgow insertado \u2713','ok');};
+
+    function edadDe(){var f=elx('exp-fnac');if(!f||!f.value)return '';var b=new Date(f.value),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return isNaN(a)?'':a;}
+    function paciente(){return (elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||gv('fn')||'(sin nombre)';}
+    function medico(){return gv('exp-medico')||gv('fmd')||'';}
+    function dxList(){try{if(window.expGetDx)return window.expGetDx();}catch(e){}return [];}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function fechaTxt(){var v=gv('nota-fecha');if(!v)return '';try{var d=new Date(v);return d.toLocaleString('es-MX',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return v;}}
+
+    function buildHTML(){
+      var sv=[];
+      function add(l,val){if(val)sv.push('<b>'+l+':</b> '+esc(val));}
+      add('T/A',gv('nota-ta'));add('FC',gv('nota-fc')&&gv('nota-fc')+' lpm');add('FR',gv('nota-fr')&&gv('nota-fr')+' rpm');
+      add('Temp',gv('nota-temp')&&gv('nota-temp')+' C');add('SatO2',gv('nota-sat')&&gv('nota-sat')+'%');
+      add('Peso',gv('nota-peso')&&gv('nota-peso')+' kg');add('Talla',gv('nota-talla')&&gv('nota-talla')+' m');add('IMC',gv('nota-imc'));
+      var dx=dxList().map(function(d){return (d.clave?d.clave+' ':'')+d.nombre;});
+      function sec(t,c){return c?('<div style="margin-top:10px"><div style="font-size:12px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.4px">'+t+'</div><div style="font-size:13px;white-space:pre-wrap;margin-top:2px">'+esc(c)+'</div></div>'):'';}
+      var h='';
+      h+='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:13px;line-height:1.4">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:12px">';
+      h+='<div style="font-size:20px;font-weight:800;color:#1a3a5c">Clinica Alejandria</div>';
+      h+='<div style="font-size:11px;color:#5a6474">Salud &middot; Confianza &middot; Compromiso</div>';
+      h+='<div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:15px;font-weight:700;text-align:center;margin-bottom:10px">NOTA DE '+esc((gv('nota-tipo')||'CONSULTA').toUpperCase())+'</div>';
+      h+='<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:6px"><tr>';
+      h+='<td style="padding:2px"><b>Folio:</b> '+esc(gv('exp-folio'))+'</td><td style="padding:2px"><b>Fecha:</b> '+esc(fechaTxt())+'</td></tr><tr>';
+      h+='<td style="padding:2px"><b>Paciente:</b> '+esc(paciente())+'</td><td style="padding:2px"><b>Edad:</b> '+esc(edadDe())+'</td></tr></table>';
+      if(sv.length)h+='<div style="font-size:12px;background:#f5f8fb;border:1px solid #e3ebf2;border-radius:6px;padding:6px;margin-bottom:4px"><b>Signos vitales:</b> '+sv.join(' &nbsp;|&nbsp; ')+'</div>';
+      h+=sec('Motivo de consulta',gv('nota-motivo'));
+      h+=sec('Padecimiento actual',gv('nota-padecimiento'));
+      h+=sec('Exploracion fisica',gv('nota-ef'));
+      if(dx.length)h+=sec('Diagnostico(s)',dx.join('\n'));
+      h+=sec('Plan y tratamiento',gv('nota-plan'));
+      h+=sec('Pronostico',gv('nota-pronostico'));
+      h+='<div style="margin-top:46px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:4px;font-weight:700">'+esc(medico())+'</div><div style="font-size:11px;color:#5a6474">Medico responsable</div></div>';
+      h+='</div>';
+      return h;
+    }
+
+    if(elx('nota-pdf'))elx('nota-pdf').onclick=function(){
+      pc.innerHTML=buildHTML();
+      document.body.classList.add('printing-nota');
+      function done(){document.body.classList.remove('printing-nota');window.removeEventListener('afterprint',done);}
+      window.addEventListener('afterprint',done);
+      setTimeout(function(){window.print();},60);
+    };
+
+    if(elx('nota-guardar'))elx('nota-guardar').onclick=async function(){
+      var folio=gv('exp-folio');
+      if(!folio){nmsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      var contenido={
+        motivo:gv('nota-motivo'),padecimiento:gv('nota-padecimiento'),
+        signos:{ta:gv('nota-ta'),fc:gv('nota-fc'),fr:gv('nota-fr'),temp:gv('nota-temp'),sat:gv('nota-sat'),peso:gv('nota-peso'),talla:gv('nota-talla'),imc:gv('nota-imc')},
+        exploracion:gv('nota-ef'),diagnosticos:dxList(),plan:gv('nota-plan'),pronostico:gv('nota-pronostico')
+      };
+      if(!window.caSupa){nmsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('nota-guardar');b.textContent='Guardando...';
+      try{
+        var r=await window.caSupa.from('notas').insert({folio:folio,tipo:gv('nota-tipo')||'Consulta',fecha:(gv('nota-fecha')?new Date(gv('nota-fecha')).toISOString():new Date().toISOString()),medico:medico(),contenido:contenido});
+        if(r.error)throw r.error;nmsg('Nota guardada \u2713','ok');
+      }catch(e){nmsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar nota';
+    };
   })();
 })();
 </script>
