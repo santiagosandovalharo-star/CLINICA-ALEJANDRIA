@@ -4513,7 +4513,109 @@ renderVer();render();
           </div>
           <span class="exp-msg" id="nota-msg"></span>
         </div>
-        <div data-p="consentimientos" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
+        <div data-p="consentimientos" style="display:none">
+          <div class="ant-h">Consentimiento informado y carta responsiva (tercer pagador)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <button type="button" id="con-traer" class="exp-btn exp-btn-sec">Traer datos del paciente (de la Ficha)</button>
+          </div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Fecha</label><input id="con-fecha" type="date"></div>
+            <div class="exp-f"><label>Hora</label><input id="con-hora" type="time"></div>
+          </div>
+
+          <div class="ant-h">I. Datos del paciente</div>
+          <div class="exp-g2">
+            <div class="exp-f" style="grid-column:1/-1"><label>Nombre completo</label><input id="con-pac-nombre"></div>
+            <div class="exp-f"><label>CURP</label><input id="con-pac-curp"></div>
+            <div class="exp-f"><label>Fecha de nacimiento</label><input id="con-pac-fnac" type="date"></div>
+            <div class="exp-f"><label>Edad</label><input id="con-pac-edad"></div>
+            <div class="exp-f"><label>Sexo</label><input id="con-pac-sexo"></div>
+            <div class="exp-f"><label>Estado civil</label><input id="con-pac-edocivil"></div>
+            <div class="exp-f"><label>Telefono</label><input id="con-pac-tel"></div>
+            <div class="exp-f" style="grid-column:1/-1"><label>Domicilio</label><input id="con-pac-dom"></div>
+            <div class="exp-f"><label>Correo electronico</label><input id="con-pac-correo"></div>
+            <div class="exp-f"><label>Medico tratante</label><input id="con-pac-medico"></div>
+            <div class="exp-f" style="grid-column:1/-1"><label>Diagnostico de ingreso</label><input id="con-pac-dx"></div>
+            <div class="exp-f"><label>Fecha y hora de ingreso</label><input id="con-pac-ingreso" type="datetime-local"></div>
+          </div>
+          <div class="ant-chk">
+            <label><input type="checkbox" id="con-tipo-hosp"> Hospitalizacion</label>
+            <label><input type="checkbox" id="con-tipo-urg"> Urgencias</label>
+            <label><input type="checkbox" id="con-tipo-cir"> Cirugia</label>
+          </div>
+
+          <div class="ant-h">II. Datos del responsable de pago / tercer pagador</div>
+          <div class="exp-g2">
+            <div class="exp-f" style="grid-column:1/-1"><label>Nombre completo o Razon Social</label><input id="con-resp-nombre"></div>
+            <div class="exp-f"><label>RFC</label><input id="con-resp-rfc"></div>
+            <div class="exp-f"><label>CURP (persona fisica)</label><input id="con-resp-curp"></div>
+            <div class="exp-f" style="grid-column:1/-1"><label>Domicilio fiscal</label><input id="con-resp-domf"></div>
+            <div class="exp-f"><label>Telefono</label><input id="con-resp-tel"></div>
+            <div class="exp-f"><label>Correo electronico</label><input id="con-resp-correo"></div>
+            <div class="exp-f"><label>Relacion con el paciente</label><input id="con-resp-rel"></div>
+            <div class="exp-f"><label>Identificacion oficial</label><input id="con-resp-ident"></div>
+            <div class="exp-f"><label>No. de identificacion</label><input id="con-resp-noident"></div>
+            <div class="exp-f"><label>Empresa</label><input id="con-resp-empresa"></div>
+            <div class="exp-f"><label>Aseguradora</label><input id="con-resp-aseg"></div>
+            <div class="exp-f"><label>No. de poliza</label><input id="con-resp-poliza"></div>
+            <div class="exp-f"><label>No. de siniestro</label><input id="con-resp-sin"></div>
+            <div class="exp-f"><label>No. de autorizacion</label><input id="con-resp-aut"></div>
+          </div>
+
+          <div class="ant-h">V. Coberturas que acepta cubrir</div>
+          <div class="ant-chk" id="con-cob">
+            <label><input type="checkbox" value="Honorarios medicos"> Honorarios medicos</label>
+            <label><input type="checkbox" value="Hospitalizacion"> Hospitalizacion</label>
+            <label><input type="checkbox" value="Cirugia"> Cirugia</label>
+            <label><input type="checkbox" value="Terapia Intensiva"> Terapia Intensiva</label>
+            <label><input type="checkbox" value="Imagenologia"> Imagenologia</label>
+            <label><input type="checkbox" value="Laboratorio"> Laboratorio</label>
+            <label><input type="checkbox" value="Medicamentos"> Medicamentos</label>
+            <label><input type="checkbox" value="Material de curacion"> Material de curacion</label>
+            <label><input type="checkbox" value="Implantes"> Implantes</label>
+            <label><input type="checkbox" value="Protesis"> Protesis</label>
+            <label><input type="checkbox" value="Rehabilitacion"> Rehabilitacion</label>
+            <label><input type="checkbox" value="Ambulancia"> Ambulancia</label>
+            <label><input type="checkbox" value="Interconsultas"> Interconsultas</label>
+            <label><input type="checkbox" value="Otros servicios necesarios"> Otros servicios necesarios</label>
+          </div>
+
+          <div class="ant-h">IX. Proteccion de datos personales</div>
+          <div class="exp-f"><label>Aviso de privacidad</label><select id="con-priv"><option value="">--</option><option>Acepto</option><option>No acepto</option></select></div>
+
+          <div class="ant-h">Documentos anexos entregados</div>
+          <div class="ant-chk" id="con-anx">
+            <label><input type="checkbox" value="Identificacion oficial del paciente"> Ident. del paciente</label>
+            <label><input type="checkbox" value="Identificacion del responsable de pago"> Ident. del responsable</label>
+            <label><input type="checkbox" value="Comprobante de domicilio"> Comprobante de domicilio</label>
+            <label><input type="checkbox" value="Constancia fiscal"> Constancia fiscal</label>
+            <label><input type="checkbox" value="Poliza de seguro"> Poliza de seguro</label>
+            <label><input type="checkbox" value="Credencial de aseguradora"> Credencial de aseguradora</label>
+            <label><input type="checkbox" value="Carta de autorizacion"> Carta de autorizacion</label>
+            <label><input type="checkbox" value="Consentimiento informado medico"> Consentimiento informado medico</label>
+            <label><input type="checkbox" value="Aviso de privacidad"> Aviso de privacidad</label>
+            <label><input type="checkbox" value="Contrato de prestacion de servicios"> Contrato de servicios</label>
+            <label><input type="checkbox" value="Pagare o garantia"> Pagare o garantia</label>
+          </div>
+
+          <div class="ant-h">Firmas (nombres para el documento)</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Paciente</label><input id="con-f-pac"></div>
+            <div class="exp-f"><label>Responsable de pago</label><input id="con-f-resp"></div>
+            <div class="exp-f"><label>Testigo 1</label><input id="con-f-t1"></div>
+            <div class="exp-f"><label>Testigo 2</label><input id="con-f-t2"></div>
+            <div class="exp-f"><label>Admision - nombre del colaborador</label><input id="con-f-adm"></div>
+            <div class="exp-f"><label>Admision - cargo</label><input id="con-f-cargo"></div>
+          </div>
+
+          <div class="exp-f" style="margin-top:6px"><label>Observaciones</label><textarea id="con-obs" rows="2"></textarea></div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button type="button" id="con-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button>
+            <button type="button" id="con-guardar" class="exp-btn exp-btn-pri">Guardar consentimiento</button>
+          </div>
+          <span class="exp-msg" id="con-msg"></span>
+        </div>
         <div data-p="solicitudes" style="display:none">
           <div class="ant-h">Solicitud de estudios (laboratorio / imagen)</div>
           <div class="exp-g2">
@@ -4612,6 +4714,7 @@ renderVer();render();
       el('exp-dx').value=d.diagnostico_principal||'';
       if(window.expCargarDx)window.expCargarDx(d.diagnosticos||[]);
       if(window.expCargarAnt)window.expCargarAnt(d.antecedentes||{});
+      if(window.expCargarConsent)window.expCargarConsent(d.consentimiento||{});
       el('exp-medico').value=d.medico_tratante||'';
       msg('Expediente cargado \u2713','ok');
     }catch(e){msg('No se pudo buscar: '+(e.message||e),'err');}
@@ -5017,6 +5120,109 @@ renderVer();render();
         if(r.error)throw r.error;smsg('Solicitud guardada \u2713','ok');
       }catch(e){smsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar solicitud';
+    };
+  })();
+
+  /* ===== Consentimiento / Carta responsiva (aditivo) ===== */
+  (function initConsent(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function cmsg(t,c){var m=elx('con-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+
+    (function(){var d=new Date();if(elx('con-fecha')&&!elx('con-fecha').value)elx('con-fecha').value=d.toISOString().slice(0,10);if(elx('con-hora')&&!elx('con-hora').value)elx('con-hora').value=d.toTimeString().slice(0,5);})();
+
+    function edadDe(f){if(!f)return '';var b=new Date(f),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return isNaN(a)?'':a;}
+    if(elx('con-traer'))elx('con-traer').onclick=function(){
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||gv('fn')||'';
+      if(nom&&nom.indexOf('sin nombre')<0&&!gv('con-pac-nombre'))elx('con-pac-nombre').value=nom;
+      if(gv('exp-fnac')){elx('con-pac-fnac').value=gv('exp-fnac');elx('con-pac-edad').value=edadDe(gv('exp-fnac'));}
+      if(gv('exp-edocivil')&&!gv('con-pac-edocivil'))elx('con-pac-edocivil').value=gv('exp-edocivil');
+      if(gv('exp-medico')&&!gv('con-pac-medico'))elx('con-pac-medico').value=gv('exp-medico');
+      if(gv('exp-dx')&&!gv('con-pac-dx'))elx('con-pac-dx').value=gv('exp-dx');
+      if(elx('ant-sexo')&&elx('ant-sexo').value&&!gv('con-pac-sexo'))elx('con-pac-sexo').value=elx('ant-sexo').value;
+      cmsg('Datos del paciente traidos \u2713','ok');
+    };
+
+    function checks(id){return Array.prototype.slice.call(document.querySelectorAll('#'+id+' input:checked')).map(function(c){return c.value;});}
+    function gather(){
+      return {
+        fecha:gv('con-fecha'),hora:gv('con-hora'),
+        paciente:{nombre:gv('con-pac-nombre'),curp:gv('con-pac-curp'),fnac:gv('con-pac-fnac'),edad:gv('con-pac-edad'),sexo:gv('con-pac-sexo'),edocivil:gv('con-pac-edocivil'),tel:gv('con-pac-tel'),domicilio:gv('con-pac-dom'),correo:gv('con-pac-correo'),medico:gv('con-pac-medico'),dx:gv('con-pac-dx'),ingreso:gv('con-pac-ingreso'),tipo:{hosp:elx('con-tipo-hosp').checked,urg:elx('con-tipo-urg').checked,cir:elx('con-tipo-cir').checked}},
+        responsable:{nombre:gv('con-resp-nombre'),rfc:gv('con-resp-rfc'),curp:gv('con-resp-curp'),domf:gv('con-resp-domf'),tel:gv('con-resp-tel'),correo:gv('con-resp-correo'),rel:gv('con-resp-rel'),ident:gv('con-resp-ident'),noident:gv('con-resp-noident'),empresa:gv('con-resp-empresa'),aseg:gv('con-resp-aseg'),poliza:gv('con-resp-poliza'),siniestro:gv('con-resp-sin'),autorizacion:gv('con-resp-aut')},
+        coberturas:checks('con-cob'),privacidad:gv('con-priv'),anexos:checks('con-anx'),
+        firmas:{paciente:gv('con-f-pac'),responsable:gv('con-f-resp'),testigo1:gv('con-f-t1'),testigo2:gv('con-f-t2'),admision:gv('con-f-adm'),cargo:gv('con-f-cargo')},
+        observaciones:gv('con-obs')
+      };
+    }
+
+    function row(l,v){return '<tr><td style="border:1px solid #cfd8e0;padding:4px;font-weight:600;width:38%">'+l+'</td><td style="border:1px solid #cfd8e0;padding:4px">'+esc(v||'')+'</td></tr>';}
+    function P(t){return '<p style="margin:5px 0;text-align:justify">'+t+'</p>';}
+    function H(t){return '<div style="font-weight:700;color:#1a3a5c;margin:10px 0 3px;font-size:12.5px">'+t+'</div>';}
+    function firma(nom,rol){return '<div style="text-align:center;flex:1;min-width:200px;margin-top:34px"><div style="border-top:1px solid #1a2733;margin:0 10px;padding-top:3px;font-weight:600">'+esc(nom||'')+'</div><div style="font-size:10px;color:#5a6474">'+rol+'</div></div>';}
+
+    function buildHTML(){
+      var d=gather();var pc=d.paciente,rs=d.responsable;
+      var tipo=[];if(pc.tipo.hosp)tipo.push('Hospitalizacion');if(pc.tipo.urg)tipo.push('Urgencias');if(pc.tipo.cir)tipo.push('Cirugia');
+      var COB=['Honorarios medicos','Hospitalizacion','Cirugia','Terapia Intensiva','Imagenologia','Laboratorio','Medicamentos','Material de curacion','Implantes','Protesis','Rehabilitacion','Ambulancia','Interconsultas','Otros servicios necesarios'];
+      var cob=COB.map(function(x){return '<span style="display:inline-block;width:48%;font-size:11px">'+(d.coberturas.indexOf(x)>=0?'\u2611':'\u2610')+' '+x+'</span>';}).join('');
+      var ANX=['Identificacion oficial del paciente','Identificacion del responsable de pago','Comprobante de domicilio','Constancia fiscal','Poliza de seguro','Credencial de aseguradora','Carta de autorizacion','Consentimiento informado medico','Aviso de privacidad','Contrato de prestacion de servicios','Pagare o garantia'];
+      var anx=ANX.map(function(x){return '<span style="display:inline-block;width:48%;font-size:11px">'+(d.anexos.indexOf(x)>=0?'\u2611':'\u2610')+' '+x+'</span>';}).join('');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px;line-height:1.45">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center">FORMATO DE ADMISION HOSPITALARIA</div>';
+      h+='<div style="font-size:12px;font-weight:700;text-align:center;margin-bottom:8px">CONSENTIMIENTO INFORMADO Y CARTA RESPONSIVA DEL CLIENTE (TERCER PAGADOR O RESPONSABLE DE PAGO)</div>';
+      h+='<div style="font-size:11px;margin-bottom:6px"><b>Folio:</b> '+esc(gv('exp-folio'))+' &nbsp; <b>Fecha:</b> '+esc(d.fecha)+' &nbsp; <b>Hora:</b> '+esc(d.hora)+'</div>';
+      h+=H('I. DATOS DEL PACIENTE')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre completo',pc.nombre)+row('CURP',pc.curp)+row('Fecha de nacimiento',pc.fnac)+row('Edad',pc.edad)+row('Sexo',pc.sexo)+row('Estado civil',pc.edocivil)+row('Domicilio',pc.domicilio)+row('Telefono',pc.tel)+row('Correo electronico',pc.correo)+row('Medico tratante',pc.medico)+row('Diagnostico de ingreso',pc.dx)+row('Fecha y hora de ingreso',pc.ingreso)+row('Tipo de ingreso',tipo.join(', '))+'</table>';
+      h+=H('II. DATOS DEL RESPONSABLE DE PAGO O TERCER PAGADOR')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre o Razon Social',rs.nombre)+row('RFC',rs.rfc)+row('CURP',rs.curp)+row('Domicilio fiscal',rs.domf)+row('Telefono',rs.tel)+row('Correo electronico',rs.correo)+row('Relacion con el paciente',rs.rel)+row('Identificacion oficial',rs.ident)+row('No. de identificacion',rs.noident)+row('Empresa',rs.empresa)+row('Aseguradora',rs.aseg)+row('No. de poliza',rs.poliza)+row('No. de siniestro',rs.siniestro)+row('No. de autorizacion',rs.autorizacion)+'</table>';
+      h+=H('III. DECLARACION')+P('El suscrito manifiesta, bajo protesta de decir verdad, que cuenta con capacidad legal suficiente para obligarse como responsable de pago de los servicios medicos y hospitalarios otorgados al paciente antes referido.')+P('Reconoce que la atencion medica podra requerir procedimientos adicionales, medicamentos, materiales, implantes, estudios diagnosticos, honorarios medicos, hospitalizacion, terapia intensiva, rehabilitacion, interconsultas y cualquier otro servicio necesario de acuerdo con la evolucion clinica.');
+      h+=H('IV. CONSENTIMIENTO PARA LA ATENCION MEDICA')+P('Autorizo expresamente al cuerpo medico y al personal de Clinica Alejandria Salud Integral Especializada para realizar todos los procedimientos diagnosticos, terapeuticos, hospitalarios y administrativos que resulten medicamente necesarios para la atencion integral del paciente.')+P('Entiendo que los diagnosticos y tratamientos pueden modificarse conforme a la evolucion clinica y que dichas modificaciones forman parte del ejercicio profesional de la medicina.');
+      h+=H('V. RESPONSABILIDAD ECONOMICA')+P('Acepto cubrir el importe total de los servicios medicos y hospitalarios que no sean cubiertos por aseguradoras, empresas, instituciones o cualquier otro tercero obligado al pago.')+P('En caso de rechazo, improcedencia, reduccion o pago parcial por parte de una aseguradora o tercero pagador, me obligo a cubrir inmediatamente el saldo pendiente, sin necesidad de requerimiento adicional.')+P('Asimismo, acepto cubrir los gastos derivados de:')+'<div style="margin:4px 0">'+cob+'</div>';
+      h+=H('VI. GARANTIA DE PAGO')+P('Autorizo a la institucion a solicitar anticipos, depositos en garantia, cartas responsivas o cualquier otro mecanismo administrativo necesario para garantizar el cumplimiento de las obligaciones economicas derivadas de la presente atencion medica.');
+      h+=H('VII. AUTORIZACION PARA INTERCAMBIO DE INFORMACION')+P('Autorizo a la institucion para compartir informacion clinica y administrativa con medicos tratantes, aseguradoras, empresas, hospitales, laboratorios, autoridades competentes y demas instituciones involucradas en la atencion del paciente, exclusivamente para fines medicos, administrativos, auditoria clinica y gestion de cobro, conforme a la legislacion aplicable.');
+      h+=H('VIII. AVISO SOBRE COBERTURAS')+P('Reconozco que cualquier autorizacion emitida por una aseguradora, empresa o institucion constituye unicamente una autorizacion administrativa preliminar y no garantiza el pago definitivo de la totalidad de los servicios prestados.')+P('Las diferencias no cubiertas seran responsabilidad del suscrito.');
+      h+=H('IX. PROTECCION DE DATOS PERSONALES')+P('Manifiesto haber recibido el Aviso de Privacidad de Clinica Alejandria Salud Integral Especializada, autorizando el tratamiento de mis datos personales y los del paciente para fines medicos, administrativos, fiscales, legales y de facturacion.')+'<div style="font-size:11px">'+(d.privacidad==='Acepto'?'\u2611':'\u2610')+' Acepto &nbsp;&nbsp; '+(d.privacidad==='No acepto'?'\u2611':'\u2610')+' No acepto</div>';
+      h+=H('X. ACEPTACION')+P('Declaro haber leido integramente el presente documento, comprendiendo plenamente su contenido y alcance legal, firmandolo de manera libre, voluntaria y sin presion alguna.');
+      h+='<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">'+firma(d.firmas.paciente,'Paciente')+firma(d.firmas.responsable,'Responsable de pago / Tercer pagador')+'</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+firma(d.firmas.testigo1,'Testigo 1')+firma(d.firmas.testigo2,'Testigo 2')+'</div>';
+      h+=H('ADMISION HOSPITALARIA')+'<div style="font-size:11px">Nombre del colaborador: '+esc(d.firmas.admision)+' &nbsp;|&nbsp; Cargo: '+esc(d.firmas.cargo)+'</div>';
+      h+=H('DOCUMENTOS ANEXOS ENTREGADOS')+'<div style="margin:3px 0">'+anx+'</div>';
+      if(d.observaciones)h+=H('OBSERVACIONES')+P(esc(d.observaciones));
+      h+='<p style="margin-top:10px;font-size:10px;color:#5a6474;text-align:justify">Este documento forma parte integrante del expediente clinico y administrativo de ingreso hospitalario y constituye el consentimiento informado y la aceptacion expresa de las obligaciones economicas derivadas de la prestacion de servicios medicos y hospitalarios por parte de Clinica Alejandria Salud Integral Especializada.</p>';
+      h+='</div>';
+      return h;
+    }
+
+    if(elx('con-pdf'))elx('con-pdf').onclick=function(){
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){cmsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Consentimiento</title></head><body style="margin:0;padding:16px">'+buildHTML()+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    };
+    if(elx('con-guardar'))elx('con-guardar').onclick=async function(){
+      var folio=gv('exp-folio');if(!folio){cmsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){cmsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('con-guardar');b.textContent='Guardando...';
+      try{
+        var r=await window.caSupa.from('expedientes').upsert({folio:folio,consentimiento:gather(),modificado_en:new Date().toISOString()},{onConflict:'folio'});
+        if(r.error)throw r.error;cmsg('Consentimiento guardado \u2713','ok');
+      }catch(e){cmsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar consentimiento';
+    };
+
+    window.expCargarConsent=function(o){
+      o=o||{};var pc=o.paciente||{},rs=o.responsable||{},fm=o.firmas||{};
+      function sv(id,v){var e=elx(id);if(e)e.value=(v==null?'':v);}
+      function sc(id,v){var e=elx(id);if(e)e.checked=!!v;}
+      sv('con-fecha',o.fecha);sv('con-hora',o.hora);
+      sv('con-pac-nombre',pc.nombre);sv('con-pac-curp',pc.curp);sv('con-pac-fnac',pc.fnac);sv('con-pac-edad',pc.edad);sv('con-pac-sexo',pc.sexo);sv('con-pac-edocivil',pc.edocivil);sv('con-pac-tel',pc.tel);sv('con-pac-dom',pc.domicilio);sv('con-pac-correo',pc.correo);sv('con-pac-medico',pc.medico);sv('con-pac-dx',pc.dx);sv('con-pac-ingreso',pc.ingreso);
+      var tp=pc.tipo||{};sc('con-tipo-hosp',tp.hosp);sc('con-tipo-urg',tp.urg);sc('con-tipo-cir',tp.cir);
+      sv('con-resp-nombre',rs.nombre);sv('con-resp-rfc',rs.rfc);sv('con-resp-curp',rs.curp);sv('con-resp-domf',rs.domf);sv('con-resp-tel',rs.tel);sv('con-resp-correo',rs.correo);sv('con-resp-rel',rs.rel);sv('con-resp-ident',rs.ident);sv('con-resp-noident',rs.noident);sv('con-resp-empresa',rs.empresa);sv('con-resp-aseg',rs.aseg);sv('con-resp-poliza',rs.poliza);sv('con-resp-sin',rs.siniestro);sv('con-resp-aut',rs.autorizacion);
+      Array.prototype.slice.call(document.querySelectorAll('#con-cob input')).forEach(function(c){c.checked=(o.coberturas||[]).indexOf(c.value)>=0;});
+      Array.prototype.slice.call(document.querySelectorAll('#con-anx input')).forEach(function(c){c.checked=(o.anexos||[]).indexOf(c.value)>=0;});
+      sv('con-priv',o.privacidad);
+      sv('con-f-pac',fm.paciente);sv('con-f-resp',fm.responsable);sv('con-f-t1',fm.testigo1);sv('con-f-t2',fm.testigo2);sv('con-f-adm',fm.admision);sv('con-f-cargo',fm.cargo);
+      sv('con-obs',o.observaciones);
     };
   })();
 })();
