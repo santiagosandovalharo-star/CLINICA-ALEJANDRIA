@@ -4695,6 +4695,21 @@ renderVer();render();
     function val(r,sel){var e=r.querySelector(sel);return e?String(e.value||'').trim():'';}
     function chk(r,sel){var e=r.querySelector(sel);return e?!!e.checked:false;}
 
+    // datalists para Patologias diagnosticadas (CIE-10 y medicamentos/insumos)
+    (function(){
+      if(!document.getElementById('ant-dx-cat')){
+        var d1=document.createElement('datalist');d1.id='ant-dx-cat';
+        var c10=(window.CIE10||[]);var o1='';for(var i=0;i<c10.length;i++){o1+='<option value="'+String(c10[i][1]).replace(/"/g,'&quot;')+'"></option>';}
+        d1.innerHTML=o1;document.body.appendChild(d1);
+      }
+      if(!document.getElementById('ant-tx-cat')){
+        var d2=document.createElement('datalist');d2.id='ant-tx-cat';
+        var TXC=['Medicamento','Material','Insumo','Implante'];var cat=(window.CAT||[]);var seen={};var o2='';
+        for(var j=0;j<cat.length;j++){if(TXC.indexOf(cat[j][3])>=0){var n=cat[j][0];if(!seen[n]){seen[n]=1;o2+='<option value="'+String(n).replace(/"/g,'&quot;')+'"></option>';}}}
+        d2.innerHTML=o2;document.body.appendChild(d2);
+      }
+    })();
+
     function calcEdad(){
       var f=elx('exp-fnac'),out=elx('ant-edad');
       if(!f||!f.value){if(out)out.value='';return null;}
@@ -4728,7 +4743,7 @@ renderVer();render();
       nada.onchange=function(){pend.disabled=nada.checked;if(nada.checked)pend.value='';};
       row.querySelector('.ant-del').onclick=function(){row.remove();};elx('ant-cir-list').appendChild(row);}
     function patRow(d){d=d||{};var row=document.createElement('div');row.className='ant-row';
-      row.innerHTML='<input class="pa-nom" placeholder="Patologia"><input class="pa-trat" placeholder="Tratamiento"><label class="ant-inline"><input type="checkbox" class="pa-sin"> Sin tratamiento</label><button type="button" class="ant-del" title="Quitar">&times;</button>';
+      row.innerHTML='<input class="pa-nom" list="ant-dx-cat" placeholder="Patologia (escribe, enlazado a CIE-10)"><input class="pa-trat" list="ant-tx-cat" placeholder="Tratamiento (medicamento/insumo)"><label class="ant-inline"><input type="checkbox" class="pa-sin"> Sin tratamiento</label><button type="button" class="ant-del" title="Quitar">&times;</button>';
       row.querySelector('.pa-nom').value=d.nombre||'';row.querySelector('.pa-trat').value=d.tratamiento||'';
       var sin=row.querySelector('.pa-sin'),tr=row.querySelector('.pa-trat');sin.checked=!!d.sinTratamiento;tr.disabled=sin.checked;
       sin.onchange=function(){tr.disabled=sin.checked;if(sin.checked)tr.value='';};
