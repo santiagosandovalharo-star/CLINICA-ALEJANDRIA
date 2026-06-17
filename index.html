@@ -4520,16 +4520,11 @@ renderVer();render();
             <div class="exp-f"><label>Fecha</label><input id="sol-fecha" type="datetime-local"></div>
             <div class="exp-f"><label>Prioridad</label><select id="sol-prioridad"><option>Rutina</option><option>Urgente</option></select></div>
           </div>
-          <label style="font-size:12px;color:#1a3a5c;font-weight:700">Buscar estudio en tu catalogo</label>
-          <input id="sol-search" placeholder="Escribe: biometria, radiografia, TAC, ultrasonido..." autocomplete="off" style="width:100%;padding:8px;border:1px solid #cfd8e0;border-radius:8px;margin:4px 0 6px;box-sizing:border-box">
-          <div id="sol-results" class="exp-dx-results"></div>
-          <div class="exp-dx-banner">No esta en tu catalogo? <button type="button" id="sol-addcustom" class="exp-dx-link">+ Agregar estudio manual</button></div>
-          <div id="sol-customform" style="display:none" class="exp-dx-custom">
-            <input id="sol-cnombre" placeholder="Nombre del estudio">
-            <button type="button" id="sol-csave" class="exp-btn exp-btn-sec">Agregar</button>
-          </div>
-          <div style="margin-top:10px"><label style="font-size:12px;color:#1a3a5c;font-weight:700">Estudios solicitados</label></div>
+          <datalist id="sol-cat"></datalist>
+          <label style="font-size:12px;color:#1a3a5c;font-weight:700">Estudios solicitados (hasta 30)</label>
+          <div style="font-size:11px;color:#5a6474;margin:2px 0 6px">Escribe y elige de tu catalogo, o capturalo manual. Usa &laquo;+ Agregar estudio&raquo; para mas.</div>
           <div id="sol-sel"></div>
+          <button type="button" id="sol-add" class="exp-btn exp-btn-sec" style="margin-top:4px">+ Agregar estudio</button>
           <div class="exp-f" style="margin-top:6px"><label>Observaciones para el laboratorio o gabinete</label><textarea id="sol-obs" rows="2"></textarea></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
             <button type="button" id="sol-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button>
@@ -4939,49 +4934,39 @@ renderVer();render();
     };
   })();
 
-  /* ===== Solicitud de estudios (usa el catalogo) (aditivo) ===== */
+  /* ===== Solicitud de estudios (filas + autocompletar) (aditivo) ===== */
   (function initSol(){
     function elx(id){return document.getElementById(id);}
     function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
     function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-    function enc(s){return encodeURIComponent(String(s==null?'':s));}
-    function dec(s){return decodeURIComponent(String(s||''));}
-    function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
-
-    var DIAG=['Laboratorio','Tomografia','Tomografía','Ultrasonido','Mastografia','Mastografía','Densitometria','Densitometría','Fluoroscopia','Estudios externos','Imagenologia intrahospitalaria','Imagenología intrahospitalaria','Imagenologia','Imagenología'];
-    function catEstudios(){var c=(window.CAT||[]);var out=[];for(var i=0;i<c.length;i++){var cat=c[i][3]||'';if(DIAG.indexOf(cat)>=0){out.push({nombre:c[i][0],categoria:cat});}}return out;}
-    var ALL=catEstudios();
-
+    var MAX=30;
+    var DIAG=['Laboratorio','Tomografia','Tomograf\u00eda','Ultrasonido','Mastografia','Mastograf\u00eda','Densitometria','Densitometr\u00eda','Fluoroscopia','Estudios externos','Imagenologia intrahospitalaria','Imagenolog\u00eda intrahospitalaria','Imagenologia','Imagenolog\u00eda'];
+    var NAMECAT={};
+    (function(){
+      var dl=elx('sol-cat');var c=(window.CAT||[]);var seen={};var opts='';
+      for(var i=0;i<c.length;i++){var cat=c[i][3]||'';if(DIAG.indexOf(cat)>=0){var n=c[i][0];NAMECAT[n.toUpperCase()]=cat;if(!seen[n]){seen[n]=1;opts+='<option value="'+esc(n)+'"></option>';}}}
+      if(dl)dl.innerHTML=opts;
+    })();
     function smsg(t,c){var m=elx('sol-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
     (function(){var f=elx('sol-fecha');if(f&&!f.value){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());f.value=d.toISOString().slice(0,16);}})();
 
-    function yaEsta(nom){var items=elx('sol-sel').querySelectorAll('.sol-item');for(var i=0;i<items.length;i++){if(dec(items[i].getAttribute('data-nom'))===nom)return true;}return false;}
-    function addItem(nom,cat){
-      if(!nom||yaEsta(nom))return;
-      var it=document.createElement('div');it.className='sol-item';it.setAttribute('data-nom',enc(nom));it.setAttribute('data-cat',enc(cat||''));
-      it.style.cssText='background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:7px;margin-bottom:6px';
-      it.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:13px">'+esc(nom)+'</b><button type="button" class="ant-del" title="Quitar">&times;</button></div><input class="sol-just" placeholder="Sospecha clinica / justificacion (opcional)" style="width:100%;margin-top:5px;padding:6px;border:1px solid #cfd8e0;border-radius:6px;font-size:13px;box-sizing:border-box">';
-      it.querySelector('.ant-del').onclick=function(){it.remove();};
-      elx('sol-sel').appendChild(it);
+    function nRows(){return elx('sol-sel').querySelectorAll('.sol-row').length;}
+    function addRow(nom,just){
+      if(nRows()>=MAX){smsg('Maximo '+MAX+' estudios por solicitud.','warn');return;}
+      var row=document.createElement('div');row.className='ant-row sol-row';
+      row.innerHTML='<input list="sol-cat" class="sol-nom" placeholder="Estudio (escribe o elige del catalogo)" style="flex:2"><input class="sol-just" placeholder="Justificacion / sospecha (opcional)" style="flex:1.4"><button type="button" class="ant-del" title="Quitar">&times;</button>';
+      row.querySelector('.sol-nom').value=nom||'';row.querySelector('.sol-just').value=just||'';
+      row.querySelector('.ant-del').onclick=function(){row.remove();if(nRows()===0)addRow();};
+      elx('sol-sel').appendChild(row);smsg('');
     }
-
-    function renderRes(q){
-      var box=elx('sol-results');if(!box)return;
-      if(!q||q.length<2){box.className='exp-dx-results';box.innerHTML='';return;}
-      var nq=norm(q),hits=[];
-      for(var i=0;i<ALL.length&&hits.length<40;i++){if(norm(ALL[i].nombre).indexOf(nq)>=0)hits.push(ALL[i]);}
-      if(!hits.length){box.className='exp-dx-results show';box.innerHTML='<div class="exp-dx-row" style="cursor:default;color:#9aa4b0">Sin resultados &mdash; agregalo manual abajo.</div>';return;}
-      box.innerHTML=hits.map(function(d){return '<div class="exp-dx-row" data-n="'+enc(d.nombre)+'" data-c="'+enc(d.categoria)+'"><b>'+esc(d.categoria)+'</b> '+esc(d.nombre)+'</div>';}).join('');
-      box.className='exp-dx-results show';
-      box.querySelectorAll('.exp-dx-row[data-n]').forEach(function(row){row.addEventListener('click',function(){addItem(dec(row.getAttribute('data-n')),dec(row.getAttribute('data-c')));elx('sol-search').value='';renderRes('');});});
-    }
-    if(elx('sol-search'))elx('sol-search').addEventListener('input',function(){renderRes(this.value);});
-    if(elx('sol-addcustom'))elx('sol-addcustom').onclick=function(){var f=elx('sol-customform');f.style.display=(f.style.display==='none')?'flex':'none';};
-    if(elx('sol-csave'))elx('sol-csave').onclick=function(){var n=gv('sol-cnombre');if(!n){smsg('Escribe el nombre del estudio.','err');return;}addItem(n,'Manual');elx('sol-cnombre').value='';elx('sol-customform').style.display='none';};
+    if(elx('sol-add'))elx('sol-add').onclick=function(){addRow();};
+    addRow();
 
     function gather(){
-      var items=Array.prototype.slice.call(elx('sol-sel').querySelectorAll('.sol-item'));
-      return items.map(function(it){return {nombre:dec(it.getAttribute('data-nom')),categoria:dec(it.getAttribute('data-cat')),justificacion:(it.querySelector('.sol-just')||{}).value||''};});
+      return Array.prototype.slice.call(elx('sol-sel').querySelectorAll('.sol-row')).map(function(r){
+        var nom=String((r.querySelector('.sol-nom')||{}).value||'').trim();
+        return {nombre:nom,categoria:(NAMECAT[nom.toUpperCase()]||'Manual'),justificacion:String((r.querySelector('.sol-just')||{}).value||'').trim()};
+      }).filter(function(x){return x.nombre;});
     }
     function edadDe(){var f=elx('exp-fnac');if(!f||!f.value)return '';var b=new Date(f.value),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return isNaN(a)?'':a;}
     function paciente(){return (elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||gv('fn')||'(sin nombre)';}
