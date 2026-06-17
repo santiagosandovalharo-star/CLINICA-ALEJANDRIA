@@ -4368,7 +4368,91 @@ renderVer();render();
             <div class="exp-f"><label>Medico tratante</label><input id="exp-medico"></div>
           </div>
         </div>
-        <div data-p="antecedentes" style="display:none"><div class="exp-soon">Proximamente &mdash; ya esta lista la base de datos.</div></div>
+        <div data-p="antecedentes" style="display:none">
+          <div class="exp-g2">
+            <div class="exp-f"><label>Sexo</label><select id="ant-sexo"><option value="">--</option><option>Masculino</option><option>Femenino</option></select></div>
+            <div class="exp-f"><label>Edad (de la fecha de nacimiento)</label><input id="ant-edad" readonly placeholder="--"></div>
+          </div>
+
+          <div class="ant-h">Antecedentes heredofamiliares</div>
+          <div id="ant-hf-list"></div>
+          <button type="button" id="ant-hf-add" class="exp-btn exp-btn-sec" style="margin:2px 0 4px">+ Agregar antecedente familiar</button>
+
+          <div class="ant-h">Esquema de vacunacion</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Esquema</label><select id="ant-vac-esq"><option value="">--</option><option>Completo</option><option>Incompleto</option><option>Se desconoce</option></select></div>
+            <div class="exp-f"><label>Ultima vacuna aplicada</label><input id="ant-vac-ultima" placeholder="Ej. Influenza 2025"></div>
+          </div>
+          <div class="ant-chk" id="ant-vac-chk">
+            <label><input type="checkbox" value="Influenza"> Influenza</label>
+            <label><input type="checkbox" value="COVID-19"> COVID-19</label>
+            <label><input type="checkbox" value="Tetanos/Td"> Tetanos/Td</label>
+            <label><input type="checkbox" value="Hepatitis B"> Hepatitis B</label>
+            <label><input type="checkbox" value="Neumococo"> Neumococo</label>
+            <label><input type="checkbox" value="SRP"> SRP</label>
+            <label><input type="checkbox" value="VPH"> VPH</label>
+            <label><input type="checkbox" value="Herpes zoster"> Herpes zoster</label>
+          </div>
+
+          <div class="ant-h">Tabaquismo</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Estado</label><select id="ant-tab-estado"><option value="">--</option><option>No fumador</option><option>Fumador activo</option><option>Exfumador</option></select></div>
+            <div class="exp-f"><label>Cigarrillos por dia</label><input id="ant-tab-cig" type="number" min="0"></div>
+            <div class="exp-f"><label>Anios fumando</label><input id="ant-tab-anios" type="number" min="0"></div>
+            <div class="exp-f"><label>Indice tabaquico (paquetes/anio)</label><input id="ant-tab-indice" readonly placeholder="automatico"></div>
+          </div>
+
+          <div class="ant-h">Cirugias previas</div>
+          <div id="ant-cir-list"></div>
+          <button type="button" id="ant-cir-add" class="exp-btn exp-btn-sec" style="margin:2px 0 4px">+ Agregar cirugia</button>
+
+          <div class="ant-h">Patologias diagnosticadas</div>
+          <div id="ant-pat-list"></div>
+          <button type="button" id="ant-pat-add" class="exp-btn exp-btn-sec" style="margin:2px 0 4px">+ Agregar patologia</button>
+
+          <div class="ant-h">Actividad fisica</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Horas al dia</label><input id="ant-ej-horas" type="number" min="0" step="0.5"></div>
+            <div class="exp-f"><label>Dias por semana</label><input id="ant-ej-dias" type="number" min="0" max="7"></div>
+            <div class="exp-f" style="grid-column:1/-1"><label>Actividad que realiza</label><input id="ant-ej-act" placeholder="Ej. Caminata, gimnasio..."></div>
+          </div>
+
+          <div class="ant-h" id="ant-gine-h" style="display:none">Antecedentes gineco-obstetricos</div>
+          <div id="ant-gine" style="display:none">
+            <label class="ant-inline" style="margin-bottom:6px"><input type="checkbox" id="ant-gi-ivsa-chk"> Ya inicio vida sexual activa</label>
+            <div id="ant-gine-body" style="display:none">
+              <div class="exp-g2">
+                <div class="exp-f"><label>Menarquia (edad)</label><input id="ant-gi-menarquia" type="number" min="0"></div>
+                <div class="exp-f"><label>Inicio de vida sexual (edad)</label><input id="ant-gi-ivsa" type="number" min="0"></div>
+                <div class="exp-f"><label>Vida sexual activa actualmente</label><select id="ant-gi-activa"><option value="">--</option><option>Si</option><option>No</option></select></div>
+                <div class="exp-f"><label>Fecha de ultima menstruacion</label><input id="ant-gi-fum" type="date"></div>
+                <div class="exp-f"><label><input type="checkbox" id="ant-gi-meno-chk" style="margin-right:5px">Menopausia</label><input id="ant-gi-meno-edad" type="number" min="0" placeholder="Edad de menopausia" disabled></div>
+                <div class="exp-f"><label>Embarazos</label><input id="ant-gi-g" type="number" min="0"></div>
+                <div class="exp-f"><label>Abortos</label><input id="ant-gi-a" type="number" min="0"></div>
+                <div class="exp-f"><label>Cesareas</label><input id="ant-gi-c" type="number" min="0"></div>
+                <div class="exp-f"><label>Obitos</label><input id="ant-gi-o" type="number" min="0"></div>
+              </div>
+              <div class="ant-chk">
+                <label><input type="checkbox" id="ant-gi-urin"> Sintomas urinarios de importancia</label>
+                <label><input type="checkbox" id="ant-gi-lumbar"> Dolor lumbar recurrente</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="ant-h" id="ant-pros-h" style="display:none">Tamizaje prostatico / urologico</div>
+          <div id="ant-pros" style="display:none">
+            <div class="exp-g2">
+              <div class="exp-f" style="grid-column:1/-1"><label>Antigeno prostatico especifico (valor / fecha)</label><input id="ant-pr-ape" placeholder="Ej. 1.2 ng/mL - 03/2026"></div>
+            </div>
+            <div class="ant-chk">
+              <label><input type="checkbox" id="ant-pr-urin"> Sintomas urinarios de importancia</label>
+              <label><input type="checkbox" id="ant-pr-lumbar"> Dolor lumbar recurrente</label>
+            </div>
+          </div>
+
+          <button type="button" id="ant-guardar" class="exp-btn exp-btn-pri" style="margin-top:12px">Guardar antecedentes</button>
+          <span class="exp-msg" id="ant-msg"></span>
+        </div>
         <div data-p="consulta" style="display:none">
           <label style="font-size:12px;color:#1a3a5c;font-weight:700">Buscar diagnostico (CIE-10)</label>
           <input id="exp-dx-search" placeholder="Escribe: diabetes, lumbalgia, J45..." autocomplete="off" style="width:100%;padding:8px;border:1px solid #cfd8e0;border-radius:8px;margin:4px 0 6px;box-sizing:border-box">
@@ -4464,6 +4548,7 @@ renderVer();render();
       el('exp-contacto').value=d.contacto_emergencia||'';
       el('exp-dx').value=d.diagnostico_principal||'';
       if(window.expCargarDx)window.expCargarDx(d.diagnosticos||[]);
+      if(window.expCargarAnt)window.expCargarAnt(d.antecedentes||{});
       el('exp-medico').value=d.medico_tratante||'';
       msg('Expediente cargado \u2713','ok');
     }catch(e){msg('No se pudo buscar: '+(e.message||e),'err');}
@@ -4534,6 +4619,136 @@ renderVer();render();
     });
     renderSel();
     window.expCargarDx=function(a){sel=Array.isArray(a)?a.map(function(d){return {clave:d.clave||'',nombre:d.nombre||'',custom:!!d.custom};}):[];renderSel();};
+  })();
+
+  /* ===== Modulo Antecedentes (aditivo) ===== */
+  (function initAnt(){
+    var st=document.createElement('style');
+    st.textContent=".ant-h{font-size:13px;font-weight:700;color:#1a3a5c;margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid #e3ebf2}.ant-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:7px}.ant-row input,.ant-row select{flex:1;min-width:115px;padding:6px;border:1px solid #cfd8e0;border-radius:6px;font-size:13px}.ant-row .ant-del{flex:0 0 auto;min-width:auto;background:none;border:none;color:#b83232;font-weight:700;font-size:16px;cursor:pointer;padding:0 4px}.ant-inline{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5a6474;flex:0 0 auto;min-width:auto}.ant-chk{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0}.ant-chk label{font-size:12px;color:#5a6474;display:inline-flex;gap:4px;align-items:center}";
+    document.head.appendChild(st);
+
+    function elx(id){return document.getElementById(id);}
+    function val(r,sel){var e=r.querySelector(sel);return e?String(e.value||'').trim():'';}
+    function chk(r,sel){var e=r.querySelector(sel);return e?!!e.checked:false;}
+
+    function calcEdad(){
+      var f=elx('exp-fnac'),out=elx('ant-edad');
+      if(!f||!f.value){if(out)out.value='';return null;}
+      var b=new Date(f.value),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();
+      if(m<0||(m===0&&n.getDate()<b.getDate()))a--;
+      if(out)out.value=isNaN(a)?'':a; return isNaN(a)?null:a;
+    }
+    function aplicarCond(){
+      var sx=(elx('ant-sexo')||{}).value||'', edad=calcEdad();
+      var fem=(sx==='Femenino'), masc=(sx==='Masculino');
+      elx('ant-gine-h').style.display=fem?'':'none';
+      elx('ant-gine').style.display=fem?'':'none';
+      var sp=masc&&(edad!==null&&edad>45);
+      elx('ant-pros-h').style.display=sp?'':'none';
+      elx('ant-pros').style.display=sp?'':'none';
+    }
+    function calcIndice(){
+      var c=parseFloat((elx('ant-tab-cig')||{}).value)||0, a=parseFloat((elx('ant-tab-anios')||{}).value)||0;
+      var i=(c*a)/20; elx('ant-tab-indice').value=i?i.toFixed(1):'';
+    }
+
+    // filas dinamicas
+    function hfRow(d){d=d||{};var row=document.createElement('div');row.className='ant-row';
+      row.innerHTML='<input class="hf-pad" placeholder="Padecimiento (ej. Diabetes)"><input class="hf-fam" placeholder="Familiar (ej. Madre)"><select class="hf-linea"><option value="">Linea --</option><option>Materna</option><option>Paterna</option><option>Ambas</option></select><button type="button" class="ant-del" title="Quitar">&times;</button>';
+      row.querySelector('.hf-pad').value=d.padecimiento||'';row.querySelector('.hf-fam').value=d.familiar||'';row.querySelector('.hf-linea').value=d.linea||'';
+      row.querySelector('.ant-del').onclick=function(){row.remove();};elx('ant-hf-list').appendChild(row);}
+    function cirRow(d){d=d||{};var row=document.createElement('div');row.className='ant-row';
+      row.innerHTML='<input class="ci-nom" placeholder="Cirugia"><input class="ci-fec" placeholder="Fecha o anios"><input class="ci-pend" placeholder="Pendiente / tratamiento"><label class="ant-inline"><input type="checkbox" class="ci-nada"> Nada pendiente</label><button type="button" class="ant-del" title="Quitar">&times;</button>';
+      row.querySelector('.ci-nom').value=d.nombre||'';row.querySelector('.ci-fec').value=d.fecha||'';row.querySelector('.ci-pend').value=d.pendiente||'';
+      var nada=row.querySelector('.ci-nada'),pend=row.querySelector('.ci-pend');nada.checked=!!d.nadaPendiente;pend.disabled=nada.checked;
+      nada.onchange=function(){pend.disabled=nada.checked;if(nada.checked)pend.value='';};
+      row.querySelector('.ant-del').onclick=function(){row.remove();};elx('ant-cir-list').appendChild(row);}
+    function patRow(d){d=d||{};var row=document.createElement('div');row.className='ant-row';
+      row.innerHTML='<input class="pa-nom" placeholder="Patologia"><input class="pa-trat" placeholder="Tratamiento"><label class="ant-inline"><input type="checkbox" class="pa-sin"> Sin tratamiento</label><button type="button" class="ant-del" title="Quitar">&times;</button>';
+      row.querySelector('.pa-nom').value=d.nombre||'';row.querySelector('.pa-trat').value=d.tratamiento||'';
+      var sin=row.querySelector('.pa-sin'),tr=row.querySelector('.pa-trat');sin.checked=!!d.sinTratamiento;tr.disabled=sin.checked;
+      sin.onchange=function(){tr.disabled=sin.checked;if(sin.checked)tr.value='';};
+      row.querySelector('.ant-del').onclick=function(){row.remove();};elx('ant-pat-list').appendChild(row);}
+
+    function amsg(t,c){var m=elx('ant-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+
+    // eventos
+    if(elx('ant-hf-add'))elx('ant-hf-add').onclick=function(){hfRow();};
+    if(elx('ant-cir-add'))elx('ant-cir-add').onclick=function(){cirRow();};
+    if(elx('ant-pat-add'))elx('ant-pat-add').onclick=function(){patRow();};
+    if(elx('ant-sexo'))elx('ant-sexo').onchange=aplicarCond;
+    if(elx('exp-fnac'))elx('exp-fnac').addEventListener('change',aplicarCond);
+    if(elx('ant-tab-cig'))elx('ant-tab-cig').addEventListener('input',calcIndice);
+    if(elx('ant-tab-anios'))elx('ant-tab-anios').addEventListener('input',calcIndice);
+    if(elx('ant-gi-ivsa-chk'))elx('ant-gi-ivsa-chk').onchange=function(){elx('ant-gine-body').style.display=this.checked?'':'none';};
+    if(elx('ant-gi-meno-chk'))elx('ant-gi-meno-chk').onchange=function(){var ed=elx('ant-gi-meno-edad'),fum=elx('ant-gi-fum');ed.disabled=!this.checked;fum.disabled=this.checked;if(this.checked)fum.value='';if(!this.checked)ed.value='';};
+
+    function gather(){
+      function rows(id,fn){return Array.prototype.slice.call(elx(id).querySelectorAll('.ant-row')).map(fn).filter(function(o){return o._ok;}).map(function(o){delete o._ok;return o;});}
+      var vac=Array.prototype.slice.call(document.querySelectorAll('#ant-vac-chk input:checked')).map(function(c){return c.value;});
+      var gine=null;
+      if(elx('ant-gine').style.display!=='none'){
+        gine={ivsa_iniciada:!!elx('ant-gi-ivsa-chk').checked,menarquia:(elx('ant-gi-menarquia')||{}).value||'',ivsa_edad:(elx('ant-gi-ivsa')||{}).value||'',activa:(elx('ant-gi-activa')||{}).value||'',fum:(elx('ant-gi-fum')||{}).value||'',menopausia:!!elx('ant-gi-meno-chk').checked,menopausia_edad:(elx('ant-gi-meno-edad')||{}).value||'',g:(elx('ant-gi-g')||{}).value||'',a:(elx('ant-gi-a')||{}).value||'',c:(elx('ant-gi-c')||{}).value||'',obitos:(elx('ant-gi-o')||{}).value||'',sint_urin:!!elx('ant-gi-urin').checked,dolor_lumbar:!!elx('ant-gi-lumbar').checked};
+      }
+      var pros=null;
+      if(elx('ant-pros').style.display!=='none'){
+        pros={ape:(elx('ant-pr-ape')||{}).value||'',sint_urin:!!elx('ant-pr-urin').checked,dolor_lumbar:!!elx('ant-pr-lumbar').checked};
+      }
+      return {
+        sexo:(elx('ant-sexo')||{}).value||'',
+        heredofamiliares:rows('ant-hf-list',function(r){var o={padecimiento:val(r,'.hf-pad'),familiar:val(r,'.hf-fam'),linea:val(r,'.hf-linea')};o._ok=!!(o.padecimiento||o.familiar);return o;}),
+        vacunacion:{esquema:(elx('ant-vac-esq')||{}).value||'',ultima:(elx('ant-vac-ultima')||{}).value||'',vacunas:vac},
+        tabaquismo:{estado:(elx('ant-tab-estado')||{}).value||'',cigarrillos:(elx('ant-tab-cig')||{}).value||'',anios:(elx('ant-tab-anios')||{}).value||'',indice:(elx('ant-tab-indice')||{}).value||''},
+        cirugias:rows('ant-cir-list',function(r){var o={nombre:val(r,'.ci-nom'),fecha:val(r,'.ci-fec'),pendiente:val(r,'.ci-pend'),nadaPendiente:chk(r,'.ci-nada')};o._ok=!!o.nombre;return o;}),
+        patologias:rows('ant-pat-list',function(r){var o={nombre:val(r,'.pa-nom'),tratamiento:val(r,'.pa-trat'),sinTratamiento:chk(r,'.pa-sin')};o._ok=!!o.nombre;return o;}),
+        ejercicio:{horas:(elx('ant-ej-horas')||{}).value||'',dias:(elx('ant-ej-dias')||{}).value||'',actividad:(elx('ant-ej-act')||{}).value||''},
+        gineco:gine,prostata:pros
+      };
+    }
+
+    if(elx('ant-guardar'))elx('ant-guardar').onclick=async function(){
+      var folio=(elx('exp-folio')||{}).value;folio=folio?String(folio).trim():'';
+      if(!folio){amsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      var data=gather();
+      if(!window.caSupa){amsg('Guardado local. Inicia sesion para guardar en la nube.','warn');return;}
+      var b=elx('ant-guardar');b.textContent='Guardando...';
+      try{
+        var r=await window.caSupa.from('expedientes').upsert({folio:folio,antecedentes:data,modificado_en:new Date().toISOString()},{onConflict:'folio'});
+        if(r.error)throw r.error;amsg('Antecedentes guardados \u2713','ok');
+      }catch(e){amsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar antecedentes';
+    };
+
+    window.expCargarAnt=function(o){
+      o=o||{};
+      function setv(id,val){var e=elx(id);if(e)e.value=(val==null?'':val);}
+      function setc(id,val){var e=elx(id);if(e)e.checked=!!val;}
+      setv('ant-sexo',o.sexo);
+      // listas
+      elx('ant-hf-list').innerHTML='';(o.heredofamiliares||[]).forEach(hfRow);
+      elx('ant-cir-list').innerHTML='';(o.cirugias||[]).forEach(cirRow);
+      elx('ant-pat-list').innerHTML='';(o.patologias||[]).forEach(patRow);
+      // vacunacion
+      var vc=o.vacunacion||{};setv('ant-vac-esq',vc.esquema);setv('ant-vac-ultima',vc.ultima);
+      Array.prototype.slice.call(document.querySelectorAll('#ant-vac-chk input')).forEach(function(c){c.checked=(vc.vacunas||[]).indexOf(c.value)>=0;});
+      // tabaquismo
+      var tb=o.tabaquismo||{};setv('ant-tab-estado',tb.estado);setv('ant-tab-cig',tb.cigarrillos);setv('ant-tab-anios',tb.anios);setv('ant-tab-indice',tb.indice);
+      // ejercicio
+      var ej=o.ejercicio||{};setv('ant-ej-horas',ej.horas);setv('ant-ej-dias',ej.dias);setv('ant-ej-act',ej.actividad);
+      // gineco
+      var gi=o.gineco||null;
+      if(gi){setc('ant-gi-ivsa-chk',gi.ivsa_iniciada);elx('ant-gine-body').style.display=gi.ivsa_iniciada?'':'none';
+        setv('ant-gi-menarquia',gi.menarquia);setv('ant-gi-ivsa',gi.ivsa_edad);setv('ant-gi-activa',gi.activa);setv('ant-gi-fum',gi.fum);
+        setc('ant-gi-meno-chk',gi.menopausia);setv('ant-gi-meno-edad',gi.menopausia_edad);elx('ant-gi-meno-edad').disabled=!gi.menopausia;elx('ant-gi-fum').disabled=!!gi.menopausia;
+        setv('ant-gi-g',gi.g);setv('ant-gi-a',gi.a);setv('ant-gi-c',gi.c);setv('ant-gi-o',gi.obitos);setc('ant-gi-urin',gi.sint_urin);setc('ant-gi-lumbar',gi.dolor_lumbar);
+      }
+      // prostata
+      var pr=o.prostata||null;
+      if(pr){setv('ant-pr-ape',pr.ape);setc('ant-pr-urin',pr.sint_urin);setc('ant-pr-lumbar',pr.dolor_lumbar);}
+      aplicarCond();calcIndice();
+    };
+
+    aplicarCond();
   })();
 })();
 </script>
