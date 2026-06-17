@@ -4687,7 +4687,7 @@ renderVer();render();
   /* ===== Modulo Antecedentes (aditivo) ===== */
   (function initAnt(){
     var st=document.createElement('style');
-    st.textContent=".ant-h{font-size:13px;font-weight:700;color:#1a3a5c;margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid #e3ebf2}.ant-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:7px}.ant-row input,.ant-row select{flex:1;min-width:115px;padding:6px;border:1px solid #cfd8e0;border-radius:6px;font-size:13px}.ant-row .ant-del{flex:0 0 auto;min-width:auto;background:none;border:none;color:#b83232;font-weight:700;font-size:16px;cursor:pointer;padding:0 4px}.ant-inline{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5a6474;flex:0 0 auto;min-width:auto}.ant-chk{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0}.ant-chk label{font-size:12px;color:#5a6474;display:inline-flex;gap:4px;align-items:center}";
+    st.textContent=".ant-h{font-size:13px;font-weight:700;color:#1a3a5c;margin:14px 0 6px;padding-bottom:3px;border-bottom:2px solid #e3ebf2}.ant-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px;background:#f7fafc;border:1px solid #e3ebf2;border-radius:8px;padding:7px}.ant-row input,.ant-row select{flex:1;min-width:115px;padding:6px;border:1px solid #cfd8e0;border-radius:6px;font-size:13px}.ant-row .ant-del{flex:0 0 auto;min-width:auto;background:none;border:none;color:#b83232;font-weight:700;font-size:16px;cursor:pointer;padding:0 4px}.ant-inline{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5a6474;flex:0 0 auto;min-width:auto}.ant-chk{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0}.ant-chk label{font-size:12px;color:#5a6474;display:inline-flex;gap:4px;align-items:center}#exp-overlay input[type=checkbox]{width:16px!important;height:16px!important;min-width:16px!important;flex:0 0 auto!important;margin:0 4px 0 0!important;padding:0!important;display:inline-block!important;vertical-align:middle}.ant-chk{align-items:center;gap:14px}.ant-chk label{font-size:13px!important;text-transform:none!important;font-weight:400!important;white-space:nowrap;width:auto!important;flex:0 0 auto}";
     document.head.appendChild(st);
 
     function elx(id){return document.getElementById(id);}
@@ -4879,11 +4879,10 @@ renderVer();render();
     }
 
     if(elx('nota-pdf'))elx('nota-pdf').onclick=function(){
-      pc.innerHTML=buildHTML();
-      document.body.classList.add('printing-nota');
-      function done(){document.body.classList.remove('printing-nota');window.removeEventListener('afterprint',done);}
-      window.addEventListener('afterprint',done);
-      setTimeout(function(){window.print();},60);
+      var w=window.open('','_blank','width=840,height=920');
+      if(!w){nmsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Nota de consulta</title></head><body style="margin:0;padding:16px">'+buildHTML()+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},400);
     };
 
     if(elx('nota-guardar'))elx('nota-guardar').onclick=async function(){
@@ -4967,10 +4966,10 @@ renderVer();render();
     }
 
     if(elx('sol-pdf'))elx('sol-pdf').onclick=function(){
-      var pc=elx('nota-print');if(!pc){smsg('No se pudo preparar el PDF.','err');return;}
-      pc.innerHTML=buildHTML();document.body.classList.add('printing-nota');
-      function done(){document.body.classList.remove('printing-nota');window.removeEventListener('afterprint',done);}
-      window.addEventListener('afterprint',done);setTimeout(function(){window.print();},60);
+      var w=window.open('','_blank','width=840,height=920');
+      if(!w){smsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Solicitud de estudios</title></head><body style="margin:0;padding:16px">'+buildHTML()+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},400);
     };
     if(elx('sol-guardar'))elx('sol-guardar').onclick=async function(){
       var folio=gv('exp-folio');if(!folio){smsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
