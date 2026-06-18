@@ -5582,6 +5582,44 @@ renderVer();render();
        {tipo:'texto',titulo:'RECEPCION DE INDICACIONES',p:['Recibi las indicaciones medicas y recomendaciones para el cuidado posterior, asi como la indicacion de acudir nuevamente en caso de ser necesario.']},
        {tipo:'texto',titulo:'DECLARACION',p:['Declaro que tomo esta decision de manera libre, consciente y voluntaria, habiendo comprendido la informacion proporcionada.']}
      ]},
+
+     'CI-021':{codigo:'CI-021',version:'1.0',area:'Administracion',titulo:'CONTRATO DE PRESTACION DE SERVICIOS MEDICOS Y HOSPITALARIOS',nombre:'Contrato de Prestacion de Servicios Hospitalarios',pacTitulo:'DATOS DEL CLIENTE / PACIENTE',camposTitulo:'DATOS DEL CONTRATO',campos:[{id:'resp',label:'Responsable de pago / contratante',tipo:'text'},{id:'rfc',label:'RFC',tipo:'text'},{id:'domf',label:'Domicilio',tipo:'text'},{id:'servicios',label:'Servicios contratados',tipo:'textarea'}],firmasRoles:[{id:'cliente',label:'El Cliente / Contratante'},{id:'clinica',label:'Por la Clinica (representante)'},{id:'t1',label:'Testigo 1'},{id:'t2',label:'Testigo 2'}],secciones:[
+       {tipo:'texto',titulo:'PRIMERA. OBJETO',p:['La Clinica se obliga a prestar al paciente los servicios medicos y hospitalarios que su estado de salud requiera (consulta, hospitalizacion, estudios, procedimientos, medicamentos, materiales, honorarios y demas servicios), conforme a la Lex Artis Medica y a las Normas Oficiales Mexicanas aplicables.']},
+       {tipo:'texto',titulo:'SEGUNDA. ALCANCE',p:['Los servicios se prestaran segun la indicacion medica y podran modificarse conforme a la evolucion clinica. La Clinica se obliga a prestar los servicios con diligencia y conforme a la buena practica medica, sin garantizar un resultado determinado.']},
+       {tipo:'texto',titulo:'TERCERA. PRECIO Y FORMA DE PAGO',p:['El cliente se obliga a cubrir el importe de los servicios conforme a las tarifas vigentes de la Clinica. Podran solicitarse anticipos o depositos en garantia. Los saldos deberan liquidarse al egreso, salvo convenio por escrito.']},
+       {tipo:'texto',titulo:'CUARTA. TERCERO PAGADOR O ASEGURADORA',p:['Cuando exista aseguradora o tercero pagador, el cliente reconoce que cualquier autorizacion es preliminar y que las diferencias no cubiertas seran a su cargo, conforme a la carta responsiva correspondiente.']},
+       {tipo:'texto',titulo:'QUINTA. OBLIGACIONES DEL CLIENTE',p:['Proporcionar informacion veraz, cumplir las indicaciones medicas, respetar los reglamentos internos y cubrir oportunamente los pagos.']},
+       {tipo:'texto',titulo:'SEXTA. OBLIGACIONES DE LA CLINICA',p:['Prestar los servicios con personal capacitado, integrar y resguardar el expediente clinico, guardar la confidencialidad de los datos e informar al paciente conforme a la normatividad.']},
+       {tipo:'texto',titulo:'SEPTIMA. PROTECCION DE DATOS',p:['El tratamiento de los datos personales se realiza conforme al Aviso de Privacidad institucional y a la Ley Federal de Proteccion de Datos Personales en Posesion de los Particulares.']},
+       {tipo:'texto',titulo:'OCTAVA. VIGENCIA Y JURISDICCION',p:['El presente contrato surte efectos desde su firma y durante la prestacion de los servicios. Para su interpretacion y cumplimiento, las partes se someten a las leyes y tribunales competentes de Queretaro, renunciando a cualquier otro fuero. Leido el presente, las partes lo firman de conformidad.']}
+     ]},
+     'CI-022':{codigo:'CI-022',version:'1.0',area:'Admision / Enfermeria',titulo:'INVENTARIO DE PERTENENCIAS DEL PACIENTE',nombre:'Inventario de Pertenencias',pacTitulo:'DATOS DEL PACIENTE',camposTitulo:'DATOS DEL REGISTRO',campos:[{id:'momento',label:'Fecha y hora del registro',tipo:'text'},{id:'ubic',label:'Ubicacion / cama',tipo:'text'},{id:'detalle',label:'Descripcion y estado de las pertenencias',tipo:'textarea'},{id:'obs',label:'Observaciones',tipo:'textarea'}],firmasRoles:[{id:'paciente',label:'Paciente / familiar que entrega'},{id:'recibe',label:'Personal de la Clinica que recibe',extra:'Cargo'}],secciones:[
+       {tipo:'check',titulo:'PERTENENCIAS REGISTRADAS',id:'pert',intro:'Se registran las siguientes pertenencias del paciente:',items:['Cartera / dinero','Identificaciones / documentos','Telefono celular','Reloj','Joyeria, anillos o aretes','Lentes / lentes de contacto','Protesis dental','Aparato auditivo','Ropa','Calzado','Llaves','Otros']},
+       {tipo:'texto',titulo:'NOTA',p:['Se hace constar la relacion de pertenencias del paciente al ingreso. La Clinica recomienda no conservar objetos de valor durante la estancia; los objetos no entregados a un familiar quedan bajo resguardo conforme al reglamento interno. El paciente o su familiar manifiesta su conformidad con el presente inventario.']}
+     ]},
+     'CI-023':{codigo:'CI-023',version:'1.0',area:'Proteccion de Datos',titulo:'AVISO DE PRIVACIDAD',nombre:'Aviso de Privacidad',pacTitulo:'DATOS DEL TITULAR',firmasRoles:[{id:'titular',label:'Titular de los datos (paciente o representante)'}],secciones:[
+       {tipo:'texto',titulo:'RESPONSABLE',p:['Clinica Alejandria Salud Integral Especializada, con domicilio en Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100, es responsable del tratamiento y proteccion de sus datos personales, conforme a la Ley Federal de Proteccion de Datos Personales en Posesion de los Particulares.']},
+       {tipo:'texto',titulo:'DATOS QUE SE RECABAN',p:['Datos de identificacion y contacto, datos fiscales y, por la naturaleza de los servicios, datos personales sensibles relativos a su salud (estado de salud, antecedentes, diagnosticos, tratamientos y estudios).']},
+       {tipo:'texto',titulo:'FINALIDADES PRIMARIAS (NECESARIAS)',p:['Brindar atencion medica; integrar y resguardar el expediente clinico; dar seguimiento al tratamiento; realizar la facturacion y cobranza; y cumplir las obligaciones legales y sanitarias aplicables.']},
+       {tipo:'texto',titulo:'FINALIDADES SECUNDARIAS (VOLUNTARIAS)',p:['Envio de recordatorios de citas, informacion de servicios y encuestas de calidad. Usted puede negarse a estas finalidades sin que ello afecte la prestacion del servicio.']},
+       {tipo:'texto',titulo:'DATOS SENSIBLES',p:['Por tratarse de datos de salud (sensibles), la ley requiere su consentimiento expreso y por escrito, el cual otorga con su firma al calce.']},
+       {tipo:'texto',titulo:'TRANSFERENCIAS',p:['Sus datos podran transferirse, cuando sea necesario, a aseguradoras o terceros pagadores para la gestion de cobertura y cobro; a medicos, laboratorios u hospitales para la continuidad de la atencion; y a autoridades sanitarias o judiciales cuando la ley lo exija.']},
+       {tipo:'texto',titulo:'DERECHOS ARCO Y REVOCACION',p:['Usted puede ejercer sus derechos de Acceso, Rectificacion, Cancelacion y Oposicion (ARCO), asi como revocar su consentimiento, presentando su solicitud en el domicilio de la Clinica o al correo electronico institucional.']},
+       {tipo:'texto',titulo:'CAMBIOS AL AVISO Y AUTORIDAD',p:['Cualquier modificacion a este aviso se hara de su conocimiento a traves de los medios institucionales. La autoridad en materia de proteccion de datos personales en posesion de particulares es la Secretaria Anticorrupcion y Buen Gobierno.']},
+       {tipo:'datos',titulo:'CONSENTIMIENTO',p:['Otorgo mi consentimiento expreso para el tratamiento de mis datos personales sensibles (de salud) conforme a las finalidades primarias descritas. Respecto de las finalidades secundarias (voluntarias), manifiesto:']}
+     ]},
+     'CI-024':{codigo:'CI-024',version:'1.0',area:'Administracion / Facturacion',titulo:'AUTORIZACION PARA FACTURACION Y COBRANZA',nombre:'Autorizacion para Facturacion y Cobranza',pacTitulo:'DATOS DEL TITULAR / RESPONSABLE DE PAGO',camposTitulo:'DATOS FISCALES',campos:[{id:'razon',label:'Razon social / nombre',tipo:'text'},{id:'rfc',label:'RFC',tipo:'text'},{id:'regimen',label:'Regimen fiscal',tipo:'text'},{id:'uso',label:'Uso de CFDI',tipo:'text'},{id:'domf',label:'Domicilio fiscal y C.P.',tipo:'textarea'},{id:'correo',label:'Correo para factura',tipo:'text'},{id:'pago',label:'Forma / metodo de pago',tipo:'text'}],firmasRoles:[{id:'titular',label:'Titular / responsable de pago'}],secciones:[
+       {tipo:'texto',titulo:'AUTORIZACION DE FACTURACION',p:['Autorizo a Clinica Alejandria Salud Integral Especializada a emitir el Comprobante Fiscal Digital por Internet (CFDI) correspondiente a los servicios prestados, con los datos fiscales aqui proporcionados, los cuales declaro correctos y vigentes.']},
+       {tipo:'texto',titulo:'COBRANZA',p:['Reconozco la obligacion de pago de los servicios prestados que no sean cubiertos por aseguradora o tercero, y autorizo las gestiones de cobranza conforme a la normatividad aplicable.']},
+       {tipo:'texto',titulo:'PROTECCION DE DATOS',p:['El tratamiento de mis datos fiscales se realiza conforme al Aviso de Privacidad institucional y a la Ley Federal de Proteccion de Datos Personales en Posesion de los Particulares.']},
+       {tipo:'datos',titulo:'CONSENTIMIENTO',p:['Otorgo mi consentimiento para el tratamiento de mis datos fiscales para los fines de facturacion y cobranza descritos.']}
+     ]},
+     'CI-025':{codigo:'CI-025',version:'1.0',area:'Administracion',titulo:'AUTORIZACION PARA COMPARTIR INFORMACION CON ASEGURADORAS',nombre:'Autorizacion para Compartir Informacion con Aseguradoras',pacTitulo:'DATOS DEL PACIENTE',camposTitulo:'DATOS DE LA ASEGURADORA',campos:[{id:'aseg',label:'Aseguradora',tipo:'text'},{id:'poliza',label:'No. de poliza',tipo:'text'},{id:'sin',label:'No. de siniestro',tipo:'text'},{id:'aut',label:'No. de autorizacion',tipo:'text'}],firmasRoles:[{id:'titular',label:'Titular de los datos (paciente o representante)'}],secciones:[
+       {tipo:'texto',titulo:'AUTORIZACION',p:['Autorizo a Clinica Alejandria Salud Integral Especializada a compartir con la aseguradora o tercero pagador antes referido la informacion clinica y administrativa necesaria (diagnosticos, estudios, tratamientos, notas medicas, costos y comprobantes) para la gestion de la cobertura, autorizacion y pago de los servicios.']},
+       {tipo:'texto',titulo:'ALCANCE',p:['Esta autorizacion se limita a los fines de cobertura, auditoria medica y cobro, y se otorga conforme a la Ley Federal de Proteccion de Datos Personales en Posesion de los Particulares.']},
+       {tipo:'texto',titulo:'VIGENCIA Y REVOCACION',p:['Esta autorizacion estara vigente durante la gestion del caso y podra ser revocada por escrito, sin efectos retroactivos.']},
+       {tipo:'datos',titulo:'CONSENTIMIENTO PARA LA TRANSFERENCIA',p:['Otorgo mi consentimiento para la transferencia de mis datos de salud (sensibles) a la aseguradora o tercero pagador, exclusivamente para los fines descritos.']}
+     ]},
     };
     window.conEngineHas=function(c){return !!PLANTILLAS[c];};
 
@@ -5597,7 +5635,7 @@ renderVer();render();
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button type="button" id="ce-traer" class="exp-btn exp-btn-sec">Traer datos del paciente</button></div>';
       h+='<div class="exp-g2"><div class="exp-f"><label>Fecha</label><input id="ce-fecha" type="date"></div><div class="exp-f"><label>Hora</label><input id="ce-hora" type="time"></div></div>';
       /* I. Paciente */
-      h+='<div class="ant-h">I. Datos del paciente</div><div class="exp-g2">'
+      h+='<div class="ant-h">'+esc(P.pacTitulo||'I. Datos del paciente')+'</div><div class="exp-g2">'
        +'<div class="exp-f" style="grid-column:1/-1"><label>Nombre</label><input id="ce-pac-nombre"></div>'
        +'<div class="exp-f"><label>CURP</label><input id="ce-pac-curp"></div>'
        +'<div class="exp-f"><label>Fecha de nacimiento</label><input id="ce-pac-fnac" type="date"></div>'
@@ -5642,15 +5680,23 @@ renderVer();render();
         }
       });
       /* Firmas */
-      h+='<div class="ant-h">Firmas (nombres para el documento)</div><div class="exp-g2">'
-       +'<div class="exp-f"><label>Paciente</label><input id="ce-f-pac"></div>'
-       +'<div class="exp-f"><label>Medico tratante</label><input id="ce-f-med"></div>'
-       +'<div class="exp-f"><label>Cedula profesional</label><input id="ce-f-ced"></div>';
-      if(P.responsable)h+='<div class="exp-f"><label>Responsable / familiar</label><input id="ce-f-resp"></div><div class="exp-f"><label>Parentesco</label><input id="ce-f-resp-par"></div>';
-      h+='<div class="exp-f"><label>Testigo 1</label><input id="ce-f-t1"></div>'
-       +'<div class="exp-f"><label>Testigo 2</label><input id="ce-f-t2"></div>'
-       +'<div class="exp-f"><label>Colaborador ('+esc(P.area)+')</label><input id="ce-f-col"></div>'
-       +'<div class="exp-f"><label>Cargo</label><input id="ce-f-cargo"></div></div>';
+      h+='<div class="ant-h">Firmas (nombres para el documento)</div><div class="exp-g2">';
+      if(P.firmasRoles){
+        P.firmasRoles.forEach(function(r){
+          h+='<div class="exp-f"><label>'+esc(r.label)+'</label><input id="ce-fx-'+r.id+'"></div>';
+          if(r.extra)h+='<div class="exp-f"><label>'+esc(r.extra)+'</label><input id="ce-fxe-'+r.id+'"></div>';
+        });
+        h+='</div>';
+      }else{
+        h+='<div class="exp-f"><label>Paciente</label><input id="ce-f-pac"></div>'
+         +'<div class="exp-f"><label>Medico tratante</label><input id="ce-f-med"></div>'
+         +'<div class="exp-f"><label>Cedula profesional</label><input id="ce-f-ced"></div>';
+        if(P.responsable)h+='<div class="exp-f"><label>Responsable / familiar</label><input id="ce-f-resp"></div><div class="exp-f"><label>Parentesco</label><input id="ce-f-resp-par"></div>';
+        h+='<div class="exp-f"><label>Testigo 1</label><input id="ce-f-t1"></div>'
+         +'<div class="exp-f"><label>Testigo 2</label><input id="ce-f-t2"></div>'
+         +'<div class="exp-f"><label>Colaborador ('+esc(P.area)+')</label><input id="ce-f-col"></div>'
+         +'<div class="exp-f"><label>Cargo</label><input id="ce-f-cargo"></div></div>';
+      }
       h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="ce-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="ce-guardar" class="exp-btn exp-btn-pri">Guardar consentimiento</button><span class="exp-msg" id="ce-msg"></span></div>';
       h+='</div>';
       return h;
@@ -5665,6 +5711,7 @@ renderVer();render();
       if(P.responsable)o.responsable={nombre:gv('ce-resp-nombre'),parentesco:gv('ce-resp-parent'),tel:gv('ce-resp-tel'),ident:gv('ce-resp-ident')};
       if(P.motivo){o.motivo=gv('ce-motivo');o.dx=gv('ce-dx');}
       if(P.campos){o.campos={};P.campos.forEach(function(c){o.campos[c.id]=gv('ce-c-'+c.id);});}
+      if(P.firmasRoles){o.firmasX={};P.firmasRoles.forEach(function(r){o.firmasX[r.id]=gv('ce-fx-'+r.id);if(r.extra)o.firmasX[r.id+'_x']=gv('ce-fxe-'+r.id);});}
       P.secciones.forEach(function(s,idx){if(s.tipo==='check'||s.tipo==='docs')o.sel[idx]=secChecks(idx);});
       return o;
     }
@@ -5676,6 +5723,7 @@ renderVer();render();
       if(P.responsable){sv('ce-resp-nombre',rs.nombre);sv('ce-resp-parent',rs.parentesco);sv('ce-resp-tel',rs.tel);sv('ce-resp-ident',rs.ident);}
       if(P.motivo){sv('ce-motivo',o.motivo);sv('ce-dx',o.dx);}
       if(P.campos){var cv=o.campos||{};P.campos.forEach(function(c){sv('ce-c-'+c.id,cv[c.id]);});}
+      if(P.firmasRoles){var fxr=o.firmasX||{};P.firmasRoles.forEach(function(r){sv('ce-fx-'+r.id,fxr[r.id]);if(r.extra)sv('ce-fxe-'+r.id,fxr[r.id+'_x']);});}
       sv('ce-datos',o.datos);
       sv('ce-f-pac',fm.paciente);sv('ce-f-med',fm.medico);sv('ce-f-ced',fm.cedula);sv('ce-f-resp',fm.responsable);sv('ce-f-resp-par',fm.resp_par);sv('ce-f-t1',fm.testigo1);sv('ce-f-t2',fm.testigo2);sv('ce-f-col',fm.colaborador);sv('ce-f-cargo',fm.cargo);
       var sel=o.sel||{};
@@ -5711,7 +5759,7 @@ renderVer();render();
       h+='<div style="font-size:13px;font-weight:700;text-align:center">'+esc(P.titulo)+'</div>';
       h+='<div style="font-size:10px;color:#5a6474;text-align:center;margin-bottom:6px">Codigo '+esc(P.codigo)+' &middot; Version '+esc(P.version)+' &middot; '+esc(P.area)+'</div>';
       h+='<div style="font-size:11px;margin-bottom:6px"><b>Folio:</b> '+esc(gv('exp-folio'))+' &nbsp; <b>Fecha:</b> '+esc(o.fecha)+' &nbsp; <b>Hora:</b> '+esc(o.hora)+'</div>';
-      h+=Hh('I. DATOS DEL PACIENTE')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre',pc.nombre)+row('CURP',pc.curp)+row('Fecha de nacimiento',pc.fnac)+row('Edad',pc.edad)+row('Sexo',pc.sexo)+row('Telefono',pc.tel)+row('Domicilio',pc.dom)+'</table>';
+      h+=Hh((P.pacTitulo||'I. DATOS DEL PACIENTE'))+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre',pc.nombre)+row('CURP',pc.curp)+row('Fecha de nacimiento',pc.fnac)+row('Edad',pc.edad)+row('Sexo',pc.sexo)+row('Telefono',pc.tel)+row('Domicilio',pc.dom)+'</table>';
       if(P.responsable){var rs=o.responsable||{};h+=Hh('II. RESPONSABLE LEGAL O FAMILIAR')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre',rs.nombre)+row('Parentesco',rs.parentesco)+row('Telefono',rs.tel)+row('Identificacion oficial',rs.ident)+'</table>';}
       if(P.motivo){h+=Hh('III. MOTIVO DE ATENCION')+Pp(o.motivo)+(o.dx?'<p style="margin:5px 0"><b>Diagnostico presuntivo:</b> '+esc(o.dx)+'</p>':'');}
       if(P.campos){var cv=o.campos||{};var rws='';P.campos.forEach(function(c){rws+=row(c.label,cv[c.id]);});h+=Hh(P.camposTitulo||'DATOS DEL ACTO')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+rws+'</table>';}
@@ -5723,12 +5771,18 @@ renderVer();render();
       });
       var fm=o.firmas||{};
       h+=Hh('FIRMAS');
-      h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+firmaBox(fm.paciente,'Paciente')+firmaBox(fm.medico,'Medico tratante',fm.cedula?'Cedula: '+esc(fm.cedula):'')+'</div>';
-      var fila2='';
-      if(P.responsable)fila2+=firmaBox(fm.responsable,'Responsable / familiar',fm.resp_par?'Parentesco: '+esc(fm.resp_par):'');
-      fila2+=firmaBox(fm.testigo1,'Testigo 1')+firmaBox(fm.testigo2,'Testigo 2');
-      h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+fila2+'</div>';
-      h+='<div style="margin-top:10px;font-size:11px"><b>'+esc(P.area)+'</b><br>Colaborador: '+esc(fm.colaborador)+' &nbsp;|&nbsp; Cargo: '+esc(fm.cargo)+' &nbsp;|&nbsp; Sello: ____________</div>';
+      if(P.firmasRoles){
+        var fx=o.firmasX||{};var fb='';
+        P.firmasRoles.forEach(function(r){fb+=firmaBox(fx[r.id],r.label,(r.extra&&fx[r.id+'_x'])?esc(r.extra)+': '+esc(fx[r.id+'_x']):'');});
+        h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+fb+'</div>';
+      }else{
+        h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+firmaBox(fm.paciente,'Paciente')+firmaBox(fm.medico,'Medico tratante',fm.cedula?'Cedula: '+esc(fm.cedula):'')+'</div>';
+        var fila2='';
+        if(P.responsable)fila2+=firmaBox(fm.responsable,'Responsable / familiar',fm.resp_par?'Parentesco: '+esc(fm.resp_par):'');
+        fila2+=firmaBox(fm.testigo1,'Testigo 1')+firmaBox(fm.testigo2,'Testigo 2');
+        h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+fila2+'</div>';
+        h+='<div style="margin-top:10px;font-size:11px"><b>'+esc(P.area)+'</b><br>Colaborador: '+esc(fm.colaborador)+' &nbsp;|&nbsp; Cargo: '+esc(fm.cargo)+' &nbsp;|&nbsp; Sello: ____________</div>';
+      }
       h+='<p style="margin-top:10px;font-size:9.5px;color:#5a6474">Control documental &middot; Codigo '+esc(P.codigo)+' &middot; Nombre: '+esc(P.nombre||P.titulo)+' &middot; Version '+esc(P.version)+' &middot; Documento integrante del expediente clinico institucional.</p>';
       h+='</div>';
       return h;
