@@ -5284,6 +5284,36 @@ renderVer();render();
     function tById(v){for(var i=0;i<TIPOS.length;i++)if(TIPOS[i].v===v)return TIPOS[i];return null;}
     function isResp(d){return /Responsiva|Tercer Pagador/i.test(d);}
 
+    /* Mapa: documento del checklist -> codigo CI del motor */
+    var DOC2CI={
+      'Aviso de Privacidad':'CI-023','Consentimiento para Tratamiento de Datos Personales':'CI-023','Consentimiento para Proteccion de Datos Personales':'CI-023',
+      'Consentimiento para Consulta Medica':'CI-001','Consentimiento de Atencion Subsecuente':'CI-001',
+      'Consentimiento de Atencion en Urgencias':'CI-002',
+      'Consentimiento de Ingreso Hospitalario':'CI-003','Consentimiento General de Hospitalizacion':'CI-003','Consentimiento de Hospitalizacion':'CI-003','Consentimiento General para Atencion Medica':'CI-003',
+      'Consentimiento para Tratamiento Medico':'CI-004',
+      'Consentimiento para Procedimiento Quirurgico':'CI-005',
+      'Consentimiento Quirurgico Especifico':'CI-006',
+      'Consentimiento Anestesico':'CI-007','Consentimiento para Conversion a Anestesia General':'CI-007',
+      'Consentimiento para Transfusion (si existe posibilidad)':'CI-008','Consentimiento para Transfusion (si aplica)':'CI-008','Consentimiento para Transfusion':'CI-008','Consentimiento para Hemoderivados':'CI-008',
+      'Consentimiento para Maniobras de RCP o Voluntad Anticipada':'CI-009','Consentimiento para Procedimientos de Soporte Vital':'CI-009',
+      'Consentimiento para UCI (si existe posibilidad)':'CI-010','Consentimiento para UCI':'CI-010','Consentimiento para Ventilacion Mecanica':'CI-010',
+      'Consentimiento para Administracion de Medicamentos':'CI-011','Consentimiento para Riesgo de Reacciones Alergicas':'CI-011',
+      'Consentimiento para Toma de Muestras Biologicas':'CI-012',
+      'Consentimiento para Estudios Diagnosticos':'CI-013','Autorizacion para estudios diagnosticos':'CI-013',
+      'Consentimiento para Uso de Medio de Contraste (cuando aplique)':'CI-014',
+      'Consentimiento para Curacion':'CI-015','Consentimiento para Procedimientos Menores':'CI-015',
+      'Consentimiento para Procedimientos Diagnosticos y Terapeuticos':'CI-016','Consentimiento para Cateteres Centrales':'CI-016','Consentimiento para Procedimientos Invasivos':'CI-016','Consentimiento para procedimientos adicionales en caso de urgencia':'CI-016',
+      'Consentimiento del Procedimiento':'CI-017','Consentimiento para Biopsia y Polipectomia':'CI-017',
+      'Consentimiento para Sedacion':'CI-018',
+      'Solicitud de Alta Voluntaria':'CI-019','Exoneracion de Responsabilidad Medica':'CI-019','Recepcion de Indicaciones Medicas':'CI-019',
+      'Carta Responsiva de Pago (si aplica)':'CI-020','Responsiva de Pago (si cambia responsable)':'CI-020','Responsiva de Pago':'CI-020','Carta Responsiva del Responsable de Pago':'CI-020','Carta Responsiva del Responsable de Pago o Tercer Pagador':'CI-020',
+      'Contrato de Prestacion de Servicios Hospitalarios':'CI-021',
+      'Inventario de pertenencias':'CI-022','Entrega de Pertenencias':'CI-022',
+      'Autorizacion para Facturacion':'CI-024',
+      'Autorizacion para compartir informacion con aseguradoras':'CI-025'
+    };
+    function docCI(d){return DOC2CI[d]||'';}
+
     function render(v){
       var box=elx('con-checklist');var t=tById(v);
       if(!t){box.innerHTML='';return;}
@@ -5291,15 +5321,25 @@ renderVer();render();
       var h='<div style="font-weight:700;color:#1a3a5c;margin:6px 0 4px">Documentos requeridos &mdash; '+esc(t.label)+'</div>';
       t.docs.forEach(function(d){
         var ck=st[d]?'checked':'';
-        var btn=isResp(d)?'<button type="button" class="con-goform exp-btn exp-btn-sec" style="padding:2px 8px;font-size:11px">Llenar</button>':'';
-        h+='<label style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #eef2f5;width:100%;margin:0"><input type="checkbox" data-doc="'+esc(d)+'" '+ck+'><span style="flex:1">'+esc(d)+'</span>'+btn+'</label>';
+        var code=docCI(d);
+        var badge=code?'<span style="font-size:10px;color:#5a6474;border:1px solid #cfd8e0;border-radius:8px;padding:0 5px;margin-right:5px;white-space:nowrap">'+code+'</span>':'';
+        var btn='';
+        if(code&&window.conEngineHas&&window.conEngineHas(code))btn='<button type="button" class="ce-open exp-btn exp-btn-sec" data-code="'+code+'" style="padding:2px 10px;font-size:11px">Abrir</button>';
+        else if(code==='CI-020')btn='<button type="button" class="con-goform exp-btn exp-btn-sec" style="padding:2px 10px;font-size:11px">Llenar</button>';
+        else if(code)btn='<span style="font-size:10px;color:#c78c20;white-space:nowrap">formato pendiente</span>';
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #eef2f5;width:100%">'
+          +'<label style="display:flex;align-items:center;gap:8px;flex:1;margin:0;cursor:pointer"><input type="checkbox" data-doc="'+esc(d)+'" '+ck+'><span>'+badge+esc(d)+'</span></label>'
+          +btn+'</div>';
       });
       box.innerHTML=h;
       Array.prototype.slice.call(box.querySelectorAll('input[type=checkbox]')).forEach(function(c){
         c.onchange=function(){if(!chkState[v])chkState[v]={};chkState[v][c.getAttribute('data-doc')]=c.checked;};
       });
       Array.prototype.slice.call(box.querySelectorAll('.con-goform')).forEach(function(b){
-        b.onclick=function(){var f=elx('con-traer');if(f)f.scrollIntoView({behavior:'smooth',block:'center'});};
+        b.onclick=function(e){e.preventDefault();e.stopPropagation();var f=elx('con-traer');if(f)f.scrollIntoView({behavior:'smooth',block:'center'});};
+      });
+      Array.prototype.slice.call(box.querySelectorAll('.ce-open')).forEach(function(b){
+        b.onclick=function(e){e.preventDefault();e.stopPropagation();var code=b.getAttribute('data-code');if(selC)selC.value=code;if(window.conEngineShow)window.conEngineShow(code);};
       });
     }
     selT.onchange=function(){render(this.value);};
