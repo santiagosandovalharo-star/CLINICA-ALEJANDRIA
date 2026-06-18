@@ -322,7 +322,8 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 <!-- OPTIMIZACION -->
 <div class="sec no-print">
   <div class="sec-t"><span class="ic">&#127919;</span> Optimizacion por monto objetivo</div>
-  <div class="opt-box"><input id="opt-monto" type="number" placeholder="Monto objetivo ($)"><button class="btn-opt" id="btn-opt">&#9889; Optimizar</button></div>
+  <div class="opt-box"><input id="opt-monto" type="number" placeholder="Monto objetivo ($)"><button class="btn-opt" id="btn-opt">&#9889; Optimizar</button><button class="btn-opt" id="btn-manual">&#9999; Modo manual</button></div>
+  <div style="font-size:10px;color:#888;margin-top:3px">Optimizar reduce <b>cantidades</b> (no precios), con piso en 1 y respetando candados. El <b>Modo manual</b> habilita editar precios unitarios a mano.</div>
   <div class="opt-res" id="opt-res"></div>
 </div>
 
@@ -3596,6 +3597,7 @@ var PM={};PR.forEach(function(x){PM[x.n]=x;});
 
 /* ====== STATE ====== */
 var cart=[];var clN=1;var pendingFile=null;var dirty=false;
+var optManual=false;
 var verMajor=1;var verMinor=0;
 var versions=JSON.parse(localStorage.getItem('ca_vers')||'[]');
 function $(id){return document.getElementById(id);}
@@ -4224,7 +4226,11 @@ function render(){
     h+='<td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+it.n+'">'+it.n+'</td>';
     h+='<td class="no-print"><span class="cat">'+it.cat+'</span></td>';
     h+='<td class="c"><input class="tq no-print" type="number" min="1" value="'+it.q+'" data-cl="'+it.cl+'"><span class="print-only">'+it.q+'</span></td>';
-    h+='<td class="r no-print">'+fmt(precioU)+'</td>';
+    if(optManual){
+      h+='<td class="r no-print"><input class="tp no-print" type="number" min="0" step="0.01" value="'+precioU+'" data-cl="'+it.cl+'" style="width:84px;text-align:right;border:1px solid var(--warn);border-radius:5px;padding:2px 4px"><span class="print-only">'+fmt(precioU)+'</span></td>';
+    }else{
+      h+='<td class="r no-print">'+fmt(precioU)+'</td>';
+    }
     h+='<td class="r">'+fmt(precioT)+'</td>';
     h+='<td class="r" style="color:var(--err)">-'+fmt(descT)+'</td>';
     h+='<td class="r no-print" style="font-weight:600;color:var(--pri2)">'+fmt(subT)+'</td>';
@@ -4238,6 +4244,8 @@ function render(){
 
     var qi=tr.querySelector('.tq');
     if(qi)qi.addEventListener('change',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.q=Math.max(1,parseInt(this.value)||1);bumpVer();render();}});
+    var ppi=tr.querySelector('.tp');
+    if(ppi)ppi.addEventListener('change',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.p=Math.max(0,parseFloat(this.value)||0);bumpVer();render();}});
     var db=tr.querySelector('.td-btn');
     if(db)db.addEventListener('click',function(){cart=cart.filter(function(c){return c.cl!==this.dataset.cl;}.bind(this));bumpVer();render();});
     var lb=tr.querySelector('.td-lock');
@@ -4272,30 +4280,54 @@ function updateSidebar(n,precio,descuento,sub,iva,hon,util,marg,total,rent){
   $('sb-total').textContent=fmt(total);
 }
 
-/* ====== OPTIMIZER ====== */
+/* ====== OPTIMIZER (por cantidades, no precios) ====== */
+function setManual(v){
+  optManual=!!v;
+  var b=$('btn-manual');
+  if(b){b.innerHTML=optManual?'&#9999; Modo manual: ON':'&#9999; Modo manual';b.style.background=optManual?'var(--warn)':'';}
+  render();
+}
+var bmn=$('btn-manual');if(bmn)bmn.addEventListener('click',function(){setManual(!optManual);});
+
 $('btn-opt').addEventListener('click',function(){
   var target=parseFloat($('opt-monto').value);
   if(!target||target<=0){alert('Ingresa un monto objetivo valido');return;}
   if(!cart.length){alert('Agrega conceptos primero');return;}
   saveVersion('Pre-optimizacion');
-  var iva=ivaR(),desc=descR(),umin=uminR();
-  var currentTotal=0;cart.forEach(function(it){currentTotal+=it.p*(1-desc)*it.q*(1+iva);});
-  if(target>=currentTotal){$('opt-res').style.display='block';$('opt-res').innerHTML='<b style="color:var(--accent)">&#10004;</b> Objetivo ('+fmt(target)+') >= actual ('+fmt(currentTotal)+'). Sin ajuste.';return;}
-  var reduction=currentTotal-target,adjusted=0;
-  var priority=['Hospitalizacion','Material','Insumo','Medicamento','Laboratorio','Imagenologia','Rehabilitacion','Interconsulta'];
-  for(var pi=0;pi<priority.length;pi++){if(adjusted>=reduction)break;
-    for(var ci=0;ci<cart.length;ci++){if(adjusted>=reduction)break;var it=cart[ci];
-      if(it.locked||it.cat!==priority[pi])continue;
-      var minP=it.c*(1+umin),curSU=it.p*(1-desc);if(curSU<=minP)continue;
-      var can=(curSU-minP)*it.q*(1+iva),need=reduction-adjusted,red=Math.min(can,need);
-      var prU=red/(it.q*(1+iva));it.p=Math.round(((curSU-prU)/(1-desc))*100)/100;
-      if(it.p<Math.ceil(minP/(1-desc)*100)/100)it.p=Math.ceil(minP/(1-desc)*100)/100;
-      adjusted+=red;
-  }}
+  var iva=ivaR(),desc=descR();
+  function totalNow(){var t=0;cart.forEach(function(it){t+=it.p*(1-desc)*it.q*(1+iva);});return t;}
+  function unitVal(it){return it.p*(1-desc)*(1+iva);}
+  var currentTotal=totalNow();
+  if(target>=currentTotal){$('opt-res').style.display='block';$('opt-res').innerHTML='<b style="color:var(--accent)">&#10004;</b> Objetivo ('+fmt(target)+') &gt;= actual ('+fmt(currentTotal)+'). Sin ajuste.';return;}
+
+  // Reducir CANTIDADES por prioridad de categoria; piso=1; respeta candados.
+  var priority=['Hospitalizacion','Material','Insumo','Medicamento','Laboratorio','Imagenologia','Rehabilitacion','Interconsulta','Osteosintesis','Implante'];
+  var guard=200000;
+  while(totalNow()>target && guard-->0){
+    var cands=cart.filter(function(it){return !it.locked && it.q>1;});
+    if(!cands.length)break;
+    var pick=null;
+    for(var pi=0;pi<priority.length && !pick;pi++){
+      var inCat=cands.filter(function(it){return it.cat===priority[pi];});
+      if(inCat.length){inCat.sort(function(a,b){return unitVal(b)-unitVal(a);});pick=inCat[0];}
+    }
+    if(!pick){cands.sort(function(a,b){return unitVal(b)-unitVal(a);});pick=cands[0];}
+    pick.q-=1;
+  }
   bumpVer();render();
-  var newT=0;cart.forEach(function(it){newT+=it.p*(1-desc)*it.q*(1+iva);});
+
+  var newT=totalNow();
+  var sinMargen=!cart.some(function(it){return !it.locked && it.q>1;}); // ya no hay nada que reducir
   $('opt-res').style.display='block';
-  $('opt-res').innerHTML='<b>&#9889; Optimizacion completada</b><br>Original: '+fmt(currentTotal)+' &#8594; <b>'+fmt(newT)+'</b> (Obj: '+fmt(target)+')<br>Reduccion: <b>'+fmt(currentTotal-newT)+'</b><br>'+(newT<=target*1.02?'<span style="color:var(--accent)">&#10004; Objetivo alcanzado.</span>':'<span style="color:var(--warn)">&#9888; Margenes minimos impiden alcanzar el objetivo.</span>');
+  var msg='<b>&#9889; Optimizacion por cantidades</b><br>Original: '+fmt(currentTotal)+' &#8594; <b>'+fmt(newT)+'</b> (Obj: '+fmt(target)+')<br>Reduccion: <b>'+fmt(currentTotal-newT)+'</b><br>';
+  if(newT<=target*1.02){
+    msg+='<span style="color:var(--accent)">&#10004; Objetivo alcanzado ajustando cantidades.</span>';
+  }else{
+    msg+='<span style="color:var(--warn)">&#9888; Ya no se pueden bajar mas las cantidades (varias quedaron en 1). Para acercarte mas, activa el <b>Modo manual</b> y ajusta los precios a mano.</span>'
+       +'<br><button class="btn-opt" id="btn-manual2" style="margin-top:6px">&#9999; Activar modo manual</button>';
+  }
+  $('opt-res').innerHTML=msg;
+  var bm2=$('btn-manual2');if(bm2)bm2.addEventListener('click',function(){setManual(true);$('opt-res').innerHTML+='<br><span style="color:var(--warn)">&#10004; Modo manual activado: edita los precios unitarios directo en la tabla.</span>';});
 });
 
 /* ====== VERSIONS ====== */
