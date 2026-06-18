@@ -4520,6 +4520,7 @@ renderVer();render();
             <div class="exp-f"><label>Catalogo de consentimientos (CI)</label><select id="con-catalogo"><option value="">-- Ver documento --</option></select></div>
           </div>
           <div id="con-cat-note" style="font-size:12px;color:#5a6474;margin:2px 0"></div>
+          <div id="con-engine" style="margin:6px 0"></div>
           <div id="con-checklist" style="margin:6px 0"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
             <button type="button" id="con-chk-pdf" class="exp-btn exp-btn-sec">Imprimir caratula del checklist</button>
@@ -4729,6 +4730,7 @@ renderVer();render();
       if(window.expCargarAnt)window.expCargarAnt(d.antecedentes||{});
       if(window.expCargarConsent)window.expCargarConsent(d.consentimiento||{});
       if(window.expCargarConsentChk)window.expCargarConsentChk(d.consentimientos_checklist||{});
+      if(window.expCargarConsentData)window.expCargarConsentData(d.consentimientos_data||{});
       el('exp-medico').value=d.medico_tratante||'';
       msg('Expediente cargado \u2713','ok');
     }catch(e){msg('No se pudo buscar: '+(e.message||e),'err');}
@@ -5303,8 +5305,11 @@ renderVer();render();
     selT.onchange=function(){render(this.value);};
 
     selC.onchange=function(){
-      var v=this.value,note=elx('con-cat-note');if(!v){note.innerHTML='';return;}
+      var v=this.value,note=elx('con-cat-note');
+      if(window.conEngineHide)window.conEngineHide();
+      if(!v){note.innerHTML='';return;}
       var nom='';CAT25.forEach(function(c){if(c[0]===v)nom=c[1];});
+      if(window.conEngineHas&&window.conEngineHas(v)){note.innerHTML='';if(window.conEngineShow)window.conEngineShow(v);return;}
       if(LISTOS[v]){
         note.innerHTML='<b>'+v+'</b> &middot; '+esc(nom)+' &mdash; ya esta listo. <a href="#" id="con-goCI" style="color:#1a6fb0">Ir al formulario &darr;</a>';
         var a=elx('con-goCI');if(a)a.onclick=function(e){e.preventDefault();var f=elx('con-traer');if(f)f.scrollIntoView({behavior:'smooth',block:'center'});};
@@ -5348,6 +5353,197 @@ renderVer();render();
     };
 
     window.expCargarConsentChk=function(o){chkState=o||{};var v=elx('con-tipo-ingreso').value;if(v)render(v);};
+  })();
+
+  /* ===== Motor de consentimientos por plantilla (aditivo) ===== */
+  (function initConsentEngine(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function emsg(t,c){var m=elx('ce-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+
+    /* ---- Plantillas de consentimientos ---- */
+    var PLANTILLAS={
+     'CI-002':{
+      codigo:'CI-002',version:'1.0',area:'Servicio de Urgencias',
+      titulo:'CONSENTIMIENTO INFORMADO PARA ATENCION MEDICA EN EL SERVICIO DE URGENCIAS',
+      nombre:'Consentimiento Informado para Atencion Medica en Urgencias',
+      responsable:true,motivo:true,
+      secciones:[
+       {tipo:'texto',titulo:'IV. OBJETO DEL CONSENTIMIENTO',p:['El suscrito autoriza al personal medico y de enfermeria de Clinica Alejandria Salud Integral Especializada para realizar la valoracion inicial, interrogatorio, exploracion fisica, monitoreo, estudios diagnosticos, administracion de medicamentos, procedimientos medicos y demas acciones necesarias para preservar la salud y la vida del paciente, conforme a la Lex Artis Medica y a las Normas Oficiales Mexicanas aplicables.']},
+       {tipo:'check',titulo:'V. PROCEDIMIENTOS QUE PODRAN REALIZARSE',id:'proc',intro:'Autorizo la realizacion de los procedimientos que el medico tratante considere clinicamente indicados, incluyendo, entre otros:',items:['Valoracion medica integral','Toma de signos vitales','Canalizacion venosa periferica','Administracion de medicamentos','Oxigenoterapia','Nebulizaciones','Electrocardiograma','Toma de muestras para laboratorio','Estudios de imagen','Curaciones','Sutura de heridas','Inmovilizacion con ferulas o yesos','Reduccion cerrada de luxaciones o fracturas','Colocacion de sonda urinaria','Colocacion de sonda nasogastrica','Aspiracion de secreciones','Procedimientos diagnosticos y terapeuticos necesarios','Otros clinicamente indicados']},
+       {tipo:'riesgos',titulo:'VI. RIESGOS',intro:'Reconozco que todo procedimiento medico puede implicar riesgos, entre ellos:',items:['Dolor','Sangrado','Infeccion','Reacciones alergicas','Lesiones a estructuras vecinas','Complicaciones derivadas de la enfermedad de base','Necesidad de hospitalizacion','Necesidad de cirugia urgente','Riesgo de discapacidad permanente','Riesgo de fallecimiento en casos de extrema gravedad'],nota:'Se me ha explicado que dichos riesgos pueden presentarse aun actuando conforme a la buena practica medica.'},
+       {tipo:'texto',titulo:'VII. SITUACIONES DE URGENCIA',p:['Entiendo que, cuando exista riesgo inminente para la vida o la funcion de un organo y no sea posible obtener oportunamente la autorizacion del paciente o de su representante legal, el personal medico podra realizar las maniobras indispensables para preservar la vida o disminuir el dano, dejando constancia en el expediente clinico conforme a la legislacion sanitaria aplicable.']},
+       {tipo:'texto',titulo:'VIII. ALTERNATIVAS',p:['Se me informo que puedo solicitar una segunda opinion medica o rechazar procedimientos especificos, comprendiendo que dicha decision puede incrementar el riesgo de complicaciones, secuelas o fallecimiento.']},
+       {tipo:'texto',titulo:'IX. RESPONSABILIDAD ECONOMICA',p:['Acepto cubrir los gastos derivados de la atencion medica de urgencias, estudios diagnosticos, medicamentos, materiales, procedimientos y demas servicios prestados que no sean cubiertos por aseguradoras o terceros obligados al pago.']},
+       {tipo:'datos',titulo:'X. PROTECCION DE DATOS PERSONALES',p:['Autorizo el tratamiento de mis datos personales y clinicos para fines asistenciales, administrativos, legales, de auditoria medica, facturacion y continuidad de la atencion, conforme al Aviso de Privacidad institucional.']},
+       {tipo:'texto',titulo:'XI. DECLARACION',p:['Manifiesto que he recibido informacion suficiente sobre mi estado de salud, los procedimientos propuestos, sus beneficios, riesgos y alternativas, habiendo tenido oportunidad de realizar preguntas que fueron contestadas satisfactoriamente.','Declaro que firmo el presente consentimiento de manera libre, voluntaria y sin presion alguna.']},
+       {tipo:'docs',titulo:'XII. DOCUMENTACION ENTREGADA',id:'docs',items:['Aviso de Privacidad','Nota de Urgencias','Receta Medica','Solicitud de Laboratorio','Solicitud de Imagenologia','Indicaciones Medicas','Certificado Medico (cuando aplique)','Incapacidad Medica (cuando aplique)','Hoja de Referencia (cuando aplique)']}
+      ]
+     }
+    };
+    window.conEngineHas=function(c){return !!PLANTILLAS[c];};
+
+    var STORE={};            /* { codigo: datos } cargado del expediente */
+    var actual=null;         /* codigo en pantalla */
+
+    function edadDe(f){if(!f)return '';var b=new Date(f),n=new Date(),a=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth();if(m<0||(m===0&&n.getDate()<b.getDate()))a--;return isNaN(a)?'':a;}
+
+    function buildForm(P){
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div style="font-weight:700;color:#1a3a5c">'+esc(P.codigo)+' &middot; '+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;color:#5a6474;margin-bottom:6px">Area: '+esc(P.area)+' &middot; Version '+esc(P.version)+'</div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button type="button" id="ce-traer" class="exp-btn exp-btn-sec">Traer datos del paciente</button></div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha</label><input id="ce-fecha" type="date"></div><div class="exp-f"><label>Hora</label><input id="ce-hora" type="time"></div></div>';
+      /* I. Paciente */
+      h+='<div class="ant-h">I. Datos del paciente</div><div class="exp-g2">'
+       +'<div class="exp-f" style="grid-column:1/-1"><label>Nombre</label><input id="ce-pac-nombre"></div>'
+       +'<div class="exp-f"><label>CURP</label><input id="ce-pac-curp"></div>'
+       +'<div class="exp-f"><label>Fecha de nacimiento</label><input id="ce-pac-fnac" type="date"></div>'
+       +'<div class="exp-f"><label>Edad</label><input id="ce-pac-edad"></div>'
+       +'<div class="exp-f"><label>Sexo</label><input id="ce-pac-sexo"></div>'
+       +'<div class="exp-f"><label>Telefono</label><input id="ce-pac-tel"></div>'
+       +'<div class="exp-f" style="grid-column:1/-1"><label>Domicilio</label><input id="ce-pac-dom"></div></div>';
+      /* II. Responsable */
+      if(P.responsable){
+        h+='<div class="ant-h">II. Responsable legal o familiar</div><div class="exp-g2">'
+         +'<div class="exp-f" style="grid-column:1/-1"><label>Nombre</label><input id="ce-resp-nombre"></div>'
+         +'<div class="exp-f"><label>Parentesco</label><input id="ce-resp-parent"></div>'
+         +'<div class="exp-f"><label>Telefono</label><input id="ce-resp-tel"></div>'
+         +'<div class="exp-f" style="grid-column:1/-1"><label>Identificacion oficial</label><input id="ce-resp-ident"></div></div>';
+      }
+      /* III. Motivo */
+      if(P.motivo){
+        h+='<div class="ant-h">III. Motivo de atencion</div>'
+         +'<div class="exp-f"><label>Motivo / padecimiento</label><textarea id="ce-motivo" rows="2"></textarea></div>'
+         +'<div class="exp-f"><label>Diagnostico presuntivo</label><textarea id="ce-dx" rows="1"></textarea></div>';
+      }
+      /* Secciones dinamicas con interaccion */
+      P.secciones.forEach(function(s,idx){
+        if(s.tipo==='check'||s.tipo==='docs'){
+          h+='<div class="ant-h">'+esc(s.titulo)+'</div>';
+          if(s.intro)h+='<div style="font-size:11px;color:#5a6474;margin-bottom:2px">'+esc(s.intro)+'</div>';
+          h+='<div class="ant-chk" data-sec="'+idx+'">';
+          s.items.forEach(function(it){h+='<label><input type="checkbox" value="'+esc(it)+'"> '+esc(it)+'</label>';});
+          h+='</div>';
+        }else if(s.tipo==='datos'){
+          h+='<div class="ant-h">'+esc(s.titulo)+'</div><div class="exp-f"><label>Tratamiento de datos personales</label><select id="ce-datos"><option value="">--</option><option>Si autorizo</option><option>No autorizo</option></select></div>';
+        }
+      });
+      /* Firmas */
+      h+='<div class="ant-h">Firmas (nombres para el documento)</div><div class="exp-g2">'
+       +'<div class="exp-f"><label>Paciente</label><input id="ce-f-pac"></div>'
+       +'<div class="exp-f"><label>Medico tratante</label><input id="ce-f-med"></div>'
+       +'<div class="exp-f"><label>Cedula profesional</label><input id="ce-f-ced"></div>';
+      if(P.responsable)h+='<div class="exp-f"><label>Responsable / familiar</label><input id="ce-f-resp"></div><div class="exp-f"><label>Parentesco</label><input id="ce-f-resp-par"></div>';
+      h+='<div class="exp-f"><label>Testigo 1</label><input id="ce-f-t1"></div>'
+       +'<div class="exp-f"><label>Testigo 2</label><input id="ce-f-t2"></div>'
+       +'<div class="exp-f"><label>Colaborador ('+esc(P.area)+')</label><input id="ce-f-col"></div>'
+       +'<div class="exp-f"><label>Cargo</label><input id="ce-f-cargo"></div></div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="ce-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="ce-guardar" class="exp-btn exp-btn-pri">Guardar consentimiento</button><span class="exp-msg" id="ce-msg"></span></div>';
+      h+='</div>';
+      return h;
+    }
+
+    function secChecks(idx){return Array.prototype.slice.call(document.querySelectorAll('#con-engine .ant-chk[data-sec="'+idx+'"] input:checked')).map(function(c){return c.value;});}
+    function gather(P){
+      var o={codigo:P.codigo,fecha:gv('ce-fecha'),hora:gv('ce-hora'),
+        paciente:{nombre:gv('ce-pac-nombre'),curp:gv('ce-pac-curp'),fnac:gv('ce-pac-fnac'),edad:gv('ce-pac-edad'),sexo:gv('ce-pac-sexo'),tel:gv('ce-pac-tel'),dom:gv('ce-pac-dom')},
+        datos:gv('ce-datos'),sel:{},
+        firmas:{paciente:gv('ce-f-pac'),medico:gv('ce-f-med'),cedula:gv('ce-f-ced'),responsable:gv('ce-f-resp'),resp_par:gv('ce-f-resp-par'),testigo1:gv('ce-f-t1'),testigo2:gv('ce-f-t2'),colaborador:gv('ce-f-col'),cargo:gv('ce-f-cargo')}};
+      if(P.responsable)o.responsable={nombre:gv('ce-resp-nombre'),parentesco:gv('ce-resp-parent'),tel:gv('ce-resp-tel'),ident:gv('ce-resp-ident')};
+      if(P.motivo){o.motivo=gv('ce-motivo');o.dx=gv('ce-dx');}
+      P.secciones.forEach(function(s,idx){if(s.tipo==='check'||s.tipo==='docs')o.sel[idx]=secChecks(idx);});
+      return o;
+    }
+    function restore(P,o){
+      o=o||{};var pc=o.paciente||{},rs=o.responsable||{},fm=o.firmas||{};
+      function sv(id,v){var e=elx(id);if(e)e.value=(v==null?'':v);}
+      sv('ce-fecha',o.fecha);sv('ce-hora',o.hora);
+      sv('ce-pac-nombre',pc.nombre);sv('ce-pac-curp',pc.curp);sv('ce-pac-fnac',pc.fnac);sv('ce-pac-edad',pc.edad);sv('ce-pac-sexo',pc.sexo);sv('ce-pac-tel',pc.tel);sv('ce-pac-dom',pc.dom);
+      if(P.responsable){sv('ce-resp-nombre',rs.nombre);sv('ce-resp-parent',rs.parentesco);sv('ce-resp-tel',rs.tel);sv('ce-resp-ident',rs.ident);}
+      if(P.motivo){sv('ce-motivo',o.motivo);sv('ce-dx',o.dx);}
+      sv('ce-datos',o.datos);
+      sv('ce-f-pac',fm.paciente);sv('ce-f-med',fm.medico);sv('ce-f-ced',fm.cedula);sv('ce-f-resp',fm.responsable);sv('ce-f-resp-par',fm.resp_par);sv('ce-f-t1',fm.testigo1);sv('ce-f-t2',fm.testigo2);sv('ce-f-col',fm.colaborador);sv('ce-f-cargo',fm.cargo);
+      var sel=o.sel||{};
+      P.secciones.forEach(function(s,idx){if(s.tipo==='check'||s.tipo==='docs'){var arr=sel[idx]||[];Array.prototype.slice.call(document.querySelectorAll('#con-engine .ant-chk[data-sec="'+idx+'"] input')).forEach(function(c){c.checked=arr.indexOf(c.value)>=0;});}});
+    }
+
+    function wire(P){
+      if(elx('ce-fecha')&&!gv('ce-fecha'))elx('ce-fecha').value=new Date().toISOString().slice(0,10);
+      if(elx('ce-hora')&&!gv('ce-hora'))elx('ce-hora').value=new Date().toTimeString().slice(0,5);
+      elx('ce-traer').onclick=function(){
+        var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
+        if(nom&&nom.indexOf('sin nombre')<0)elx('ce-pac-nombre').value=nom;
+        if(gv('exp-fnac')){elx('ce-pac-fnac').value=gv('exp-fnac');elx('ce-pac-edad').value=edadDe(gv('exp-fnac'));}
+        if(elx('ant-sexo')&&elx('ant-sexo').value)elx('ce-pac-sexo').value=elx('ant-sexo').value;
+        if(P.motivo&&gv('exp-dx')&&!gv('ce-dx'))elx('ce-dx').value=gv('exp-dx');
+        if(gv('exp-medico')&&!gv('ce-f-med'))elx('ce-f-med').value=gv('exp-medico');
+        emsg('Datos traidos \u2713','ok');
+      };
+      elx('ce-pdf').onclick=function(){doPDF(P);};
+      elx('ce-guardar').onclick=function(){doSave(P);};
+    }
+
+    function row(l,v){return '<tr><td style="border:1px solid #cfd8e0;padding:4px;font-weight:600;width:34%">'+l+'</td><td style="border:1px solid #cfd8e0;padding:4px">'+esc(v||'')+'</td></tr>';}
+    function Pp(t){return '<p style="margin:5px 0;text-align:justify">'+esc(t)+'</p>';}
+    function Hh(t){return '<div style="font-weight:700;color:#1a3a5c;margin:9px 0 3px;font-size:12.5px">'+esc(t)+'</div>';}
+    function firmaBox(nom,rol,extra){return '<div style="text-align:center;flex:1;min-width:200px;margin-top:30px"><div style="border-top:1px solid #1a2733;margin:0 10px;padding-top:3px;font-weight:600">'+esc(nom||'')+'</div><div style="font-size:10px;color:#5a6474">'+rol+(extra?'<br>'+extra:'')+'</div></div>';}
+
+    function buildHTML(P){
+      var o=gather(P),pc=o.paciente;
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px;line-height:1.45">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:13px;font-weight:700;text-align:center">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:10px;color:#5a6474;text-align:center;margin-bottom:6px">Codigo '+esc(P.codigo)+' &middot; Version '+esc(P.version)+' &middot; '+esc(P.area)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:6px"><b>Folio:</b> '+esc(gv('exp-folio'))+' &nbsp; <b>Fecha:</b> '+esc(o.fecha)+' &nbsp; <b>Hora:</b> '+esc(o.hora)+'</div>';
+      h+=Hh('I. DATOS DEL PACIENTE')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre',pc.nombre)+row('CURP',pc.curp)+row('Fecha de nacimiento',pc.fnac)+row('Edad',pc.edad)+row('Sexo',pc.sexo)+row('Telefono',pc.tel)+row('Domicilio',pc.dom)+'</table>';
+      if(P.responsable){var rs=o.responsable||{};h+=Hh('II. RESPONSABLE LEGAL O FAMILIAR')+'<table style="width:100%;border-collapse:collapse;font-size:11px">'+row('Nombre',rs.nombre)+row('Parentesco',rs.parentesco)+row('Telefono',rs.tel)+row('Identificacion oficial',rs.ident)+'</table>';}
+      if(P.motivo){h+=Hh('III. MOTIVO DE ATENCION')+Pp(o.motivo)+(o.dx?'<p style="margin:5px 0"><b>Diagnostico presuntivo:</b> '+esc(o.dx)+'</p>':'');}
+      P.secciones.forEach(function(s,idx){
+        if(s.tipo==='texto'){h+=Hh(s.titulo);(s.p||[]).forEach(function(p){h+=Pp(p);});}
+        else if(s.tipo==='riesgos'){h+=Hh(s.titulo);if(s.intro)h+=Pp(s.intro);h+='<ul style="margin:4px 0 4px 18px;padding:0">'+s.items.map(function(it){return '<li>'+esc(it)+'</li>';}).join('')+'</ul>';if(s.nota)h+=Pp(s.nota);}
+        else if(s.tipo==='check'||s.tipo==='docs'){h+=Hh(s.titulo);if(s.intro)h+=Pp(s.intro);var arr=o.sel[idx]||[];h+='<div style="margin:3px 0">'+s.items.map(function(it){return '<span style="display:inline-block;width:48%;font-size:11px;vertical-align:top">'+(arr.indexOf(it)>=0?'\u2611':'\u2610')+' '+esc(it)+'</span>';}).join('')+'</div>';}
+        else if(s.tipo==='datos'){h+=Hh(s.titulo);(s.p||[]).forEach(function(p){h+=Pp(p);});h+='<div style="font-size:11px">'+(o.datos==='Si autorizo'?'\u2611':'\u2610')+' Si autorizo &nbsp;&nbsp; '+(o.datos==='No autorizo'?'\u2611':'\u2610')+' No autorizo</div>';}
+      });
+      var fm=o.firmas||{};
+      h+=Hh('FIRMAS');
+      h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+firmaBox(fm.paciente,'Paciente')+firmaBox(fm.medico,'Medico tratante',fm.cedula?'Cedula: '+esc(fm.cedula):'')+'</div>';
+      var fila2='';
+      if(P.responsable)fila2+=firmaBox(fm.responsable,'Responsable / familiar',fm.resp_par?'Parentesco: '+esc(fm.resp_par):'');
+      fila2+=firmaBox(fm.testigo1,'Testigo 1')+firmaBox(fm.testigo2,'Testigo 2');
+      h+='<div style="display:flex;flex-wrap:wrap;gap:10px">'+fila2+'</div>';
+      h+='<div style="margin-top:10px;font-size:11px"><b>'+esc(P.area)+'</b><br>Colaborador: '+esc(fm.colaborador)+' &nbsp;|&nbsp; Cargo: '+esc(fm.cargo)+' &nbsp;|&nbsp; Sello: ____________</div>';
+      h+='<p style="margin-top:10px;font-size:9.5px;color:#5a6474">Control documental &middot; Codigo '+esc(P.codigo)+' &middot; Nombre: '+esc(P.nombre||P.titulo)+' &middot; Version '+esc(P.version)+' &middot; Documento integrante del expediente clinico institucional.</p>';
+      h+='</div>';
+      return h;
+    }
+
+    function doPDF(P){
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){emsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+esc(P.codigo)+'</title></head><body style="margin:0;padding:16px">'+buildHTML(P)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(P){
+      var folio=gv('exp-folio');if(!folio){emsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      STORE[P.codigo]=gather(P);
+      if(!window.caSupa){emsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('ce-guardar');b.textContent='Guardando...';
+      try{
+        var r=await window.caSupa.from('expedientes').upsert({folio:folio,consentimientos_data:STORE,modificado_en:new Date().toISOString()},{onConflict:'folio'});
+        if(r.error)throw r.error;emsg('Consentimiento '+P.codigo+' guardado \u2713','ok');
+      }catch(e){emsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar consentimiento';
+    }
+
+    window.conEngineShow=function(c){
+      var P=PLANTILLAS[c];if(!P){return;}
+      actual=c;var box=elx('con-engine');box.innerHTML=buildForm(P);wire(P);restore(P,STORE[c]||{});
+      box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    };
+    window.conEngineHide=function(){actual=null;var box=elx('con-engine');if(box)box.innerHTML='';};
+    window.expCargarConsentData=function(o){STORE=o||{};if(actual&&PLANTILLAS[actual])restore(PLANTILLAS[actual],STORE[actual]||{});};
   })();
 })();
 </script>
