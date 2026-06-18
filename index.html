@@ -4514,7 +4514,20 @@ renderVer();render();
           <span class="exp-msg" id="nota-msg"></span>
         </div>
         <div data-p="consentimientos" style="display:none">
-          <div class="ant-h">Consentimiento informado y carta responsiva (tercer pagador)</div>
+          <div class="ant-h">Asistente de consentimientos por tipo de ingreso</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Tipo de atencion / ingreso</label><select id="con-tipo-ingreso"><option value="">-- Selecciona --</option></select></div>
+            <div class="exp-f"><label>Catalogo de consentimientos (CI)</label><select id="con-catalogo"><option value="">-- Ver documento --</option></select></div>
+          </div>
+          <div id="con-cat-note" style="font-size:12px;color:#5a6474;margin:2px 0"></div>
+          <div id="con-checklist" style="margin:6px 0"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;align-items:center">
+            <button type="button" id="con-chk-pdf" class="exp-btn exp-btn-sec">Imprimir caratula del checklist</button>
+            <button type="button" id="con-chk-save" class="exp-btn exp-btn-pri">Guardar checklist</button>
+            <span class="exp-msg" id="con-chk-msg"></span>
+          </div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:10px 0">
+          <div class="ant-h">CI-020 &middot; Consentimiento informado y carta responsiva (tercer pagador)</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
             <button type="button" id="con-traer" class="exp-btn exp-btn-sec">Traer datos del paciente (de la Ficha)</button>
           </div>
@@ -4715,6 +4728,7 @@ renderVer();render();
       if(window.expCargarDx)window.expCargarDx(d.diagnosticos||[]);
       if(window.expCargarAnt)window.expCargarAnt(d.antecedentes||{});
       if(window.expCargarConsent)window.expCargarConsent(d.consentimiento||{});
+      if(window.expCargarConsentChk)window.expCargarConsentChk(d.consentimientos_checklist||{});
       el('exp-medico').value=d.medico_tratante||'';
       msg('Expediente cargado \u2713','ok');
     }catch(e){msg('No se pudo buscar: '+(e.message||e),'err');}
@@ -5224,6 +5238,116 @@ renderVer();render();
       sv('con-f-pac',fm.paciente);sv('con-f-resp',fm.responsable);sv('con-f-t1',fm.testigo1);sv('con-f-t2',fm.testigo2);sv('con-f-adm',fm.admision);sv('con-f-cargo',fm.cargo);
       sv('con-obs',o.observaciones);
     };
+  })();
+
+  /* ===== Menu de consentimientos por tipo de ingreso (aditivo) ===== */
+  (function initConsentMenu(){
+    function elx(id){return document.getElementById(id);}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function cmsg(t,c){var m=elx('con-chk-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('con-tipo-ingreso'))return;
+
+    var TIPOS=[
+      {v:'1',label:'1. Consulta medica general o especializada',docs:['Aviso de Privacidad','Consentimiento para Consulta Medica','Consentimiento para Tratamiento de Datos Personales','Carta Responsiva de Pago (si aplica)']},
+      {v:'2',label:'2. Revision medica subsecuente',docs:['Consentimiento de Atencion Subsecuente','Actualizacion de Datos','Responsiva de Pago (si cambia responsable)']},
+      {v:'3',label:'3. Curacion de heridas o manejo ambulatorio',docs:['Consentimiento para Curacion','Consentimiento para Procedimientos Menores','Consentimiento para Fotografia Clinica (opcional)','Responsiva de Pago']},
+      {v:'4',label:'4. Aplicacion de medicamentos IM / IV / SC',docs:['Consentimiento para Administracion de Medicamentos','Consentimiento para Riesgo de Reacciones Alergicas','Responsiva de Pago']},
+      {v:'5',label:'5. Toma de muestras de laboratorio',docs:['Consentimiento para Toma de Muestras Biologicas','Aviso de Privacidad','Responsiva de Pago']},
+      {v:'6',label:'6. Toma de estudios de gabinete e imagenologia',docs:['Consentimiento para Estudios Diagnosticos','Consentimiento para Uso de Medio de Contraste (cuando aplique)','Responsiva de Pago']},
+      {v:'7',label:'7. Atencion en Urgencias sin hospitalizacion',docs:['Consentimiento de Atencion en Urgencias','Consentimiento para Procedimientos Necesarios','Carta Responsiva del Responsable de Pago','Aviso de Privacidad']},
+      {v:'8',label:'8. Hospitalizacion por Urgencias',docs:['Consentimiento de Ingreso Hospitalario','Consentimiento General de Hospitalizacion','Consentimiento para Procedimientos Diagnosticos y Terapeuticos','Responsiva de Pago','Aviso de Privacidad']},
+      {v:'9',label:'9. Hospitalizacion con posibilidad de RCP',docs:['Consentimiento General de Hospitalizacion','Consentimiento para Maniobras de RCP o Voluntad Anticipada','Consentimiento para Procedimientos de Soporte Vital','Responsiva de Pago']},
+      {v:'10',label:'10. Internamiento para tratamiento medico (no quirurgico)',docs:['Consentimiento de Hospitalizacion','Consentimiento para Tratamiento Medico','Consentimiento para Administracion de Medicamentos','Consentimiento para Transfusion (si existe posibilidad)','Responsiva de Pago']},
+      {v:'11',label:'11. Internamiento para cirugia menor',docs:['Consentimiento de Hospitalizacion','Consentimiento para Procedimiento Quirurgico','Consentimiento Anestesico','Consentimiento para Transfusion (si aplica)','Consentimiento para Patologia (si aplica)','Responsiva de Pago']},
+      {v:'12',label:'12. Internamiento para cirugia mayor',docs:['Consentimiento de Hospitalizacion','Consentimiento Quirurgico Especifico','Consentimiento Anestesico','Consentimiento para Transfusion','Consentimiento para UCI (si existe posibilidad)','Consentimiento para Reintervencion en caso de urgencia','Consentimiento para Patologia','Responsiva de Pago']},
+      {v:'13',label:'13. Ingreso a Terapia Intensiva',docs:['Consentimiento para UCI','Consentimiento para Ventilacion Mecanica','Consentimiento para Cateteres Centrales','Consentimiento para Hemoderivados','Consentimiento para Procedimientos Invasivos','Responsiva de Pago']},
+      {v:'14',label:'14. Sedacion o procedimientos bajo sedacion',docs:['Consentimiento para Sedacion','Valoracion Anestesica','Consentimiento para Conversion a Anestesia General','Responsiva de Pago']},
+      {v:'15',label:'15. Endoscopia o colonoscopia',docs:['Consentimiento del Procedimiento','Consentimiento para Sedacion','Consentimiento para Biopsia y Polipectomia','Responsiva de Pago']},
+      {v:'16',label:'16. Alta voluntaria',docs:['Solicitud de Alta Voluntaria','Exoneracion de Responsabilidad Medica','Recepcion de Indicaciones Medicas']},
+      {v:'17',label:'17. Traslado interhospitalario',docs:['Consentimiento para Traslado','Aceptacion de Riesgos','Responsiva de Pago']},
+      {v:'18',label:'18. Defuncion hospitalaria',docs:['Certificado correspondiente','Entrega de Pertenencias','Recepcion del Cuerpo','Documentacion administrativa']},
+      {v:'BASE',label:'Documentos base en TODO ingreso hospitalario',docs:['Aviso de Privacidad','Consentimiento para Proteccion de Datos Personales','Contrato de Prestacion de Servicios Hospitalarios','Consentimiento General para Atencion Medica','Carta Responsiva del Responsable de Pago o Tercer Pagador','Autorizacion para Facturacion','Autorizacion para compartir informacion con aseguradoras','Autorizacion para estudios diagnosticos','Identificacion oficial del paciente','Identificacion del responsable','Poliza y autorizacion de aseguradora (cuando aplique)','Inventario de pertenencias','Formato de ingreso hospitalario','Consentimiento para procedimientos adicionales en caso de urgencia']}
+    ];
+    var CAT25=[['CI-001','Consentimiento Consulta Medica'],['CI-002','Consentimiento Atencion en Urgencias'],['CI-003','Consentimiento Hospitalizacion'],['CI-004','Consentimiento Tratamiento Medico'],['CI-005','Consentimiento Cirugia Menor'],['CI-006','Consentimiento Cirugia Mayor'],['CI-007','Consentimiento Anestesia'],['CI-008','Consentimiento Transfusion'],['CI-009','Consentimiento RCP'],['CI-010','Consentimiento Terapia Intensiva'],['CI-011','Consentimiento Administracion de Medicamentos'],['CI-012','Consentimiento Laboratorio'],['CI-013','Consentimiento Imagenologia'],['CI-014','Consentimiento Medio de Contraste'],['CI-015','Consentimiento Curacion y Sutura'],['CI-016','Consentimiento Procedimientos Invasivos'],['CI-017','Consentimiento Endoscopia'],['CI-018','Consentimiento Sedacion'],['CI-019','Alta Voluntaria'],['CI-020','Carta Responsiva del Tercer Pagador'],['CI-021','Contrato de Prestacion de Servicios Hospitalarios'],['CI-022','Inventario de Pertenencias'],['CI-023','Aviso de Privacidad'],['CI-024','Autorizacion para Facturacion y Cobranza'],['CI-025','Autorizacion para Compartir Informacion con Aseguradoras']];
+    var LISTOS={'CI-020':1}; /* consentimientos con PDF ya construido */
+
+    var chkState={};
+
+    /* poblar selects */
+    var selT=elx('con-tipo-ingreso');
+    TIPOS.forEach(function(t){var o=document.createElement('option');o.value=t.v;o.textContent=t.label;selT.appendChild(o);});
+    var selC=elx('con-catalogo');
+    CAT25.forEach(function(c){var o=document.createElement('option');o.value=c[0];o.textContent=c[0]+' - '+c[1];selC.appendChild(o);});
+
+    function tById(v){for(var i=0;i<TIPOS.length;i++)if(TIPOS[i].v===v)return TIPOS[i];return null;}
+    function isResp(d){return /Responsiva|Tercer Pagador/i.test(d);}
+
+    function render(v){
+      var box=elx('con-checklist');var t=tById(v);
+      if(!t){box.innerHTML='';return;}
+      var st=chkState[v]||{};
+      var h='<div style="font-weight:700;color:#1a3a5c;margin:6px 0 4px">Documentos requeridos &mdash; '+esc(t.label)+'</div>';
+      t.docs.forEach(function(d){
+        var ck=st[d]?'checked':'';
+        var btn=isResp(d)?'<button type="button" class="con-goform exp-btn exp-btn-sec" style="padding:2px 8px;font-size:11px">Llenar</button>':'';
+        h+='<label style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #eef2f5;width:100%;margin:0"><input type="checkbox" data-doc="'+esc(d)+'" '+ck+'><span style="flex:1">'+esc(d)+'</span>'+btn+'</label>';
+      });
+      box.innerHTML=h;
+      Array.prototype.slice.call(box.querySelectorAll('input[type=checkbox]')).forEach(function(c){
+        c.onchange=function(){if(!chkState[v])chkState[v]={};chkState[v][c.getAttribute('data-doc')]=c.checked;};
+      });
+      Array.prototype.slice.call(box.querySelectorAll('.con-goform')).forEach(function(b){
+        b.onclick=function(){var f=elx('con-traer');if(f)f.scrollIntoView({behavior:'smooth',block:'center'});};
+      });
+    }
+    selT.onchange=function(){render(this.value);};
+
+    selC.onchange=function(){
+      var v=this.value,note=elx('con-cat-note');if(!v){note.innerHTML='';return;}
+      var nom='';CAT25.forEach(function(c){if(c[0]===v)nom=c[1];});
+      if(LISTOS[v]){
+        note.innerHTML='<b>'+v+'</b> &middot; '+esc(nom)+' &mdash; ya esta listo. <a href="#" id="con-goCI" style="color:#1a6fb0">Ir al formulario &darr;</a>';
+        var a=elx('con-goCI');if(a)a.onclick=function(e){e.preventDefault();var f=elx('con-traer');if(f)f.scrollIntoView({behavior:'smooth',block:'center'});};
+      }else{
+        note.innerHTML='<b>'+v+'</b> &middot; '+esc(nom)+' &mdash; <span style="color:#c78c20">texto pendiente</span>. Cuando me pases el texto, le armo su PDF con membrete.';
+      }
+    };
+
+    elx('con-chk-save').onclick=async function(){
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){cmsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){cmsg('Sin nube: inicia sesion para guardar.','warn');return;}
+      var b=this;b.textContent='Guardando...';
+      try{
+        var r=await window.caSupa.from('expedientes').upsert({folio:folio,consentimientos_checklist:chkState,modificado_en:new Date().toISOString()},{onConflict:'folio'});
+        if(r.error)throw r.error;cmsg('Checklist guardado \u2713','ok');
+      }catch(e){cmsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar checklist';
+    };
+
+    elx('con-chk-pdf').onclick=function(){
+      var v=elx('con-tipo-ingreso').value,t=tById(v);
+      if(!t){cmsg('Elige primero un tipo de atencion / ingreso.','err');return;}
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
+      var folio=(elx('exp-folio')&&elx('exp-folio').value)||'';
+      var med=(elx('exp-medico')&&elx('exp-medico').value)||'';
+      var st=chkState[v]||{};var fecha=new Date().toLocaleString('es-MX');
+      var rows=t.docs.map(function(d){return '<tr><td style="border:1px solid #cfd8e0;padding:5px;text-align:center;width:34px;font-size:14px">'+(st[d]?'\u2611':'\u2610')+'</td><td style="border:1px solid #cfd8e0;padding:5px">'+esc(d)+'</td><td style="border:1px solid #cfd8e0;padding:5px;width:120px"></td></tr>';}).join('');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:8px">CHECKLIST DE CONSENTIMIENTOS Y DOCUMENTOS</div>';
+      h+='<div style="font-size:11px;margin-bottom:6px"><b>Folio:</b> '+esc(folio)+' &nbsp; <b>Paciente:</b> '+esc(nom)+'<br><b>Medico tratante:</b> '+esc(med)+' &nbsp; <b>Fecha:</b> '+esc(fecha)+'</div>';
+      h+='<div style="font-size:12px;font-weight:700;color:#1a3a5c;margin:6px 0">'+esc(t.label)+'</div>';
+      h+='<table style="width:100%;border-collapse:collapse;font-size:11px"><tr style="background:#eef3f7"><th style="border:1px solid #cfd8e0;padding:5px">\u2713</th><th style="border:1px solid #cfd8e0;padding:5px;text-align:left">Documento</th><th style="border:1px solid #cfd8e0;padding:5px">Firma/Folio</th></tr>'+rows+'</table>';
+      h+='<div style="margin-top:30px;display:flex;gap:20px"><div style="flex:1;text-align:center"><div style="border-top:1px solid #1a2733;padding-top:3px">Responsable de admision</div></div><div style="flex:1;text-align:center"><div style="border-top:1px solid #1a2733;padding-top:3px">Paciente / Responsable</div></div></div>';
+      h+='<p style="margin-top:10px;font-size:10px;color:#5a6474">Hoja de control interna. Cada documento marcado debe estar firmado y resguardado en el expediente del paciente.</p></div>';
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){cmsg('Permite las ventanas emergentes.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Checklist</title></head><body style="margin:0;padding:16px">'+h+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    };
+
+    window.expCargarConsentChk=function(o){chkState=o||{};var v=elx('con-tipo-ingreso').value;if(v)render(v);};
   })();
 })();
 </script>
