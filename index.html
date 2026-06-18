@@ -4708,6 +4708,22 @@ renderVer();render();
             <button type="button" id="sol-guardar" class="exp-btn exp-btn-pri">Guardar solicitud</button>
           </div>
           <span class="exp-msg" id="sol-msg"></span>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Solicitud de material (osteosintesis) al proveedor</div>
+          <div class="exp-g2">
+            <div class="exp-f"><label>Correo del proveedor</label><input id="mat-correo" autocomplete="off" placeholder="proveedor@ejemplo.com"></div>
+            <div class="exp-f"><label>Fecha de cirugia</label><input id="mat-fecha" type="date"></div>
+          </div>
+          <div class="exp-f"><label>Buscar material (hueso o tipo: femur, placa, tornillo canulado...)</label><input id="mat-buscar" autocomplete="off" placeholder="Escribe para buscar..."></div>
+          <div id="mat-res" style="display:none;border:1px solid #d8e0e6;border-radius:8px;max-height:190px;overflow:auto;background:#fff;margin-top:4px"></div>
+          <div id="mat-lista" style="margin-top:8px"></div>
+          <div class="exp-f" style="margin-top:6px"><label>Notas para el proveedor (opcional)</label><textarea id="mat-notas" rows="2" placeholder="Ej. confirmar disponibilidad, lado derecho/izquierdo, hora de entrega..."></textarea></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <button type="button" id="mat-mail" class="exp-btn exp-btn-pri">Enviar por correo</button>
+            <button type="button" id="mat-copiar" class="exp-btn exp-btn-sec">Copiar texto</button>
+            <button type="button" id="mat-pdf" class="exp-btn exp-btn-sec">Generar PDF</button>
+          </div>
+          <span class="exp-msg" id="mat-msg"></span>
         </div>
       </div>
       <div class="exp-ft">
@@ -6017,6 +6033,131 @@ renderVer();render();
       }catch(e){nmsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar nota';
     }
+  })();
+
+  /* ===== Solicitud de material de osteosintesis por correo (aditivo) ===== */
+  (function initMaterial(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function mmsg(t,c){var m=elx('mat-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('mat-buscar'))return;
+
+    var sel=[]; // [{n, q}]
+
+    // recordar correo del proveedor en este navegador
+    try{var sv=localStorage.getItem('ca_mat_correo');if(sv&&!gv('mat-correo'))elx('mat-correo').value=sv;}catch(e){}
+
+    function cat(){try{return (window.CAT||[]).filter(function(r){return r&&r[3]==='Osteosintesis';});}catch(e){return [];}}
+
+    function renderRes(q){
+      var box=elx('mat-res');q=(q||'').toUpperCase().trim();
+      if(!q){box.style.display='none';box.innerHTML='';return;}
+      var toks=q.split(/\s+/);
+      var hits=cat().filter(function(r){var n=String(r[0]).toUpperCase();return toks.every(function(t){return n.indexOf(t)>=0;});}).slice(0,14);
+      if(!hits.length){box.style.display='block';box.innerHTML='<div style="padding:8px;color:#7a8694;font-size:12px">Sin resultados</div>';return;}
+      box.innerHTML=hits.map(function(r){return '<div class="mat-hit" data-n="'+esc(r[0])+'" style="padding:7px 9px;border-bottom:1px solid #eef2f5;cursor:pointer;font-size:12.5px"><b>+</b> '+esc(r[0])+' <span style="color:#7a8694">($'+Number(r[2]).toLocaleString('es-MX')+')</span></div>';}).join('');
+      box.style.display='block';
+      Array.prototype.forEach.call(box.querySelectorAll('.mat-hit'),function(d){
+        d.onclick=function(){add(d.getAttribute('data-n'));elx('mat-buscar').value='';renderRes('');elx('mat-buscar').focus();};
+      });
+    }
+    function add(n){
+      var f=sel.filter(function(x){return x.n===n;})[0];
+      if(f){f.q++;}else{sel.push({n:n,q:1});}
+      renderLista();
+    }
+    function renderLista(){
+      var box=elx('mat-lista');
+      if(!sel.length){box.innerHTML='<div style="color:#7a8694;font-size:12px;padding:4px 0">Aun no agregas material. Busca arriba y toca un resultado.</div>';return;}
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;overflow:hidden">';
+      sel.forEach(function(it,i){
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;border-bottom:1px solid #eef2f5">'
+          +'<div style="flex:1;font-size:12.5px">'+esc(it.n)+'</div>'
+          +'<input type="number" min="1" value="'+it.q+'" data-i="'+i+'" class="mat-q" style="width:64px">'
+          +'<button type="button" data-x="'+i+'" class="mat-del" style="border:none;background:#fdecec;color:#b83232;border-radius:6px;padding:4px 9px;cursor:pointer">Quitar</button>'
+          +'</div>';
+      });
+      h+='</div>';
+      box.innerHTML=h;
+      Array.prototype.forEach.call(box.querySelectorAll('.mat-q'),function(inp){inp.onchange=function(){var i=+inp.getAttribute('data-i');var q=parseInt(inp.value,10);sel[i].q=(q&&q>0)?q:1;inp.value=sel[i].q;};});
+      Array.prototype.forEach.call(box.querySelectorAll('.mat-del'),function(b){b.onclick=function(){sel.splice(+b.getAttribute('data-x'),1);renderLista();};});
+    }
+    renderLista();
+
+    elx('mat-buscar').oninput=function(){renderRes(this.value);};
+
+    function ctx(){
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent||'').trim();
+      var folio=gv('exp-folio');
+      var med=gv('exp-medico');
+      return {nom:nom,folio:folio,med:med};
+    }
+    function bodyText(){
+      var c=ctx();var hoy=new Date().toLocaleDateString('es-MX');
+      var L=[];
+      L.push('SOLICITUD DE MATERIAL DE OSTEOSINTESIS');
+      L.push('Clinica Alejandria Salud Integral Especializada');
+      L.push('RFC CAS240224NH5  -  Tel. 446 141 6785');
+      L.push('');
+      L.push('Fecha de solicitud: '+hoy);
+      if(gv('mat-fecha'))L.push('Fecha de cirugia: '+new Date(gv('mat-fecha')+'T00:00').toLocaleDateString('es-MX'));
+      if(c.nom)L.push('Paciente: '+c.nom+(c.folio?'  (Folio '+c.folio+')':''));
+      else if(c.folio)L.push('Folio: '+c.folio);
+      if(c.med)L.push('Medico solicitante: '+c.med);
+      L.push('');
+      L.push('Material solicitado:');
+      sel.forEach(function(it,i){L.push('  '+(i+1)+') '+it.n+'   x'+it.q);});
+      if(gv('mat-notas')){L.push('');L.push('Notas: '+gv('mat-notas'));}
+      L.push('');
+      L.push('Favor de confirmar disponibilidad y costo. Gracias.');
+      return L.join('\n');
+    }
+
+    function validar(){
+      if(!sel.length){mmsg('Agrega al menos un material.','err');return false;}
+      return true;
+    }
+
+    elx('mat-mail').onclick=function(){
+      if(!validar())return;
+      var correo=gv('mat-correo');
+      if(!correo||correo.indexOf('@')<0){mmsg('Escribe el correo del proveedor.','err');elx('mat-correo').focus();return;}
+      try{localStorage.setItem('ca_mat_correo',correo);}catch(e){}
+      var c=ctx();
+      var asunto='Solicitud de material de osteosintesis'+(c.nom?' - '+c.nom:(gv('mat-fecha')?' - '+gv('mat-fecha'):''));
+      var url='mailto:'+encodeURIComponent(correo)+'?subject='+encodeURIComponent(asunto)+'&body='+encodeURIComponent(bodyText());
+      window.location.href=url;
+      mmsg('Se abrio tu app de Correo con la solicitud lista. Revisa y presiona Enviar.','ok');
+    };
+
+    elx('mat-copiar').onclick=function(){
+      if(!validar())return;
+      var t=bodyText();
+      function ok(){mmsg('Texto copiado. Pegalo en tu correo o WhatsApp.','ok');}
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(ok,function(){fallback(t);});}
+      else fallback(t);
+      function fallback(x){try{var ta=document.createElement('textarea');ta.value=x;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);ok();}catch(e){mmsg('No se pudo copiar; usa Generar PDF.','err');}}
+    };
+
+    elx('mat-pdf').onclick=function(){
+      if(!validar())return;
+      var c=ctx();var hoy=new Date().toLocaleDateString('es-MX');
+      var rows=sel.map(function(it,i){return '<tr><td style="padding:5px 7px;border:1px solid #cdd7df">'+(i+1)+'</td><td style="padding:5px 7px;border:1px solid #cdd7df">'+esc(it.n)+'</td><td style="padding:5px 7px;border:1px solid #cdd7df;text-align:center">'+it.q+'</td></tr>';}).join('');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">SOLICITUD DE MATERIAL DE OSTEOSINTESIS</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Fecha de solicitud:</b> '+esc(hoy)+(gv('mat-fecha')?' &nbsp; <b>Cirugia:</b> '+esc(new Date(gv('mat-fecha')+'T00:00').toLocaleDateString('es-MX')):'')+(c.nom?'<br><b>Paciente:</b> '+esc(c.nom)+(c.folio?' (Folio '+esc(c.folio)+')':''):'')+(c.med?'<br><b>Medico solicitante:</b> '+esc(c.med):'')+'</div>';
+      h+='<table style="border-collapse:collapse;width:100%;font-size:11.5px"><thead><tr style="background:#eef3f7"><th style="padding:5px 7px;border:1px solid #cdd7df;width:34px">#</th><th style="padding:5px 7px;border:1px solid #cdd7df;text-align:left">Material</th><th style="padding:5px 7px;border:1px solid #cdd7df;width:60px">Cant.</th></tr></thead><tbody>'+rows+'</tbody></table>';
+      if(gv('mat-notas'))h+='<div style="margin-top:8px;font-size:11.5px"><b>Notas:</b> '+esc(gv('mat-notas'))+'</div>';
+      h+='<div style="margin-top:8px;font-size:11px;color:#5a6474">Favor de confirmar disponibilidad y costo.</div>';
+      h+='<div style="margin-top:40px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:3px;font-weight:600">'+esc(c.med||'')+'</div><div style="font-size:10px;color:#5a6474">Medico solicitante</div></div>';
+      h+='</div>';
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){mmsg('Permite las ventanas emergentes para el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Solicitud de material</title></head><body style="margin:0;padding:16px">'+h+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    };
   })();
 })();
 </script>
