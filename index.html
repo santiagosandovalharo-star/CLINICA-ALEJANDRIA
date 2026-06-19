@@ -6269,39 +6269,51 @@ renderVer();render();
        {id:'obs',label:'Observaciones',tipo:'textarea'}
      ]}
     };
+    var MODES={
+      'Cirugia / internamiento':['Cirugia / internamiento'],
+      'Valoracion preoperatoria':['Valoracion preoperatoria'],
+      'Ambas (cirugia + valoracion preoperatoria)':['Cirugia / internamiento','Valoracion preoperatoria']
+    };
 
     var sel=elx('solc-tipo');
-    Object.keys(TIPOS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+    Object.keys(MODES).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
 
-    function render(tipo){
-      var box=elx('solc-form');var P=TIPOS[tipo];
-      if(!P){box.innerHTML='';return;}
-      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+    function fid(P,id){return 'solc-'+P.key+'-c-'+id;}
+
+    function cardHTML(P){
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd;margin-top:8px">';
       h+='<div style="font-weight:700;color:#1a3a5c;margin-bottom:6px">'+esc(P.titulo)+'</div>';
-      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button type="button" id="solc-traer" class="exp-btn exp-btn-sec">Traer datos del paciente</button></div>';
-      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha de solicitud</label><input id="solc-fecha" type="date"></div><div class="exp-f"><label>Medico solicitante</label><input id="solc-medico"></div><div class="exp-f"><label>Cedula profesional</label><input id="solc-ced"></div></div>';
+      h+='<div class="exp-g2">';
       P.campos.forEach(function(c){
         var span=(c.tipo==='textarea')?' style="grid-column:1/-1"':'';
-        var ctrl=(c.tipo==='textarea')?'<textarea id="solc-c-'+c.id+'" rows="2"></textarea>':'<input id="solc-c-'+c.id+'">';
+        var ctrl=(c.tipo==='textarea')?'<textarea id="'+fid(P,c.id)+'" rows="2"></textarea>':'<input id="'+fid(P,c.id)+'">';
         h+='<div class="exp-f"'+span+'><label>'+esc(c.label).replace(/<br>/g,' ')+'</label>'+ctrl+'</div>';
       });
-      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="solc-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="solc-guardar" class="exp-btn exp-btn-pri">Guardar solicitud</button><span class="exp-msg" id="solc-msg"></span></div>';
-      h+='</div>';
+      h+='</div></div>';
+      return h;
+    }
+
+    function render(mode){
+      var box=elx('solc-form');var list=MODES[mode];
+      if(!list){box.innerHTML='';return;}
+      var both=list.length>1;
+      var h='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button type="button" id="solc-traer" class="exp-btn exp-btn-sec">Traer datos del paciente</button></div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha de solicitud</label><input id="solc-fecha" type="date"></div><div class="exp-f"><label>Medico solicitante</label><input id="solc-medico"></div><div class="exp-f"><label>Cedula profesional</label><input id="solc-ced"></div></div>';
+      list.forEach(function(tipo){h+=cardHTML(TIPOS[tipo]);});
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="solc-pdf" class="exp-btn exp-btn-sec">'+(both?'Generar PDF de ambas / Descargar':'Generar PDF / Descargar')+'</button><button type="button" id="solc-guardar" class="exp-btn exp-btn-pri">'+(both?'Guardar ambas':'Guardar solicitud')+'</button><span class="exp-msg" id="solc-msg"></span></div>';
       box.innerHTML=h;
       if(!gv('solc-fecha'))elx('solc-fecha').value=new Date().toISOString().slice(0,10);
-      elx('solc-traer').onclick=function(){
-        if(gv('exp-medico')&&!gv('solc-medico'))elx('solc-medico').value=gv('exp-medico');
-        smsg('Datos traidos \u2713','ok');
-      };
-      elx('solc-pdf').onclick=function(){doPDF(tipo);};
-      elx('solc-guardar').onclick=function(){doSave(tipo);};
+      elx('solc-traer').onclick=function(){if(gv('exp-medico')&&!gv('solc-medico'))elx('solc-medico').value=gv('exp-medico');smsg('Datos traidos \u2713','ok');};
+      elx('solc-pdf').onclick=function(){doPDF(list);};
+      elx('solc-guardar').onclick=function(){doSave(list);};
     }
     sel.onchange=function(){render(this.value);};
 
-    function gather(tipo){var P=TIPOS[tipo];var o={};P.campos.forEach(function(c){o[c.id]=gv('solc-c-'+c.id);});return o;}
+    function gather(P){var o={};P.campos.forEach(function(c){o[c.id]=gv(fid(P,c.id));});return o;}
+    function hasData(P){var d=gather(P);return Object.keys(d).some(function(k){return d[k];});}
 
-    function buildHTML(tipo){
-      var P=TIPOS[tipo];var datos=gather(tipo);
+    function buildHTML(P){
+      var datos=gather(P);
       var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
       var folio=(elx('exp-folio')&&elx('exp-folio').value)||'';
       var fch=gv('solc-fecha')?new Date(gv('solc-fecha')+'T00:00').toLocaleDateString('es-MX'):new Date().toLocaleDateString('es-MX');
@@ -6319,24 +6331,30 @@ renderVer();render();
       return h;
     }
 
-    function doPDF(tipo){
+    function doPDF(list){
       var w=window.open('','_blank','width=860,height=940');
       if(!w){smsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
-      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Solicitud</title></head><body style="margin:0;padding:16px">'+buildHTML(tipo)+'</body></html>');w.document.close();
+      var body=list.map(function(tipo){return buildHTML(TIPOS[tipo]);}).join('<div style="page-break-before:always;height:0"></div>');
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Solicitud</title></head><body style="margin:0;padding:16px">'+body+'</body></html>');w.document.close();
       setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
     }
-    async function doSave(tipo){
-      var P=TIPOS[tipo];
+    async function doSave(list){
       var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
       if(!folio){smsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      var conDatos=list.filter(function(tipo){return hasData(TIPOS[tipo]);});
+      if(!conDatos.length){smsg('Llena al menos una solicitud.','err');return;}
       if(!window.caSupa){smsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
-      var b=elx('solc-guardar');b.textContent='Guardando...';
+      var b=elx('solc-guardar');var lbl=b.textContent;b.textContent='Guardando...';
       try{
         var med=gv('solc-medico')+(gv('solc-ced')?' (Ced. '+gv('solc-ced')+')':'');
-        var r=await window.caSupa.from('solicitudes').insert({folio:folio,tipo:P.key,fecha:(gv('solc-fecha')?new Date(gv('solc-fecha')+'T00:00').toISOString():new Date().toISOString()),prioridad:'',medico:med,contenido:gather(tipo)});
-        if(r.error)throw r.error;smsg('Solicitud de '+tipo+' guardada \u2713','ok');
+        var fechaISO=(gv('solc-fecha')?new Date(gv('solc-fecha')+'T00:00').toISOString():new Date().toISOString());
+        for(var k=0;k<conDatos.length;k++){var P=TIPOS[conDatos[k]];
+          var r=await window.caSupa.from('solicitudes').insert({folio:folio,tipo:P.key,fecha:fechaISO,prioridad:'',medico:med,contenido:gather(P)});
+          if(r.error)throw r.error;
+        }
+        smsg((conDatos.length>1?'Ambas solicitudes guardadas':'Solicitud guardada')+' \u2713','ok');
       }catch(e){smsg('No se pudo guardar: '+(e.message||e),'err');}
-      b.textContent='Guardar solicitud';
+      b.textContent=lbl;
     }
   })();
 
