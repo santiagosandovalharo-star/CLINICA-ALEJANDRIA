@@ -4609,6 +4609,10 @@ renderVer();render();
           <div class="ant-h">Formatos de enfermeria (NOM-004)</div>
           <div class="exp-f"><label>Tipo de formato</label><select id="enf-tipo"><option value="">-- Selecciona --</option></select></div>
           <div id="enf-form" style="margin-top:6px"></div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Hojas de registro de enfermeria (signos vitales / liquidos)</div>
+          <div class="exp-f"><label>Tipo de registro</label><select id="enf2-tipo"><option value="">-- Selecciona --</option></select></div>
+          <div id="enf2-form" style="margin-top:6px"></div>
         </div>
         <div data-p="consentimientos" style="display:none">
           <div class="ant-h">Asistente de consentimientos por tipo de ingreso</div>
@@ -6438,6 +6442,171 @@ renderVer();render();
         if(r.error)throw r.error;emsg('Formato de enfermeria guardado \u2713','ok');
       }catch(e){emsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar formato';
+    }
+  })();
+
+  /* ===== Hojas de registro de enfermeria: signos vitales y liquidos (aditivo) ===== */
+  (function initEnfTablas(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function tmsg(t,c){var m=elx('enf2-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('enf2-tipo'))return;
+
+    var FORMATS={
+     'Hoja de signos vitales':{key:'enf_signos',titulo:'HOJA DE REGISTRO DE SIGNOS VITALES',liquidos:false,cols:[
+       {id:'hora',label:'Fecha / Hora',w:'150px',dt:true},
+       {id:'ta',label:'TA (mmHg)',w:'80px'},
+       {id:'fc',label:'FC',w:'55px'},
+       {id:'fr',label:'FR',w:'55px'},
+       {id:'temp',label:'Temp (C)',w:'65px'},
+       {id:'spo2',label:'SpO2 (%)',w:'65px'},
+       {id:'glu',label:'Glucosa',w:'70px'},
+       {id:'dolor',label:'Dolor (0-10)',w:'70px'},
+       {id:'obs',label:'Observaciones',w:'160px'}
+     ]},
+     'Control de liquidos (ingresos / egresos)':{key:'enf_liquidos',titulo:'CONTROL DE LIQUIDOS (INGRESOS Y EGRESOS)',liquidos:true,cols:[
+       {id:'hora',label:'Hora',w:'80px'},
+       {id:'oral',label:'Ing. Oral (ml)',w:'90px',sum:'ing'},
+       {id:'iv',label:'Ing. IV (ml)',w:'90px',sum:'ing'},
+       {id:'otrosI',label:'Ing. Otros (ml)',w:'90px',sum:'ing'},
+       {id:'uresis',label:'Egr. Uresis (ml)',w:'90px',sum:'egr'},
+       {id:'evac',label:'Egr. Evac (ml)',w:'90px',sum:'egr'},
+       {id:'drenaje',label:'Egr. SNG/Drenaje (ml)',w:'100px',sum:'egr'},
+       {id:'vomito',label:'Egr. Vomito (ml)',w:'90px',sum:'egr'},
+       {id:'otrosE',label:'Egr. Otros (ml)',w:'90px',sum:'egr'}
+     ]}
+    };
+
+    var rows=[];var curKey='';
+
+    var sel=elx('enf2-tipo');
+    Object.keys(FORMATS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+
+    function blankRow(P){var r={};P.cols.forEach(function(c){r[c.id]='';});if(!P.liquidos){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());r.hora=d.toISOString().slice(0,16);}return r;}
+
+    function totals(P){var ing=0,egr=0,per={};P.cols.forEach(function(c){if(c.sum)per[c.id]=0;});
+      rows.forEach(function(r){P.cols.forEach(function(c){if(c.sum){var v=parseFloat(r[c.id])||0;per[c.id]+=v;if(c.sum==='ing')ing+=v;else egr+=v;}});});
+      return {ing:ing,egr:egr,bal:ing-egr,per:per};
+    }
+
+    function render(tipo){
+      var box=elx('enf2-form');var P=FORMATS[tipo];
+      if(!P){box.innerHTML='';return;}
+      if(curKey!==P.key){rows=[blankRow(P)];curKey=P.key;}
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div style="font-weight:700;color:#1a3a5c;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha</label><input id="enf2-fecha" type="date"></div>'
+        +(P.liquidos?'<div class="exp-f"><label>Turno / periodo</label><input id="enf2-turno" placeholder="Matutino / 24h..."></div>':'')
+        +'<div class="exp-f"><label>Enfermero(a) responsable</label><input id="enf2-enfermero"></div><div class="exp-f"><label>Cedula</label><input id="enf2-ced"></div></div>';
+      h+='<div style="overflow-x:auto;margin-top:8px"><table id="enf2-tab" style="border-collapse:collapse;font-size:11.5px;min-width:100%"><thead><tr style="background:#eef3f7">';
+      P.cols.forEach(function(c){h+='<th style="border:1px solid #cdd7df;padding:4px 5px;text-align:left;min-width:'+c.w+'">'+esc(c.label)+'</th>';});
+      h+='<th style="border:1px solid #cdd7df;padding:4px 5px;width:34px"></th></tr></thead><tbody id="enf2-body"></tbody>';
+      if(P.liquidos){h+='<tfoot id="enf2-foot"></tfoot>';}
+      h+='</table></div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" id="enf2-add" class="exp-btn exp-btn-sec">+ Agregar registro</button></div>';
+      if(P.liquidos){h+='<div id="enf2-bal" style="margin-top:8px;font-size:12.5px;font-weight:600;color:#1a3a5c"></div>';}
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="enf2-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="enf2-guardar" class="exp-btn exp-btn-pri">Guardar hoja</button><span class="exp-msg" id="enf2-msg"></span></div>';
+      h+='</div>';
+      box.innerHTML=h;
+      if(!gv('enf2-fecha'))elx('enf2-fecha').value=new Date().toISOString().slice(0,10);
+      renderBody(P);
+      elx('enf2-add').onclick=function(){rows.push(blankRow(P));renderBody(P);};
+      elx('enf2-pdf').onclick=function(){doPDF(P);};
+      elx('enf2-guardar').onclick=function(){doSave(P);};
+    }
+
+    function renderBody(P){
+      var tb=elx('enf2-body');if(!tb)return;
+      tb.innerHTML=rows.map(function(r,i){
+        var tds=P.cols.map(function(c){
+          var typ=c.dt?'datetime-local':(c.sum?'number':'text');
+          return '<td style="border:1px solid #cdd7df;padding:2px"><input data-i="'+i+'" data-c="'+c.id+'" class="enf2-cell" type="'+typ+'"'+(c.sum?' min="0" step="any"':'')+' value="'+esc(r[c.id])+'" style="width:100%;border:none;background:transparent;font-size:11.5px;padding:3px 4px"></td>';
+        }).join('');
+        return '<tr>'+tds+'<td style="border:1px solid #cdd7df;padding:2px;text-align:center"><button type="button" data-x="'+i+'" class="enf2-del" style="border:none;background:#fdecec;color:#b83232;border-radius:5px;padding:3px 7px;cursor:pointer">x</button></td></tr>';
+      }).join('');
+      Array.prototype.forEach.call(tb.querySelectorAll('.enf2-cell'),function(inp){
+        inp.oninput=function(){rows[+inp.getAttribute('data-i')][inp.getAttribute('data-c')]=inp.value;if(P.liquidos)renderFoot(P);};
+      });
+      Array.prototype.forEach.call(tb.querySelectorAll('.enf2-del'),function(b){
+        b.onclick=function(){rows.splice(+b.getAttribute('data-x'),1);if(!rows.length)rows.push(blankRow(P));renderBody(P);};
+      });
+      if(P.liquidos)renderFoot(P);
+    }
+
+    function renderFoot(P){
+      var tf=elx('enf2-foot');if(!tf)return;var t=totals(P);
+      var cells=P.cols.map(function(c,idx){
+        if(idx===0)return '<td style="border:1px solid #cdd7df;padding:4px;font-weight:700;background:#eef3f7">TOTAL</td>';
+        if(c.sum)return '<td style="border:1px solid #cdd7df;padding:4px;font-weight:700;background:#eef3f7;text-align:right">'+(t.per[c.id]||0)+'</td>';
+        return '<td style="border:1px solid #cdd7df;padding:4px;background:#eef3f7"></td>';
+      }).join('');
+      tf.innerHTML='<tr>'+cells+'<td style="background:#eef3f7;border:1px solid #cdd7df"></td></tr>';
+      var bal=elx('enf2-bal');if(bal)bal.innerHTML='Total ingresos: <b>'+t.ing+' ml</b> &nbsp;|&nbsp; Total egresos: <b>'+t.egr+' ml</b> &nbsp;|&nbsp; Balance: <b style="color:'+(t.bal>=0?'#1b7a5a':'#b83232')+'">'+(t.bal>=0?'+':'')+t.bal+' ml</b>';
+    }
+
+    sel.onchange=function(){curKey='';render(this.value);};
+
+    function head(P){
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
+      var folio=(elx('exp-folio')&&elx('exp-folio').value)||'';
+      var fch=gv('enf2-fecha')?new Date(gv('enf2-fecha')+'T00:00').toLocaleDateString('es-MX'):new Date().toLocaleDateString('es-MX');
+      var enf=gv('enf2-enfermero'),ced=gv('enf2-ced'),turno=gv('enf2-turno');
+      var h='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Folio:</b> '+esc(folio)+' &nbsp; <b>Paciente:</b> '+esc(nom)+' &nbsp; <b>Fecha:</b> '+esc(fch)+(turno?' &nbsp; <b>Turno:</b> '+esc(turno):'')+'</div>';
+      return h;
+    }
+
+    function buildHTML(P){
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:760px;margin:0 auto;font-size:11.5px">';
+      h+=head(P);
+      h+='<table style="border-collapse:collapse;width:100%;font-size:10.5px"><thead><tr style="background:#eef3f7">';
+      P.cols.forEach(function(c){h+='<th style="border:1px solid #cdd7df;padding:4px;text-align:left">'+esc(c.label)+'</th>';});
+      h+='</tr></thead><tbody>';
+      rows.forEach(function(r){
+        var any=P.cols.some(function(c){return String(r[c.id]||'').trim()!=='';});if(!any)return;
+        h+='<tr>'+P.cols.map(function(c){
+          var v=r[c.id]||'';if(c.dt&&v){try{v=new Date(v).toLocaleString('es-MX',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(e){}}
+          return '<td style="border:1px solid #cdd7df;padding:4px">'+esc(v)+'</td>';
+        }).join('')+'</tr>';
+      });
+      h+='</tbody>';
+      if(P.liquidos){var t=totals(P);
+        h+='<tfoot><tr>'+P.cols.map(function(c,idx){
+          if(idx===0)return '<td style="border:1px solid #cdd7df;padding:4px;font-weight:700;background:#eef3f7">TOTAL</td>';
+          if(c.sum)return '<td style="border:1px solid #cdd7df;padding:4px;font-weight:700;background:#eef3f7;text-align:right">'+(t.per[c.id]||0)+'</td>';
+          return '<td style="border:1px solid #cdd7df;padding:4px;background:#eef3f7"></td>';
+        }).join('')+'</tr></tfoot>';
+      }
+      h+='</table>';
+      if(P.liquidos){var t2=totals(P);h+='<div style="margin-top:8px;font-size:12px;font-weight:600">Total ingresos: '+t2.ing+' ml &nbsp;|&nbsp; Total egresos: '+t2.egr+' ml &nbsp;|&nbsp; Balance: '+(t2.bal>=0?'+':'')+t2.bal+' ml</div>';}
+      var enf=gv('enf2-enfermero'),ced=gv('enf2-ced');
+      h+='<div style="margin-top:34px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:3px;font-weight:600">'+esc(enf)+'</div><div style="font-size:10px;color:#5a6474">Enfermero(a) responsable'+(ced?' &middot; Cedula profesional: '+esc(ced):'')+'</div></div>';
+      h+='<p style="margin-top:10px;font-size:9.5px;color:#5a6474">Documento integrante del expediente clinico institucional, conforme a la NOM-004-SSA3-2012.</p>';
+      h+='</div>';
+      return h;
+    }
+
+    function doPDF(P){
+      var w=window.open('','_blank','width=900,height=960');
+      if(!w){tmsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hoja de enfermeria</title></head><body style="margin:0;padding:16px">'+buildHTML(P)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(P){
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){tmsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){tmsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('enf2-guardar');b.textContent='Guardando...';
+      try{
+        var enf=gv('enf2-enfermero')+(gv('enf2-ced')?' (Ced. '+gv('enf2-ced')+')':'');
+        var cont={periodo:gv('enf2-turno'),registros:rows};
+        if(P.liquidos)cont.totales=totals(P);
+        var r=await window.caSupa.from('notas').insert({folio:folio,tipo:P.key,fecha:(gv('enf2-fecha')?new Date(gv('enf2-fecha')+'T00:00').toISOString():new Date().toISOString()),medico:enf,contenido:cont});
+        if(r.error)throw r.error;tmsg('Hoja guardada \u2713','ok');
+      }catch(e){tmsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar hoja';
     }
   })();
 })();
