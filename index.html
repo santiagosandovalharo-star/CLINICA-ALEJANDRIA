@@ -6501,7 +6501,7 @@ renderVer();render();
     var sel=elx('enf2-tipo');
     Object.keys(FORMATS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
 
-    function blankRow(P){var r={};P.cols.forEach(function(c){r[c.id]='';});if(!P.liquidos){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());r.hora=d.toISOString().slice(0,16);}return r;}
+    function blankRow(P){var r={};P.cols.forEach(function(c){r[c.id]='';});var hc=P.cols[0];var d=new Date();if(hc&&hc.id==='hora'){if(hc.dt){d.setMinutes(d.getMinutes()-d.getTimezoneOffset());r.hora=d.toISOString().slice(0,16);}else{r.hora=d.toTimeString().slice(0,5);}}return r;}
 
     function totals(P){var ing=0,egr=0,per={};P.cols.forEach(function(c){if(c.sum)per[c.id]=0;});
       rows.forEach(function(r){P.cols.forEach(function(c){if(c.sum){var v=parseFloat(r[c.id])||0;per[c.id]+=v;if(c.sum==='ing')ing+=v;else egr+=v;}});});
