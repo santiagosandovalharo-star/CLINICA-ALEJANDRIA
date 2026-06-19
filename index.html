@@ -4605,6 +4605,10 @@ renderVer();render();
           <div class="ant-h">Notas hospitalarias (NOM-004)</div>
           <div class="exp-f"><label>Tipo de nota</label><select id="nh-tipo"><option value="">-- Selecciona --</option></select></div>
           <div id="nh-form" style="margin-top:6px"></div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Formatos de enfermeria (NOM-004)</div>
+          <div class="exp-f"><label>Tipo de formato</label><select id="enf-tipo"><option value="">-- Selecciona --</option></select></div>
+          <div id="enf-form" style="margin-top:6px"></div>
         </div>
         <div data-p="consentimientos" style="display:none">
           <div class="ant-h">Asistente de consentimientos por tipo de ingreso</div>
@@ -6329,6 +6333,111 @@ renderVer();render();
         if(r.error)throw r.error;smsg('Solicitud de '+tipo+' guardada \u2713','ok');
       }catch(e){smsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar solicitud';
+    }
+  })();
+
+  /* ===== Formatos de enfermeria NOM-004 (aditivo) ===== */
+  (function initEnfermeria(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+    function emsg(t,c){var m=elx('enf-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('enf-tipo'))return;
+
+    var FORMATOS={
+     'Valoracion inicial de enfermeria':{key:'enf_valoracion',titulo:'HOJA DE VALORACION INICIAL DE ENFERMERIA',campos:[
+       {id:'ingreso',label:'Fecha y hora de ingreso',tipo:'text'},
+       {id:'motivo',label:'Motivo de ingreso / padecimiento referido',tipo:'textarea'},
+       {id:'sv',label:'Signos vitales al ingreso (TA, FC, FR, Temp, SpO2)',tipo:'text'},
+       {id:'antropo',label:'Peso y talla',tipo:'text'},
+       {id:'alergias',label:'Alergias',tipo:'text'},
+       {id:'cronicas',label:'Enfermedades cronicas / antecedentes relevantes',tipo:'textarea'},
+       {id:'medicamentos',label:'Medicamentos que toma',tipo:'textarea'},
+       {id:'conciencia',label:'Estado de conciencia / Glasgow',tipo:'text'},
+       {id:'valoracion',label:'Valoracion por necesidades (respiracion, alimentacion, eliminacion, movilidad, dolor)',tipo:'textarea'},
+       {id:'piel',label:'Estado de la piel / heridas / ulceras por presion',tipo:'textarea'},
+       {id:'caidas',label:'Riesgo de caidas',tipo:'text'},
+       {id:'dispositivos',label:'Dispositivos (venoclisis, sondas, cateteres)',tipo:'textarea'},
+       {id:'emocional',label:'Estado emocional / red de apoyo',tipo:'text'},
+       {id:'plan',label:'Plan de cuidados inicial / observaciones',tipo:'textarea'}
+     ]},
+     'Nota de enfermeria por turno':{key:'enf_turno',titulo:'NOTA DE ENFERMERIA POR TURNO',campos:[
+       {id:'turno',label:'Turno (matutino / vespertino / nocturno)',tipo:'text'},
+       {id:'sv',label:'Signos vitales',tipo:'text'},
+       {id:'estado',label:'Estado general y evolucion durante el turno',tipo:'textarea'},
+       {id:'medicamentos',label:'Medicamentos ministrados',tipo:'textarea'},
+       {id:'procedimientos',label:'Procedimientos / curaciones realizados',tipo:'textarea'},
+       {id:'liquidos',label:'Ingresos y egresos / balance de liquidos',tipo:'text'},
+       {id:'dieta',label:'Dieta y tolerancia',tipo:'text'},
+       {id:'eliminacion',label:'Eliminacion (uresis / evacuaciones)',tipo:'text'},
+       {id:'incidencias',label:'Observaciones / incidencias',tipo:'textarea'},
+       {id:'pendientes',label:'Pendientes para el siguiente turno',tipo:'textarea'}
+     ]}
+    };
+
+    var sel=elx('enf-tipo');
+    Object.keys(FORMATOS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+
+    function render(tipo){
+      var box=elx('enf-form');var P=FORMATOS[tipo];
+      if(!P){box.innerHTML='';return;}
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div style="font-weight:700;color:#1a3a5c;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha y hora</label><input id="enf-fecha" type="datetime-local"></div><div class="exp-f"><label>Enfermero(a) responsable</label><input id="enf-enfermero"></div><div class="exp-f"><label>Cedula profesional</label><input id="enf-ced"></div></div>';
+      P.campos.forEach(function(c){
+        var span=(c.tipo==='textarea')?' style="grid-column:1/-1"':'';
+        var ctrl=(c.tipo==='textarea')?'<textarea id="enf-c-'+c.id+'" rows="2"></textarea>':'<input id="enf-c-'+c.id+'">';
+        h+='<div class="exp-f"'+span+'><label>'+esc(c.label).replace(/<br>/g,' ')+'</label>'+ctrl+'</div>';
+      });
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="enf-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="enf-guardar" class="exp-btn exp-btn-pri">Guardar formato</button><span class="exp-msg" id="enf-msg"></span></div>';
+      h+='</div>';
+      box.innerHTML=h;
+      if(!gv('enf-fecha'))elx('enf-fecha').value=new Date().toISOString().slice(0,16);
+      elx('enf-pdf').onclick=function(){doPDF(tipo);};
+      elx('enf-guardar').onclick=function(){doSave(tipo);};
+    }
+    sel.onchange=function(){render(this.value);};
+
+    function gather(tipo){var P=FORMATOS[tipo];var o={};P.campos.forEach(function(c){o[c.id]=gv('enf-c-'+c.id);});return o;}
+
+    function buildHTML(tipo){
+      var P=FORMATOS[tipo];var datos=gather(tipo);
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
+      var folio=(elx('exp-folio')&&elx('exp-folio').value)||'';
+      var fch=gv('enf-fecha')?new Date(gv('enf-fecha')).toLocaleString('es-MX'):new Date().toLocaleString('es-MX');
+      var enf=gv('enf-enfermero'),ced=gv('enf-ced');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px;line-height:1.45">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Folio:</b> '+esc(folio)+' &nbsp; <b>Paciente:</b> '+esc(nom)+' &nbsp; <b>Fecha:</b> '+esc(fch)+'</div>';
+      P.campos.forEach(function(c){
+        var v=datos[c.id];if(!v)return;
+        h+='<div style="margin:6px 0"><div style="font-weight:700;color:#1a3a5c;font-size:11.5px">'+esc(c.label).replace(/<br>/g,' ')+'</div><div style="text-align:justify">'+esc(v)+'</div></div>';
+      });
+      h+='<div style="margin-top:34px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:3px;font-weight:600">'+esc(enf)+'</div><div style="font-size:10px;color:#5a6474">Enfermero(a) responsable'+(ced?' &middot; Cedula profesional: '+esc(ced):'')+'</div></div>';
+      h+='<p style="margin-top:10px;font-size:9.5px;color:#5a6474">Documento integrante del expediente clinico institucional, conforme a la NOM-004-SSA3-2012.</p>';
+      h+='</div>';
+      return h;
+    }
+
+    function doPDF(tipo){
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){emsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Formato de enfermeria</title></head><body style="margin:0;padding:16px">'+buildHTML(tipo)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(tipo){
+      var P=FORMATOS[tipo];
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){emsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){emsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('enf-guardar');b.textContent='Guardando...';
+      try{
+        var enf=gv('enf-enfermero')+(gv('enf-ced')?' (Ced. '+gv('enf-ced')+')':'');
+        var r=await window.caSupa.from('notas').insert({folio:folio,tipo:P.key,fecha:(gv('enf-fecha')?new Date(gv('enf-fecha')).toISOString():new Date().toISOString()),medico:enf,contenido:gather(tipo)});
+        if(r.error)throw r.error;emsg('Formato de enfermeria guardado \u2713','ok');
+      }catch(e){emsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar formato';
     }
   })();
 })();
