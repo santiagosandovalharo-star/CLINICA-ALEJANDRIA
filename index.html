@@ -266,7 +266,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 <!-- PACIENTE -->
 <div class="sec">
   <div class="sec-t"><span class="ic">&#128100;</span> Datos del paciente</div>
-  <div class="g3"><div class="f"><label>Nombre completo</label><input id="fn" placeholder="Nombre del paciente"></div><div class="f"><label>Edad</label><input id="fage" placeholder="45"></div><div class="f"><label>Sexo</label><select id="fsex"><option value="">--</option><option>Masculino</option><option>Femenino</option></select></div></div>
+  <div class="g3"><div class="f"><label>Nombre completo</label><input id="fn" placeholder="Nombre del paciente"></div><div class="f"><label>Edad</label><input id="fage" placeholder="45"></div><div class="f"><label>Sexo biologico</label><select id="fsex"><option value="">--</option><option>Masculino</option><option>Femenino</option></select></div></div>
   <div class="g4"><div class="f"><label>Diagnostico</label><input id="fdx" placeholder="Diagnostico principal"></div><div class="f"><label>Procedimiento</label><input id="fproc" placeholder="Artroscopia, Protesis..."></div><div class="f"><label>Num. Poliza</label><input id="fpo" placeholder="GNP-2026-001234"></div><div class="f"><label>Num. Siniestro</label><input id="fsi" placeholder="SIN-2026-00123"></div></div>
   <div class="g4"><div class="f"><label>Aseguradora</label><select id="fseg"><option value="">--</option><option>GNP</option><option>AXA</option><option>Qualitas</option><option>Chubb</option><option>Mapfre</option><option>MetLife</option><option>Allianz</option><option>Seguros Monterrey</option><option>IMSS</option><option>ISSSTE</option><option>Otra</option></select></div><div class="f"><label>Medico tratante</label><input id="fmd" value="Dr. Santiago Sandoval"></div><div class="f"><label>Hospital</label><input id="fhosp" value="Clinica Alejandria"></div><div class="f"><label>Folio</label><input id="ff"></div></div>
   <div class="g4"><div class="f"><label>Fecha ingreso</label><input id="fdin" type="date"></div><div class="f"><label>Fecha egreso est.</label><input id="fdout" type="date"></div><div class="f"><label>Vigencia</label><input id="fvig" placeholder="15 dias"></div><div class="f"><label>Fecha cotizacion</label><input id="fd" type="date"></div></div>
@@ -4456,11 +4456,13 @@ renderVer();render();
             <div class="exp-f"><label>Estado civil</label><select id="exp-edocivil"><option value="">--</option><option>Casado(a)</option><option>Soltero(a)</option><option>Union libre</option><option>Viudo(a)</option><option>Divorciado(a)</option></select></div>
             <div class="exp-f"><label>Diagnostico principal</label><input id="exp-dx"></div>
             <div class="exp-f"><label>Medico tratante</label><input id="exp-medico"></div>
+            <div class="exp-f"><label>Cedula profesional</label><input id="exp-cedula"></div>
+            <div class="exp-f" style="display:flex;align-items:flex-end"><button type="button" id="exp-verif-sep" class="exp-btn exp-btn-sec" style="width:100%">Verificar cedula en SEP</button></div>
           </div>
         </div>
         <div data-p="antecedentes" style="display:none">
           <div class="exp-g2">
-            <div class="exp-f"><label>Sexo</label><select id="ant-sexo"><option value="">--</option><option>Masculino</option><option>Femenino</option></select></div>
+            <div class="exp-f"><label>Sexo biologico</label><select id="ant-sexo"><option value="">--</option><option>Masculino</option><option>Femenino</option></select></div>
             <div class="exp-f"><label>Edad (de la fecha de nacimiento)</label><input id="ant-edad" readonly placeholder="--"></div>
           </div>
 
@@ -4655,7 +4657,7 @@ renderVer();render();
             <div class="exp-f"><label>CURP</label><input id="con-pac-curp"></div>
             <div class="exp-f"><label>Fecha de nacimiento</label><input id="con-pac-fnac" type="date"></div>
             <div class="exp-f"><label>Edad</label><input id="con-pac-edad"></div>
-            <div class="exp-f"><label>Sexo</label><input id="con-pac-sexo"></div>
+            <div class="exp-f"><label>Sexo biologico</label><input id="con-pac-sexo"></div>
             <div class="exp-f"><label>Estado civil</label><input id="con-pac-edocivil"></div>
             <div class="exp-f"><label>Telefono</label><input id="con-pac-tel"></div>
             <div class="exp-f" style="grid-column:1/-1"><label>Domicilio</label><input id="con-pac-dom"></div>
@@ -5769,7 +5771,7 @@ renderVer();render();
        +'<div class="exp-f"><label>CURP</label><input id="ce-pac-curp"></div>'
        +'<div class="exp-f"><label>Fecha de nacimiento</label><input id="ce-pac-fnac" type="date"></div>'
        +'<div class="exp-f"><label>Edad</label><input id="ce-pac-edad"></div>'
-       +'<div class="exp-f"><label>Sexo</label><input id="ce-pac-sexo"></div>'
+       +'<div class="exp-f"><label>Sexo biologico</label><input id="ce-pac-sexo"></div>'
        +'<div class="exp-f"><label>Telefono</label><input id="ce-pac-tel"></div>'
        +'<div class="exp-f" style="grid-column:1/-1"><label>Domicilio</label><input id="ce-pac-dom"></div></div>';
       /* II. Responsable */
@@ -6278,12 +6280,42 @@ renderVer();render();
        {id:'estudios',label:'Estudios ya realizados (laboratorio / ECG / RX)',tipo:'textarea'},
        {id:'motivo',label:'Motivo de la valoracion / pregunta clinica',tipo:'textarea'},
        {id:'obs',label:'Observaciones',tipo:'textarea'}
+     ]},
+     'Estudio anatomopatologico (patologia)':{key:'patologia',titulo:'SOLICITUD DE ESTUDIO ANATOMOPATOLOGICO',campos:[
+       {id:'tipo',label:'Tipo de estudio (biopsia / pieza quirurgica / citologia / transoperatorio / necropsia)',tipo:'text'},
+       {id:'espec',label:'Descripcion del especimen / muestra',tipo:'textarea'},
+       {id:'sitio',label:'Sitio anatomico y lateralidad',tipo:'text'},
+       {id:'frascos',label:'Numero de frascos / muestras y fijador (formol)',tipo:'text'},
+       {id:'clinica',label:'Datos clinicos relevantes',tipo:'textarea'},
+       {id:'dx',label:'Diagnostico presuntivo',tipo:'textarea'},
+       {id:'estudios',label:'Estudios solicitados (H-E, inmunohistoquimica, etc.)',tipo:'text'}
+     ]},
+     'Transfusion (solicitud al banco de sangre)':{key:'transfusion_sol',titulo:'SOLICITUD DE HEMOCOMPONENTES AL BANCO DE SANGRE',campos:[
+       {id:'componente',label:'Componente solicitado (concentrado eritrocitario / plasma / plaquetas / crioprecipitados)',tipo:'text'},
+       {id:'unidades',label:'Numero de unidades solicitadas',tipo:'text'},
+       {id:'grupo',label:'Grupo y Rh del paciente',tipo:'text'},
+       {id:'urgencia',label:'Urgencia (programada / urgente)',tipo:'text'},
+       {id:'dx',label:'Diagnostico',tipo:'textarea'},
+       {id:'indicacion',label:'Indicacion / motivo de la transfusion',tipo:'textarea'},
+       {id:'labs',label:'Hb / Hto / plaquetas actuales',tipo:'text'},
+       {id:'reqfecha',label:'Fecha y hora requerida',tipo:'text'}
+     ]},
+     'Estudios de gabinete':{key:'gabinete',titulo:'SOLICITUD DE ESTUDIOS DE GABINETE',campos:[
+       {id:'estudio',label:'Estudio solicitado (ECG, EEG, endoscopia, espirometria, ecocardiograma, etc.)',tipo:'text'},
+       {id:'region',label:'Region / organo a estudiar',tipo:'text'},
+       {id:'dx',label:'Diagnostico presuntivo',tipo:'textarea'},
+       {id:'clinica',label:'Datos clinicos relevantes',tipo:'textarea'},
+       {id:'preparacion',label:'Preparacion requerida (ayuno, etc.)',tipo:'text'},
+       {id:'prioridad',label:'Prioridad (rutina / urgente)',tipo:'text'}
      ]}
     };
     var MODES={
       'Cirugia / internamiento':['Cirugia / internamiento'],
       'Valoracion preoperatoria':['Valoracion preoperatoria'],
-      'Ambas (cirugia + valoracion preoperatoria)':['Cirugia / internamiento','Valoracion preoperatoria']
+      'Ambas (cirugia + valoracion preoperatoria)':['Cirugia / internamiento','Valoracion preoperatoria'],
+      'Estudio anatomopatologico (patologia)':['Estudio anatomopatologico (patologia)'],
+      'Transfusion (solicitud al banco de sangre)':['Transfusion (solicitud al banco de sangre)'],
+      'Estudios de gabinete':['Estudios de gabinete']
     };
 
     var sel=elx('solc-tipo');
@@ -6485,13 +6517,13 @@ renderVer();render();
     var FORMATS={
      'Hoja de signos vitales':{key:'enf_signos',titulo:'HOJA DE REGISTRO DE SIGNOS VITALES',liquidos:false,cols:[
        {id:'hora',label:'Fecha / Hora',w:'150px',dt:true},
-       {id:'ta',label:'TA (mmHg)',w:'80px'},
-       {id:'fc',label:'FC',w:'55px'},
-       {id:'fr',label:'FR',w:'55px'},
-       {id:'temp',label:'Temp (C)',w:'65px'},
-       {id:'spo2',label:'SpO2 (%)',w:'65px'},
-       {id:'glu',label:'Glucosa',w:'70px'},
-       {id:'dolor',label:'Dolor (0-10)',w:'70px'},
+       {id:'ta',label:'TA (mmHg)',w:'80px',rng:[40,300]},
+       {id:'fc',label:'FC',w:'55px',rng:[20,250]},
+       {id:'fr',label:'FR',w:'55px',rng:[4,80]},
+       {id:'temp',label:'Temp (C)',w:'65px',rng:[30,43]},
+       {id:'spo2',label:'SpO2 (%)',w:'65px',rng:[40,100]},
+       {id:'glu',label:'Glucosa',w:'70px',rng:[20,900]},
+       {id:'dolor',label:'Dolor (0-10)',w:'70px',rng:[0,10]},
        {id:'obs',label:'Observaciones',w:'160px'}
      ]},
      'Control de liquidos (ingresos / egresos)':{key:'enf_liquidos',titulo:'CONTROL DE LIQUIDOS (INGRESOS Y EGRESOS)',liquidos:true,cols:[
@@ -6554,8 +6586,11 @@ renderVer();render();
         }).join('');
         return '<tr>'+tds+'<td style="border:1px solid #cdd7df;padding:2px;text-align:center"><button type="button" data-x="'+i+'" class="enf2-del" style="border:none;background:#fdecec;color:#b83232;border-radius:5px;padding:3px 7px;cursor:pointer">x</button></td></tr>';
       }).join('');
+      function colOf(id){return P.cols.filter(function(c){return c.id===id;})[0];}
+      function validaCelda(c,val){if(!c||!c.rng||!val)return true;var nums=String(val).split(/[^0-9.]+/).filter(function(x){return x!=='';}).map(Number);if(!nums.length)return true;return nums.every(function(n){return n>=c.rng[0]&&n<=c.rng[1];});}
       Array.prototype.forEach.call(tb.querySelectorAll('.enf2-cell'),function(inp){
         inp.oninput=function(){rows[+inp.getAttribute('data-i')][inp.getAttribute('data-c')]=inp.value;if(P.liquidos)renderFoot(P);};
+        inp.onchange=function(){var c=colOf(inp.getAttribute('data-c'));if(!validaCelda(c,inp.value)){tmsg('Valor fuera de rango fisiologico en '+c.label+' ('+c.rng[0]+'-'+c.rng[1]+'). Solo valores normales o patologicos.','err');inp.value='';rows[+inp.getAttribute('data-i')][inp.getAttribute('data-c')]='';inp.style.borderBottom='2px solid #b83232';setTimeout(function(){inp.style.borderBottom='';},1400);}else{tmsg('');}};
       });
       Array.prototype.forEach.call(tb.querySelectorAll('.enf2-del'),function(b){
         b.onclick=function(){rows.splice(+b.getAttribute('data-x'),1);if(!rows.length)rows.push(blankRow(P));renderBody(P);};
@@ -7016,7 +7051,33 @@ renderVer();render();
     function fmsg(t,c){var m=elx('fb-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
     if(!elx('fb-tipo'))return;
 
+    var SN=[['No','No'],['Si','Si']];
     var TIPOS={
+     'Triage / clasificacion de urgencias':{key:'triage',titulo:'HOJA DE TRIAGE / CLASIFICACION DE URGENCIAS',firma:'Personal que clasifica',campos:[
+       {id:'hora',label:'Hora de llegada',tipo:'text'},
+       {id:'motivo',label:'Motivo de consulta',tipo:'textarea'},
+       {id:'sv',label:'Signos vitales',tipo:'text'},
+       {id:'glasgow',label:'Glasgow / estado de conciencia',tipo:'text'},
+       {id:'dolor',label:'Escala de dolor (0-10)',tipo:'text'},
+       {id:'nivel',label:'Nivel de prioridad',tipo:'select',opts:[['I Rojo - Resucitacion','I ROJO - Resucitacion (atencion inmediata)'],['II Naranja - Emergencia','II NARANJA - Emergencia (atender <10 min)'],['III Amarillo - Urgente','III AMARILLO - Urgente (atender <60 min)'],['IV Verde - Menos urgente','IV VERDE - Menos urgente (atender <120 min)'],['V Azul - No urgente','V AZUL - No urgente (atender <240 min)']]},
+       {id:'area',label:'Area asignada',tipo:'text'},
+       {id:'obs',label:'Observaciones',tipo:'textarea'}
+     ]},
+     'Cuestionario de seguridad para resonancia magnetica':{key:'rm_seguridad',titulo:'CUESTIONARIO DE SEGURIDAD PARA RESONANCIA MAGNETICA',firma:'Personal responsable',campos:[
+       {id:'marcapasos',label:'Marcapasos o desfibrilador (DAI)',tipo:'select',opts:SN},
+       {id:'clips',label:'Clips de aneurisma / implantes metalicos intracraneales',tipo:'select',opts:SN},
+       {id:'implantes',label:'Implantes metalicos, placas, tornillos o protesis',tipo:'select',opts:SN},
+       {id:'coclear',label:'Implante coclear o auditivo',tipo:'select',opts:SN},
+       {id:'esquirlas',label:'Fragmentos metalicos / esquirlas (ojos o cuerpo)',tipo:'select',opts:SN},
+       {id:'amalgamas',label:'Amalgamas o material dental metalico',tipo:'select',opts:SN},
+       {id:'tatuajes',label:'Tatuajes o maquillaje permanente',tipo:'select',opts:SN},
+       {id:'dispositivos',label:'Bombas de infusion, neuroestimuladores, stents o valvulas',tipo:'select',opts:SN},
+       {id:'embarazo',label:'Embarazo o sospecha de embarazo',tipo:'select',opts:SN},
+       {id:'claustrofobia',label:'Claustrofobia',tipo:'select',opts:SN},
+       {id:'renal',label:'Insuficiencia renal (si se usara contraste / gadolinio)',tipo:'select',opts:SN},
+       {id:'metal',label:'Objetos metalicos retirados (llaves, joyeria, monedas, etc.)',tipo:'select',opts:SN},
+       {id:'detalles',label:'Detalles de los puntos marcados con SI',tipo:'textarea'}
+     ]},
      'Hoja de indicaciones medicas':{key:'indicaciones',titulo:'HOJA DE INDICACIONES MEDICAS',firma:'Medico',campos:[
        {id:'dieta',label:'Dieta / ayuno',tipo:'text'},
        {id:'cuidados',label:'Posicion y cuidados generales',tipo:'textarea'},
@@ -7054,7 +7115,7 @@ renderVer();render();
      ]},
      'Hoja frontal / caratula del expediente':{key:'caratula',titulo:'HOJA FRONTAL / CARATULA DEL EXPEDIENTE',firma:'Medico responsable',campos:[
        {id:'nombre',label:'Nombre completo del paciente',tipo:'text'},
-       {id:'sexo',label:'Sexo',tipo:'select',opts:[['Femenino','Femenino'],['Masculino','Masculino'],['Otro','Otro']]},
+       {id:'sexo',label:'Sexo biologico',tipo:'select',opts:[['Femenino','Femenino'],['Masculino','Masculino'],['Otro','Otro']]},
        {id:'nacimiento',label:'Fecha de nacimiento',tipo:'text'},
        {id:'edad',label:'Edad',tipo:'text'},
        {id:'curp',label:'CURP',tipo:'text'},
@@ -7160,6 +7221,34 @@ renderVer();render();
       }catch(e){fmsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar formato';
     }
+  })();
+
+  /* ===== Limite de 3000 palabras en notas (aditivo) ===== */
+  (function initWordLimit(){
+    var IDS=['nota-motivo','nota-padecimiento','nota-ef'];var MAX=3000;
+    function words(s){s=String(s||'').trim();return s?s.split(/\s+/).length:0;}
+    function wire(id){
+      var e=document.getElementById(id);if(!e||e.dataset.wl)return;e.dataset.wl='1';
+      var c=document.createElement('div');c.style.cssText='font-size:10px;color:#7a8694;text-align:right;margin-top:-2px';
+      function upd(){var w=words(e.value);if(w>MAX){e.value=e.value.trim().split(/\s+/).slice(0,MAX).join(' ');w=MAX;}c.textContent=w+' / '+MAX+' palabras';c.style.color=(w>=MAX?'#b83232':'#7a8694');}
+      if(e.parentNode)e.parentNode.appendChild(c);
+      e.addEventListener('input',upd);upd();
+    }
+    IDS.forEach(wire);
+  })();
+
+  /* ===== Verificacion de cedula en SEP (aditivo) ===== */
+  (function initSEP(){
+    var med=document.getElementById('exp-medico'),ced=document.getElementById('exp-cedula'),btn=document.getElementById('exp-verif-sep');
+    if(!btn)return;
+    try{var sc=localStorage.getItem('ca_cedula');if(sc&&ced&&!ced.value)ced.value=sc;}catch(e){}
+    if(ced)ced.addEventListener('change',function(){try{localStorage.setItem('ca_cedula',(ced.value||'').trim());}catch(e){}});
+    btn.addEventListener('click',function(){
+      var c=(ced&&ced.value||'').trim();var n=(med&&med.value||'').trim();
+      try{if(navigator.clipboard&&(c||n))navigator.clipboard.writeText(c||n);}catch(e){}
+      var m=document.getElementById('exp-msg');if(m){m.textContent='Se abrio el Registro Nacional de Profesionistas (SEP). La cedula se copio: pegala en la busqueda.';m.style.color='#1b7a5a';}
+      window.open('https://www.cedulaprofesional.sep.gob.mx/','_blank','noopener');
+    });
   })();
 })();
 </script>
