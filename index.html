@@ -4613,6 +4613,10 @@ renderVer();render();
           <div class="ant-h">Hojas de registro de enfermeria (signos vitales / liquidos)</div>
           <div class="exp-f"><label>Tipo de registro</label><select id="enf2-tipo"><option value="">-- Selecciona --</option></select></div>
           <div id="enf2-form" style="margin-top:6px"></div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Anestesiologia (NOM-006)</div>
+          <div class="exp-f"><label>Tipo de documento</label><select id="anes-tipo"><option value="">-- Selecciona --</option><option>Nota preanestesica</option><option>Registro transanestesico</option><option>Nota postanestesica</option></select></div>
+          <div id="anes-form" style="margin-top:6px"></div>
         </div>
         <div data-p="consentimientos" style="display:none">
           <div class="ant-h">Asistente de consentimientos por tipo de ingreso</div>
@@ -6625,6 +6629,238 @@ renderVer();render();
         if(r.error)throw r.error;tmsg('Hoja guardada \u2713','ok');
       }catch(e){tmsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar hoja';
+    }
+  })();
+
+  /* ===== Anestesiologia NOM-006 (aditivo) ===== */
+  (function initAnestesia(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+    function amsg(t,c){var m=elx('anes-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('anes-tipo'))return;
+
+    var ASA=[['I','I - Paciente sano'],['II','II - Enf. sistemica leve'],['III','III - Enf. sistemica grave'],['IV','IV - Enf. sistemica grave que amenaza la vida'],['V','V - Moribundo (riesgo de fallecer en 24h)'],['VI','VI - Muerte encefalica (donador)']];
+
+    var TIPOS={
+     'Nota preanestesica':{key:'anes_preanestesica',titulo:'NOTA PREANESTESICA',campos:[
+       {id:'evaluacion',label:'Evaluacion clinica del paciente (datos fundamentales para la anestesia)',tipo:'textarea'},
+       {id:'antecedentes',label:'Antecedentes anestesicos / alergias / comorbilidades',tipo:'textarea'},
+       {id:'viaaerea',label:'Via aerea (Mallampati / predictores de via aerea dificil)',tipo:'text'},
+       {id:'ayuno',label:'Horas de ayuno',tipo:'text'},
+       {id:'sv',label:'Signos vitales basales',tipo:'text'},
+       {id:'estudios',label:'Estudios relevantes (laboratorio, ECG, RX, valoraciones)',tipo:'textarea'},
+       {id:'asa',label:'Clasificacion del riesgo (ASA)',tipo:'select',opts:ASA},
+       {id:'riesgo',label:'Valoracion del riesgo anestesico y pronostico',tipo:'textarea'},
+       {id:'plan',label:'Plan anestesico (segun condiciones del paciente y cirugia planeada)',tipo:'textarea'},
+       {id:'indicaciones',label:'Indicaciones y recomendaciones del servicio de anestesiologia',tipo:'textarea'}
+     ]},
+     'Registro transanestesico':{key:'anes_transanestesico',titulo:'REGISTRO ANESTESICO / TRANSANESTESICO',tabla:true,campos:[
+       {id:'cirugia',label:'Cirugia / procedimiento',tipo:'text'},
+       {id:'cirujano',label:'Cirujano',tipo:'text'},
+       {id:'tecnica',label:'Tecnica anestesica empleada',tipo:'textarea'}
+     ],camposPost:[
+       {id:'agentes',label:'Agentes y medicamentos administrados (dosis y hora)',tipo:'textarea'},
+       {id:'liquidos',label:'Liquidos IV, sangre y hemoderivados, balance y perdidas hematicas',tipo:'textarea'},
+       {id:'eventos',label:'Contingencias, accidentes e incidentes',tipo:'textarea'},
+       {id:'salida',label:'Estado del paciente al salir de quirofano',tipo:'textarea'}
+     ]},
+     'Nota postanestesica':{key:'anes_postanestesica',titulo:'NOTA POSTANESTESICA / VIGILANCIA POSANESTESICA',aldrete:true,campos:[
+       {id:'estadoingreso',label:'Estado del paciente al ingreso a recuperacion',tipo:'textarea'},
+       {id:'sv',label:'Signos vitales',tipo:'text'}
+     ],camposPost:[
+       {id:'complicaciones',label:'Contingencias / complicaciones',tipo:'textarea'},
+       {id:'plan',label:'Plan de manejo inmediato (analgesia, control de signos y sintomas)',tipo:'textarea'},
+       {id:'alta',label:'Criterios y hora de alta del area de recuperacion',tipo:'text'}
+     ]}
+    };
+
+    var ALD=[
+      {id:'act',label:'Actividad (movimiento)',o:[['2','Mueve 4 extremidades'],['1','Mueve 2 extremidades'],['0','No mueve extremidades']]},
+      {id:'resp',label:'Respiracion',o:[['2','Respira y tose libremente'],['1','Disnea / respiracion limitada'],['0','Apnea']]},
+      {id:'circ',label:'Circulacion (TA vs basal)',o:[['2','TA +/- 20% del basal'],['1','TA +/- 20-50% del basal'],['0','TA +/- >50% del basal']]},
+      {id:'conc',label:'Conciencia',o:[['2','Despierto / alerta'],['1','Despierta al llamado'],['0','No responde']]},
+      {id:'sat',label:'Saturacion O2',o:[['2','SpO2 >92% al aire ambiente'],['1','Requiere O2 para SpO2 >90%'],['0','SpO2 <90% con O2']]}
+    ];
+    var MON=[{id:'hora',label:'Hora',w:'70px'},{id:'ta',label:'TA',w:'70px'},{id:'fc',label:'FC',w:'50px'},{id:'fr',label:'FR',w:'50px'},{id:'spo2',label:'SpO2',w:'55px'},{id:'etco2',label:'EtCO2',w:'55px'},{id:'temp',label:'Temp',w:'55px'}];
+
+    var rows=[];var curKey='';
+
+    var sel=elx('anes-tipo');
+
+    function fieldHTML(c){
+      var span=(c.tipo==='textarea')?' style="grid-column:1/-1"':'';
+      var ctrl;
+      if(c.tipo==='textarea')ctrl='<textarea id="anes-c-'+c.id+'" rows="2"></textarea>';
+      else if(c.tipo==='select'){ctrl='<select id="anes-c-'+c.id+'"><option value="">--</option>'+c.opts.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>';}).join('')+'</select>';}
+      else ctrl='<input id="anes-c-'+c.id+'">';
+      return '<div class="exp-f"'+span+'><label>'+esc(c.label).replace(/<br>/g,' ')+'</label>'+ctrl+'</div>';
+    }
+
+    function aldBlock(m,titulo){
+      var h='<div style="border:1px dashed #c7d2dc;border-radius:8px;padding:8px;margin-top:8px"><div style="font-weight:700;color:#1a3a5c;font-size:12px;margin-bottom:4px">'+esc(titulo)+'</div><div class="exp-g2">';
+      ALD.forEach(function(c){
+        h+='<div class="exp-f"><label>'+esc(c.label)+'</label><select id="anes-ald-'+m+'-'+c.id+'" class="anes-ald" data-m="'+m+'"><option value="">--</option>'+c.o.map(function(o){return '<option value="'+o[0]+'">'+o[0]+' - '+esc(o[1])+'</option>';}).join('')+'</select></div>';
+      });
+      h+='</div><div style="margin-top:4px;font-weight:700;color:#1a3a5c">Total Aldrete: <span id="anes-ald-'+m+'-tot">0</span>/10</div></div>';
+      return h;
+    }
+    function aldSum(m){var t=0;ALD.forEach(function(c){t+=parseInt(gv('anes-ald-'+m+'-'+c.id))||0;});return t;}
+    function aldData(m){var o={};ALD.forEach(function(c){o[c.id]=gv('anes-ald-'+m+'-'+c.id);});o.total=aldSum(m);return o;}
+
+    function render(tipo){
+      var box=elx('anes-form');var P=TIPOS[tipo];
+      if(!P){box.innerHTML='';return;}
+      if(curKey!==P.key){rows=P.tabla?[blankRow()]:[];curKey=P.key;}
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div style="font-weight:700;color:#1a3a5c;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha y hora</label><input id="anes-fecha" type="datetime-local"></div><div class="exp-f"><label>Anestesiologo</label><input id="anes-medico"></div><div class="exp-f"><label>Cedula profesional</label><input id="anes-ced"></div></div>';
+      h+='<div class="exp-g2">';
+      P.campos.forEach(function(c){h+=fieldHTML(c);});
+      h+='</div>';
+      if(P.tabla){
+        h+='<div style="font-weight:700;color:#1a3a5c;font-size:12px;margin-top:8px">Monitoreo transanestesico (signos vitales por tiempo)</div>';
+        h+='<div style="overflow-x:auto;margin-top:4px"><table style="border-collapse:collapse;font-size:11.5px;min-width:100%"><thead><tr style="background:#eef3f7">';
+        MON.forEach(function(c){h+='<th style="border:1px solid #cdd7df;padding:4px 5px;text-align:left;min-width:'+c.w+'">'+esc(c.label)+'</th>';});
+        h+='<th style="border:1px solid #cdd7df;padding:4px;width:34px"></th></tr></thead><tbody id="anes-body"></tbody></table></div>';
+        h+='<div style="margin-top:6px"><button type="button" id="anes-add" class="exp-btn exp-btn-sec">+ Agregar registro</button></div>';
+      }
+      if(P.aldrete){h+=aldBlock('ing','Calificacion de Aldrete al INGRESO a recuperacion');h+=aldBlock('egr','Calificacion de Aldrete al EGRESO de recuperacion');}
+      if(P.camposPost){h+='<div class="exp-g2" style="margin-top:6px">';P.camposPost.forEach(function(c){h+=fieldHTML(c);});h+='</div>';}
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="anes-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="anes-blank" class="exp-btn exp-btn-sec">Imprimir en blanco (llenar a mano)</button><button type="button" id="anes-guardar" class="exp-btn exp-btn-pri">Guardar documento</button><span class="exp-msg" id="anes-msg"></span></div>';
+      h+='</div>';
+      box.innerHTML=h;
+      if(!gv('anes-fecha'))elx('anes-fecha').value=new Date().toISOString().slice(0,16);
+      if(P.tabla){renderBody();elx('anes-add').onclick=function(){rows.push(blankRow());renderBody();};}
+      if(P.aldrete){Array.prototype.forEach.call(box.querySelectorAll('.anes-ald'),function(s){s.onchange=function(){var m=s.getAttribute('data-m');var t=elx('anes-ald-'+m+'-tot');if(t)t.textContent=aldSum(m);};});}
+      elx('anes-pdf').onclick=function(){doPDF(tipo);};elx('anes-blank').onclick=function(){doBlank(tipo);};
+      elx('anes-guardar').onclick=function(){doSave(tipo);};
+    }
+    sel.onchange=function(){curKey='';render(this.value);};
+
+    function blankRow(){var r={};MON.forEach(function(c){r[c.id]='';});r.hora=new Date().toTimeString().slice(0,5);return r;}
+    function renderBody(){
+      var tb=elx('anes-body');if(!tb)return;
+      tb.innerHTML=rows.map(function(r,i){
+        return '<tr>'+MON.map(function(c){return '<td style="border:1px solid #cdd7df;padding:2px"><input data-i="'+i+'" data-c="'+c.id+'" class="anes-cell" value="'+esc(r[c.id])+'" style="width:100%;border:none;background:transparent;font-size:11.5px;padding:3px 4px"></td>';}).join('')+'<td style="border:1px solid #cdd7df;padding:2px;text-align:center"><button type="button" data-x="'+i+'" class="anes-del" style="border:none;background:#fdecec;color:#b83232;border-radius:5px;padding:3px 7px;cursor:pointer">x</button></td></tr>';
+      }).join('');
+      Array.prototype.forEach.call(tb.querySelectorAll('.anes-cell'),function(inp){inp.oninput=function(){rows[+inp.getAttribute('data-i')][inp.getAttribute('data-c')]=inp.value;};});
+      Array.prototype.forEach.call(tb.querySelectorAll('.anes-del'),function(b){b.onclick=function(){rows.splice(+b.getAttribute('data-x'),1);if(!rows.length)rows.push(blankRow());renderBody();};});
+    }
+
+    function valLabel(c,v){if(c.tipo==='select'&&c.opts){var f=c.opts.filter(function(o){return o[0]===v;})[0];return f?f[1]:v;}return v;}
+    function gather(P){var o={};P.campos.forEach(function(c){o[c.id]=gv('anes-c-'+c.id);});if(P.camposPost)P.camposPost.forEach(function(c){o[c.id]=gv('anes-c-'+c.id);});return o;}
+
+    function head(P){
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
+      var folio=(elx('exp-folio')&&elx('exp-folio').value)||'';
+      var fch=gv('anes-fecha')?new Date(gv('anes-fecha')).toLocaleString('es-MX'):new Date().toLocaleString('es-MX');
+      var h='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Folio:</b> '+esc(folio)+' &nbsp; <b>Paciente:</b> '+esc(nom)+' &nbsp; <b>Fecha:</b> '+esc(fch)+'</div>';
+      return h;
+    }
+    function firma(){
+      var med=gv('anes-medico'),ced=gv('anes-ced');
+      return '<div style="margin-top:34px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:3px;font-weight:600">'+esc(med)+'</div><div style="font-size:10px;color:#5a6474">Medico anestesiologo'+(ced?' &middot; Cedula profesional: '+esc(ced):'')+'</div></div><p style="margin-top:10px;font-size:9.5px;color:#5a6474">Documento integrante del expediente clinico, conforme a la NOM-006-SSA3-2011 y NOM-004-SSA3-2012.</p>';
+    }
+    function fieldsHTML(list,datos){
+      var h='';list.forEach(function(c){var v=datos[c.id];if(!v)return;h+='<div style="margin:6px 0"><div style="font-weight:700;color:#1a3a5c;font-size:11.5px">'+esc(c.label).replace(/<br>/g,' ')+'</div><div style="text-align:justify">'+esc(valLabel(c,v))+'</div></div>';});return h;}
+
+    function aldHTML(m,titulo){
+      var d=aldData(m);if(!d.total&&!ALD.some(function(c){return d[c.id];}))return '';
+      var rowsH=ALD.map(function(c){return '<tr><td style="border:1px solid #cdd7df;padding:3px 5px">'+esc(c.label)+'</td><td style="border:1px solid #cdd7df;padding:3px 5px;text-align:center">'+esc(d[c.id]||'-')+'</td></tr>';}).join('');
+      return '<div style="margin-top:8px"><div style="font-weight:700;color:#1a3a5c;font-size:11.5px">'+esc(titulo)+'</div><table style="border-collapse:collapse;font-size:11px;margin-top:3px"><tbody>'+rowsH+'<tr><td style="border:1px solid #cdd7df;padding:3px 5px;font-weight:700;background:#eef3f7">TOTAL</td><td style="border:1px solid #cdd7df;padding:3px 5px;text-align:center;font-weight:700;background:#eef3f7">'+d.total+'/10</td></tr></tbody></table></div>';
+    }
+
+    function buildHTML(tipo){
+      var P=TIPOS[tipo];var datos=gather(P);
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:760px;margin:0 auto;font-size:12px;line-height:1.45">';
+      h+=head(P);
+      h+=fieldsHTML(P.campos,datos);
+      if(P.tabla){
+        h+='<div style="font-weight:700;color:#1a3a5c;font-size:11.5px;margin-top:8px">Monitoreo transanestesico</div>';
+        h+='<table style="border-collapse:collapse;width:100%;font-size:10.5px;margin-top:3px"><thead><tr style="background:#eef3f7">'+MON.map(function(c){return '<th style="border:1px solid #cdd7df;padding:4px;text-align:left">'+esc(c.label)+'</th>';}).join('')+'</tr></thead><tbody>';
+        rows.forEach(function(r){if(!MON.some(function(c){return String(r[c.id]||'').trim();}))return;h+='<tr>'+MON.map(function(c){return '<td style="border:1px solid #cdd7df;padding:4px">'+esc(r[c.id]||'')+'</td>';}).join('')+'</tr>';});
+        h+='</tbody></table>';
+      }
+      if(P.aldrete){h+=aldHTML('ing','Aldrete al ingreso a recuperacion');h+=aldHTML('egr','Aldrete al egreso de recuperacion');}
+      if(P.camposPost)h+=fieldsHTML(P.camposPost,datos);
+      h+=firma();
+      h+='</div>';
+      return h;
+    }
+
+    function membreteBlank(P){
+      var h='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:6px;margin-bottom:8px"><div style="font-size:17px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:9.5px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:13px;font-weight:700;text-align:center;margin-bottom:4px">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:6px"><b>Folio:</b> ______________ &nbsp; <b>Paciente:</b> ________________________________ &nbsp; <b>Edad:</b> ______ &nbsp; <b>Fecha:</b> ____________</div>';
+      return h;
+    }
+    function blankField(c){
+      var lbl=esc(c.label).replace(/<br>/g,' ');
+      if(c.tipo==='textarea')return '<div style="margin:7px 0"><div style="font-weight:700;color:#1a3a5c;font-size:11px">'+lbl+'</div><div style="border:1px solid #b8c2cc;border-radius:4px;height:40px;margin-top:2px"></div></div>';
+      return '<div style="margin:7px 0;font-size:11.5px"><b style="color:#1a3a5c">'+lbl+':</b> <span style="display:inline-block;border-bottom:1px solid #888;min-width:55%">&nbsp;</span></div>';
+    }
+    function gridBlank(){
+      var COLS=24,i,h='<table style="border-collapse:collapse;width:100%;table-layout:fixed;font-size:9px;margin-top:4px"><tbody>';
+      h+='<tr><td style="border:1px solid #888;padding:2px;font-weight:700;width:58px">Hora</td>';
+      for(i=0;i<COLS;i++)h+='<td style="border:1px solid #888;height:16px"></td>';
+      h+='</tr>';
+      for(var v=200;v>=0;v-=20){h+='<tr><td style="border:1px solid #ccc;padding:1px 3px;font-weight:600;color:#5a6474">'+v+'</td>';for(i=0;i<COLS;i++)h+='<td style="border:1px solid #e0e0e0;height:12px"></td>';h+='</tr>';}
+      ['SpO2','EtCO2','FiO2','Temp','FR','Diuresis'].forEach(function(lbl){h+='<tr><td style="border:1px solid #888;padding:1px 3px;font-weight:600">'+lbl+'</td>';for(i=0;i<COLS;i++)h+='<td style="border:1px solid #bbb;height:15px"></td>';h+='</tr>';});
+      h+='<tr><td colspan="'+(COLS+1)+'" style="border:1px solid #888;padding:2px;font-weight:700;background:#eef3f7">Medicamentos / agentes (anote dosis y hora)</td></tr>';
+      for(var m=0;m<6;m++){h+='<tr><td style="border:1px solid #ccc;height:16px"></td>';for(i=0;i<COLS;i++)h+='<td style="border:1px solid #e0e0e0;height:16px"></td>';h+='</tr>';}
+      h+='</tbody></table>';
+      return h;
+    }
+    function aldBlank(){
+      var rowsH=ALD.map(function(c){var g=c.o.map(function(o){return o[0]+'='+o[1];}).join(';  ');return '<tr><td style="border:1px solid #cdd7df;padding:3px 5px">'+esc(c.label)+'<div style="font-size:8.5px;color:#7a8694">'+esc(g)+'</div></td><td style="border:1px solid #cdd7df;width:55px"></td><td style="border:1px solid #cdd7df;width:55px"></td></tr>';}).join('');
+      return '<table style="border-collapse:collapse;width:100%;font-size:10px;margin-top:6px"><thead><tr style="background:#eef3f7"><th style="border:1px solid #cdd7df;padding:3px;text-align:left">Criterio de Aldrete</th><th style="border:1px solid #cdd7df;padding:3px;width:55px">Ingreso</th><th style="border:1px solid #cdd7df;padding:3px;width:55px">Egreso</th></tr></thead><tbody>'+rowsH+'<tr><td style="border:1px solid #cdd7df;padding:3px;font-weight:700;background:#eef3f7">TOTAL /10</td><td style="border:1px solid #cdd7df"></td><td style="border:1px solid #cdd7df"></td></tr></tbody></table>';
+    }
+    function firmaBlank(){return '<div style="margin-top:30px;text-align:center"><div style="border-top:1px solid #1a2733;width:300px;margin:0 auto;padding-top:3px">&nbsp;</div><div style="font-size:10px;color:#5a6474">Medico anestesiologo &middot; Nombre, firma y cedula profesional</div></div><p style="margin-top:8px;font-size:9px;color:#5a6474">Documento integrante del expediente clinico, conforme a la NOM-006-SSA3-2011 y NOM-004-SSA3-2012.</p>';}
+
+    function buildBlankHTML(tipo){
+      var P=TIPOS[tipo];
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;font-size:12px;line-height:1.4">';
+      h+=membreteBlank(P);
+      P.campos.forEach(function(c){h+=blankField(c);});
+      if(P.tabla){h+='<div style="font-weight:700;color:#1a3a5c;font-size:11.5px;margin-top:6px">Monitoreo transanestesico (signos vitales por tiempo)</div>';h+='<div style="font-size:9px;color:#7a8694;margin-bottom:2px">Simbologia sugerida: &#8744; TA sistolica &nbsp; &#8743; TA diastolica &nbsp; &#8226; frecuencia cardiaca</div>';h+=gridBlank();}
+      if(P.aldrete){h+=aldBlank();}
+      if(P.camposPost){P.camposPost.forEach(function(c){h+=blankField(c);});}
+      h+=firmaBlank();
+      h+='</div>';
+      return h;
+    }
+    function doBlank(tipo){
+      var P=TIPOS[tipo];
+      var page=P.tabla?'@page{size:A4 landscape;margin:9mm}':'@page{size:A4 portrait;margin:12mm}';
+      var w=window.open('','_blank','width=1000,height=900');
+      if(!w){amsg('Permite las ventanas emergentes para imprimir.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Hoja en blanco</title><style>'+page+'</style></head><body style="margin:0;padding:14px">'+buildBlankHTML(tipo)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    function doPDF(tipo){
+      var w=window.open('','_blank','width=900,height=960');
+      if(!w){amsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Anestesiologia</title></head><body style="margin:0;padding:16px">'+buildHTML(tipo)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(tipo){
+      var P=TIPOS[tipo];
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){amsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){amsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('anes-guardar');b.textContent='Guardando...';
+      try{
+        var med=gv('anes-medico')+(gv('anes-ced')?' (Ced. '+gv('anes-ced')+')':'');
+        var cont=gather(P);
+        if(P.tabla)cont.monitoreo=rows;
+        if(P.aldrete){cont.aldrete_ingreso=aldData('ing');cont.aldrete_egreso=aldData('egr');}
+        var r=await window.caSupa.from('notas').insert({folio:folio,tipo:P.key,fecha:(gv('anes-fecha')?new Date(gv('anes-fecha')).toISOString():new Date().toISOString()),medico:med,contenido:cont});
+        if(r.error)throw r.error;amsg('Documento de anestesiologia guardado \u2713','ok');
+      }catch(e){amsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar documento';
     }
   })();
 })();
