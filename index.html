@@ -6928,6 +6928,36 @@ renderVer();render();
       elx('cseg-guardar').onclick=doSave;
     }
 
+    function figura(label,post){
+      var dLeft=post?'I':'D',dRight=post?'D':'I';
+      var medio=post?'<line x1="60" y1="56" x2="60" y2="142" stroke="#8895a3" stroke-width="1" stroke-dasharray="2 3"/>':'<line x1="60" y1="58" x2="60" y2="142" stroke="#c2cad2" stroke-width="1" stroke-dasharray="3 3"/>';
+      return '<div style="text-align:center">'
+        +'<svg viewBox="0 0 120 300" width="116" height="290" style="border:1px solid #e0e6ea;background:#fff">'
+        +'<g fill="#ffffff" stroke="#54606e" stroke-width="1.5">'
+        +'<ellipse cx="60" cy="26" rx="17" ry="20"/>'
+        +'<rect x="54" y="44" width="12" height="11"/>'
+        +'<rect x="37" y="54" width="46" height="94" rx="15"/>'
+        +'<rect x="19" y="58" width="15" height="84" rx="7"/>'
+        +'<rect x="86" y="58" width="15" height="84" rx="7"/>'
+        +'<rect x="41" y="144" width="17" height="142" rx="8"/>'
+        +'<rect x="62" y="144" width="17" height="142" rx="8"/>'
+        +'</g>'
+        +medio
+        +'<text x="6" y="118" font-size="11" fill="#b83232" font-family="Arial" font-weight="bold">'+dLeft+'</text>'
+        +'<text x="106" y="118" font-size="11" fill="#b83232" font-family="Arial" font-weight="bold">'+dRight+'</text>'
+        +'</svg>'
+        +'<div style="font-size:10px;color:#5a6474;margin-top:2px">'+label+'</div></div>';
+    }
+    function bodyMap(){
+      return '<div style="border:1px solid #cdd7df;border-radius:6px;padding:8px;margin:8px 0">'
+        +'<div style="font-weight:700;color:#1a3a5c;font-size:11.5px;margin-bottom:4px">Marcado del sitio quirurgico (marque con un circulo el sitio a operar)</div>'
+        +'<div style="display:flex;gap:22px;justify-content:center;flex-wrap:wrap">'
+        +figura('Vista anterior (frente)',false)
+        +figura('Vista posterior (espalda)',true)
+        +'</div>'
+        +'<div style="font-size:9px;color:#7a8694;margin-top:3px;text-align:center">D = lado derecho del paciente &middot; I = lado izquierdo del paciente</div>'
+        +'</div>';
+    }
     function buildHTML(blank){
       var nom=blank?'':((elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'');
       var folio=blank?'':((elx('exp-folio')&&elx('exp-folio').value)||'');
@@ -6939,6 +6969,7 @@ renderVer();render();
       h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">LISTA DE VERIFICACION PARA LA CIRUGIA SEGURA</div>';
       h+='<div style="font-size:11px;margin-bottom:4px"><b>Folio:</b> '+(blank?line:esc(folio))+' &nbsp; <b>Paciente:</b> '+(blank?line:esc(nom))+' &nbsp; <b>Fecha:</b> '+fch+'</div>';
       h+='<div style="font-size:11px;margin-bottom:8px"><b>Procedimiento:</b> '+cv('proc')+' &nbsp; <b>Cirujano:</b> '+cv('cirujano')+'<br><b>Anestesiologo:</b> '+cv('anest')+' &nbsp; <b>Enfermeria:</b> '+cv('enf')+'</div>';
+      h+=bodyMap();
       FASES.forEach(function(f){
         h+='<div style="font-weight:700;color:#1a3a5c;font-size:11.5px;margin-top:8px;text-transform:uppercase">'+esc(f.t)+'</div>';
         f.items.forEach(function(it){
