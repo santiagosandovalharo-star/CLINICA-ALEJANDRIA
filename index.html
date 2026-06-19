@@ -4741,6 +4741,10 @@ renderVer();render();
           </div>
           <span class="exp-msg" id="sol-msg"></span>
           <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Solicitud de cirugia / internamiento y valoracion preoperatoria</div>
+          <div class="exp-f"><label>Tipo de solicitud</label><select id="solc-tipo"><option value="">-- Selecciona --</option></select></div>
+          <div id="solc-form" style="margin-top:6px"></div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
           <div class="ant-h">Solicitud de material (osteosintesis) al proveedor</div>
           <div class="exp-f"><label>Fecha de cirugia</label><input id="mat-fecha" type="date"></div>
           <div class="exp-f"><label>Buscar material (hueso o tipo: femur, placa, tornillo canulado...)</label><input id="mat-buscar" autocomplete="off" placeholder="Escribe para buscar..."></div>
@@ -6215,6 +6219,117 @@ renderVer();render();
       w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Solicitud de material</title></head><body style="margin:0;padding:16px">'+h+'</body></html>');w.document.close();
       setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
     };
+  })();
+
+  /* ===== Solicitudes de cirugia/internamiento y valoracion preop (aditivo) ===== */
+  (function initSolClinica(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+    function smsg(t,c){var m=elx('solc-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('solc-tipo'))return;
+
+    var TIPOS={
+     'Cirugia / internamiento':{key:'cirugia',titulo:'SOLICITUD DE CIRUGIA / INTERNAMIENTO',campos:[
+       {id:'dx',label:'Diagnostico preoperatorio',tipo:'textarea'},
+       {id:'proc',label:'Cirugia / procedimiento propuesto',tipo:'textarea'},
+       {id:'lat',label:'Lateralidad / region (derecho / izquierdo / nivel)',tipo:'text'},
+       {id:'cirujano',label:'Cirujano responsable',tipo:'text'},
+       {id:'ayudante',label:'Ayudante(s)',tipo:'text'},
+       {id:'anest',label:'Anestesiologo',tipo:'text'},
+       {id:'tipoanest',label:'Tipo de anestesia (general / regional / local / sedacion)',tipo:'text'},
+       {id:'fechacx',label:'Fecha y hora programada de cirugia',tipo:'text'},
+       {id:'ingreso',label:'Tipo de ingreso (programado / urgente)',tipo:'text'},
+       {id:'habitacion',label:'Habitacion / piso solicitado',tipo:'text'},
+       {id:'duracion',label:'Duracion estimada',tipo:'text'},
+       {id:'asa',label:'Riesgo quirurgico (ASA)',tipo:'text'},
+       {id:'sangre',label:'Tipo sanguineo / reserva de hemoderivados',tipo:'text'},
+       {id:'material',label:'Material / equipo especial requerido (osteosintesis, implantes, etc.)',tipo:'textarea'},
+       {id:'requisitos',label:'Estudios y requisitos preoperatorios',tipo:'textarea'},
+       {id:'ayuno',label:'Indicaciones de ingreso / ayuno',tipo:'textarea'},
+       {id:'obs',label:'Observaciones',tipo:'textarea'}
+     ]},
+     'Valoracion preoperatoria':{key:'valoracion_preop',titulo:'SOLICITUD DE VALORACION PREOPERATORIA',campos:[
+       {id:'servicio',label:'Servicio al que se solicita (cardiologia / medicina interna / anestesiologia...)',tipo:'text'},
+       {id:'dx',label:'Diagnostico',tipo:'textarea'},
+       {id:'proc',label:'Cirugia propuesta',tipo:'textarea'},
+       {id:'fechacx',label:'Fecha programada de cirugia',tipo:'text'},
+       {id:'comorbilidades',label:'Antecedentes y comorbilidades relevantes',tipo:'textarea'},
+       {id:'medicamentos',label:'Medicamentos actuales',tipo:'textarea'},
+       {id:'estudios',label:'Estudios ya realizados (laboratorio / ECG / RX)',tipo:'textarea'},
+       {id:'motivo',label:'Motivo de la valoracion / pregunta clinica',tipo:'textarea'},
+       {id:'obs',label:'Observaciones',tipo:'textarea'}
+     ]}
+    };
+
+    var sel=elx('solc-tipo');
+    Object.keys(TIPOS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+
+    function render(tipo){
+      var box=elx('solc-form');var P=TIPOS[tipo];
+      if(!P){box.innerHTML='';return;}
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div style="font-weight:700;color:#1a3a5c;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button type="button" id="solc-traer" class="exp-btn exp-btn-sec">Traer datos del paciente</button></div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha de solicitud</label><input id="solc-fecha" type="date"></div><div class="exp-f"><label>Medico solicitante</label><input id="solc-medico"></div><div class="exp-f"><label>Cedula profesional</label><input id="solc-ced"></div></div>';
+      P.campos.forEach(function(c){
+        var span=(c.tipo==='textarea')?' style="grid-column:1/-1"':'';
+        var ctrl=(c.tipo==='textarea')?'<textarea id="solc-c-'+c.id+'" rows="2"></textarea>':'<input id="solc-c-'+c.id+'">';
+        h+='<div class="exp-f"'+span+'><label>'+esc(c.label).replace(/<br>/g,' ')+'</label>'+ctrl+'</div>';
+      });
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="solc-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="solc-guardar" class="exp-btn exp-btn-pri">Guardar solicitud</button><span class="exp-msg" id="solc-msg"></span></div>';
+      h+='</div>';
+      box.innerHTML=h;
+      if(!gv('solc-fecha'))elx('solc-fecha').value=new Date().toISOString().slice(0,10);
+      elx('solc-traer').onclick=function(){
+        if(gv('exp-medico')&&!gv('solc-medico'))elx('solc-medico').value=gv('exp-medico');
+        smsg('Datos traidos \u2713','ok');
+      };
+      elx('solc-pdf').onclick=function(){doPDF(tipo);};
+      elx('solc-guardar').onclick=function(){doSave(tipo);};
+    }
+    sel.onchange=function(){render(this.value);};
+
+    function gather(tipo){var P=TIPOS[tipo];var o={};P.campos.forEach(function(c){o[c.id]=gv('solc-c-'+c.id);});return o;}
+
+    function buildHTML(tipo){
+      var P=TIPOS[tipo];var datos=gather(tipo);
+      var nom=(elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'';
+      var folio=(elx('exp-folio')&&elx('exp-folio').value)||'';
+      var fch=gv('solc-fecha')?new Date(gv('solc-fecha')+'T00:00').toLocaleDateString('es-MX'):new Date().toLocaleDateString('es-MX');
+      var med=gv('solc-medico'),ced=gv('solc-ced');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px;line-height:1.45">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Folio:</b> '+esc(folio)+' &nbsp; <b>Paciente:</b> '+esc(nom)+' &nbsp; <b>Fecha:</b> '+esc(fch)+'</div>';
+      P.campos.forEach(function(c){
+        var v=datos[c.id];if(!v)return;
+        h+='<div style="margin:6px 0"><div style="font-weight:700;color:#1a3a5c;font-size:11.5px">'+esc(c.label).replace(/<br>/g,' ')+'</div><div style="text-align:justify">'+esc(v)+'</div></div>';
+      });
+      h+='<div style="margin-top:34px;text-align:center"><div style="border-top:1px solid #1a2733;width:280px;margin:0 auto;padding-top:3px;font-weight:600">'+esc(med)+'</div><div style="font-size:10px;color:#5a6474">Medico solicitante'+(ced?' &middot; Cedula profesional: '+esc(ced):'')+'</div></div>';
+      h+='</div>';
+      return h;
+    }
+
+    function doPDF(tipo){
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){smsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Solicitud</title></head><body style="margin:0;padding:16px">'+buildHTML(tipo)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(tipo){
+      var P=TIPOS[tipo];
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){smsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){smsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('solc-guardar');b.textContent='Guardando...';
+      try{
+        var med=gv('solc-medico')+(gv('solc-ced')?' (Ced. '+gv('solc-ced')+')':'');
+        var r=await window.caSupa.from('solicitudes').insert({folio:folio,tipo:P.key,fecha:(gv('solc-fecha')?new Date(gv('solc-fecha')+'T00:00').toISOString():new Date().toISOString()),prioridad:'',medico:med,contenido:gather(tipo)});
+        if(r.error)throw r.error;smsg('Solicitud de '+tipo+' guardada \u2713','ok');
+      }catch(e){smsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar solicitud';
+    }
   })();
 })();
 </script>
