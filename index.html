@@ -4617,6 +4617,13 @@ renderVer();render();
           <div class="ant-h">Anestesiologia (NOM-006)</div>
           <div class="exp-f"><label>Tipo de documento</label><select id="anes-tipo"><option value="">-- Selecciona --</option><option>Nota preanestesica</option><option>Registro transanestesico</option><option>Nota postanestesica</option></select></div>
           <div id="anes-form" style="margin-top:6px"></div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Lista de verificacion de cirugia segura (OMS)</div>
+          <div id="cseg-form" style="margin-top:6px"></div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:14px 0">
+          <div class="ant-h">Formatos basicos del expediente</div>
+          <div class="exp-f"><label>Tipo de formato</label><select id="fb-tipo"><option value="">-- Selecciona --</option></select></div>
+          <div id="fb-form" style="margin-top:6px"></div>
         </div>
         <div data-p="consentimientos" style="display:none">
           <div class="ant-h">Asistente de consentimientos por tipo de ingreso</div>
@@ -6861,6 +6868,266 @@ renderVer();render();
         if(r.error)throw r.error;amsg('Documento de anestesiologia guardado \u2713','ok');
       }catch(e){amsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar documento';
+    }
+  })();
+
+  /* ===== Lista de verificacion de cirugia segura - OMS (aditivo) ===== */
+  (function initCirugiaSegura(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function cmsg(t,c){var m=elx('cseg-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    var box=elx('cseg-form');if(!box)return;
+
+    var FASES=[
+      {t:'ENTRADA (antes de la induccion anestesica)',items:[
+        ['e1','El paciente confirmo su identidad, el sitio quirurgico, el procedimiento y su consentimiento'],
+        ['e2','Sitio quirurgico marcado (o no procede)'],
+        ['e3','Verificacion de aparatos y medicacion anestesica completada'],
+        ['e4','Pulsioximetro colocado al paciente y funcionando'],
+        ['e5','Alergias conocidas revisadas'],
+        ['e6','Via aerea dificil o riesgo de aspiracion evaluado (instrumental / equipo / ayuda disponible)'],
+        ['e7','Riesgo de hemorragia >500 ml (7 ml/kg en ninos) evaluado (acceso IV y liquidos previstos)']
+      ]},
+      {t:'PAUSA QUIRURGICA / TIEMPO FUERA (antes de la incision)',items:[
+        ['p1','Todos los miembros del equipo se presentaron por nombre y funcion'],
+        ['p2','Confirmados en voz alta: identidad del paciente, sitio quirurgico y procedimiento'],
+        ['p3','El cirujano reviso pasos criticos o imprevistos, duracion y perdida de sangre prevista'],
+        ['p4','El anestesiologo reviso problemas especificos del paciente'],
+        ['p5','Enfermeria confirmo esterilidad (indicadores) y estado de instrumental / equipos'],
+        ['p6','Profilaxis antibiotica administrada en los ultimos 60 min (o no procede)'],
+        ['p7','Imagenes diagnosticas esenciales visibles (o no procede)']
+      ]},
+      {t:'SALIDA (antes de que el paciente salga del quirofano)',items:[
+        ['s1','Confirmado verbalmente el nombre del procedimiento realizado'],
+        ['s2','Recuento de gasas, instrumentos y agujas correcto (o no procede)'],
+        ['s3','Muestras / piezas etiquetadas (nombre del paciente leido en voz alta)'],
+        ['s4','Problemas de instrumental / equipos identificados para resolver'],
+        ['s5','El equipo reviso aspectos clave de la recuperacion y manejo del paciente']
+      ]}
+    ];
+    var CAMPOS=[['fecha','Fecha','date'],['proc','Procedimiento','text'],['cirujano','Cirujano','text'],['anest','Anestesiologo','text'],['enf','Enfermeria','text']];
+
+    function build(){
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div class="exp-g2">';
+      CAMPOS.forEach(function(c){h+='<div class="exp-f"><label>'+esc(c[1])+'</label><input id="cseg-'+c[0]+'" type="'+c[2]+'"></div>';});
+      h+='</div>';
+      FASES.forEach(function(f){
+        h+='<div style="font-weight:700;color:#1a3a5c;font-size:12px;margin-top:10px;text-transform:uppercase;letter-spacing:.3px">'+esc(f.t)+'</div>';
+        f.items.forEach(function(it){
+          h+='<label style="display:flex;gap:8px;align-items:flex-start;margin:5px 0;font-size:12.5px;cursor:pointer"><input type="checkbox" id="cseg-'+it[0]+'" style="margin-top:2px"><span>'+esc(it[1])+'</span></label>';
+        });
+      });
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button type="button" id="cseg-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="cseg-blank" class="exp-btn exp-btn-sec">Imprimir en blanco (llenar a mano)</button><button type="button" id="cseg-guardar" class="exp-btn exp-btn-pri">Guardar</button><span class="exp-msg" id="cseg-msg"></span></div>';
+      h+='</div>';
+      box.innerHTML=h;
+      if(!gv('cseg-fecha'))elx('cseg-fecha').value=new Date().toISOString().slice(0,10);
+      elx('cseg-pdf').onclick=function(){doPDF(false);};
+      elx('cseg-blank').onclick=function(){doPDF(true);};
+      elx('cseg-guardar').onclick=doSave;
+    }
+
+    function buildHTML(blank){
+      var nom=blank?'':((elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'');
+      var folio=blank?'':((elx('exp-folio')&&elx('exp-folio').value)||'');
+      var line='<span style="display:inline-block;border-bottom:1px solid #888;min-width:120px">&nbsp;</span>';
+      function cv(id){return blank?line:esc(gv('cseg-'+id));}
+      var fch=blank?line:(gv('cseg-fecha')?esc(new Date(gv('cseg-fecha')+'T00:00').toLocaleDateString('es-MX')):line);
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:740px;margin:0 auto;font-size:12px;line-height:1.4">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:7px;margin-bottom:8px"><div style="font-size:17px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:9.5px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">LISTA DE VERIFICACION PARA LA CIRUGIA SEGURA</div>';
+      h+='<div style="font-size:11px;margin-bottom:4px"><b>Folio:</b> '+(blank?line:esc(folio))+' &nbsp; <b>Paciente:</b> '+(blank?line:esc(nom))+' &nbsp; <b>Fecha:</b> '+fch+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Procedimiento:</b> '+cv('proc')+' &nbsp; <b>Cirujano:</b> '+cv('cirujano')+'<br><b>Anestesiologo:</b> '+cv('anest')+' &nbsp; <b>Enfermeria:</b> '+cv('enf')+'</div>';
+      FASES.forEach(function(f){
+        h+='<div style="font-weight:700;color:#1a3a5c;font-size:11.5px;margin-top:8px;text-transform:uppercase">'+esc(f.t)+'</div>';
+        f.items.forEach(function(it){
+          var chk=(!blank&&elx('cseg-'+it[0])&&elx('cseg-'+it[0]).checked)?'&#9745;':'&#9744;';
+          h+='<div style="margin:3px 0;font-size:11px"><span style="font-size:14px">'+chk+'</span> '+esc(it[1])+'</div>';
+        });
+      });
+      h+='<div style="display:flex;justify-content:space-between;margin-top:34px;gap:20px">';
+      ['Cirujano','Anestesiologo','Enfermeria'].forEach(function(r){h+='<div style="text-align:center;flex:1"><div style="border-top:1px solid #1a2733;padding-top:3px;font-size:10px;color:#5a6474">'+r+'</div></div>';});
+      h+='</div>';
+      h+='<p style="margin-top:10px;font-size:9px;color:#5a6474">Lista de verificacion de la cirugia segura (OMS), conforme a las Acciones Esenciales para la Seguridad del Paciente y la NOM-004-SSA3-2012.</p>';
+      h+='</div>';
+      return h;
+    }
+
+    function doPDF(blank){
+      var w=window.open('','_blank','width=880,height=950');
+      if(!w){cmsg('Permite las ventanas emergentes para imprimir.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Cirugia segura</title></head><body style="margin:0;padding:16px">'+buildHTML(blank)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(){
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){cmsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){cmsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('cseg-guardar');b.textContent='Guardando...';
+      try{
+        var checks={};FASES.forEach(function(f){f.items.forEach(function(it){checks[it[0]]=!!(elx('cseg-'+it[0])&&elx('cseg-'+it[0]).checked);});});
+        var campos={};CAMPOS.forEach(function(c){campos[c[0]]=gv('cseg-'+c[0]);});
+        var r=await window.caSupa.from('notas').insert({folio:folio,tipo:'cirugia_segura',fecha:(gv('cseg-fecha')?new Date(gv('cseg-fecha')+'T00:00').toISOString():new Date().toISOString()),medico:gv('cseg-cirujano'),contenido:{campos:campos,checks:checks}});
+        if(r.error)throw r.error;cmsg('Lista de cirugia segura guardada \u2713','ok');
+      }catch(e){cmsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar';
+    }
+
+    build();
+  })();
+
+  /* ===== Formatos basicos del expediente (aditivo) ===== */
+  (function initFormatosBasicos(){
+    function elx(id){return document.getElementById(id);}
+    function gv(id){var e=elx(id);return e?String(e.value||'').trim():'';}
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+    function fmsg(t,c){var m=elx('fb-msg');if(m){m.textContent=t||'';m.style.color=(c==='ok'?'#1b7a5a':c==='err'?'#b83232':'#c78c20');}}
+    if(!elx('fb-tipo'))return;
+
+    var TIPOS={
+     'Hoja de indicaciones medicas':{key:'indicaciones',titulo:'HOJA DE INDICACIONES MEDICAS',firma:'Medico',campos:[
+       {id:'dieta',label:'Dieta / ayuno',tipo:'text'},
+       {id:'cuidados',label:'Posicion y cuidados generales',tipo:'textarea'},
+       {id:'soluciones',label:'Soluciones parenterales y velocidad de infusion',tipo:'textarea'},
+       {id:'medicamentos',label:'Medicamentos (dosis, via, frecuencia y horario)',tipo:'textarea'},
+       {id:'estudios',label:'Estudios solicitados / pendientes',tipo:'textarea'},
+       {id:'alarma',label:'Signos de alarma a vigilar',tipo:'textarea'},
+       {id:'otras',label:'Otras indicaciones',tipo:'textarea'}
+     ]},
+     'Hoja de referencia / contrarreferencia':{key:'referencia',titulo:'HOJA DE REFERENCIA / CONTRARREFERENCIA',firma:'Medico que refiere',campos:[
+       {id:'tipo',label:'Tipo de documento',tipo:'select',opts:[['Referencia','Referencia (envio)'],['Contrarreferencia','Contrarreferencia (respuesta)']]},
+       {id:'unidadref',label:'Unidad / establecimiento que refiere',tipo:'text'},
+       {id:'unidadrec',label:'Unidad / establecimiento receptor',tipo:'text'},
+       {id:'servicio',label:'Servicio / especialidad al que se refiere',tipo:'text'},
+       {id:'motivo',label:'Motivo de envio / referencia',tipo:'textarea'},
+       {id:'dx',label:'Diagnostico(s)',tipo:'textarea'},
+       {id:'resumen',label:'Resumen clinico (evolucion, estudios y tratamiento otorgado)',tipo:'textarea'},
+       {id:'estado',label:'Estado actual del paciente y condiciones de traslado',tipo:'textarea'},
+       {id:'recomendaciones',label:'Recomendaciones / plan de seguimiento (para contrarreferencia)',tipo:'textarea'}
+     ]},
+     'Registro de transfusion (NOM-253)':{key:'transfusion',titulo:'REGISTRO DE TRANSFUSION SANGUINEA',firma:'Medico / responsable',campos:[
+       {id:'componente',label:'Componente sanguineo',tipo:'select',opts:[['Concentrado eritrocitario','Concentrado eritrocitario'],['Plasma fresco congelado','Plasma fresco congelado'],['Concentrado plaquetario','Concentrado plaquetario'],['Crioprecipitados','Crioprecipitados'],['Sangre total','Sangre total'],['Otro','Otro']]},
+       {id:'unidad',label:'No. de unidad / folio del banco de sangre',tipo:'text'},
+       {id:'grupopac',label:'Grupo y Rh del paciente',tipo:'text'},
+       {id:'grupounidad',label:'Grupo y Rh de la unidad',tipo:'text'},
+       {id:'compat',label:'Pruebas de compatibilidad / cruzadas',tipo:'text'},
+       {id:'volumen',label:'Volumen a transfundir (ml)',tipo:'text'},
+       {id:'inicio',label:'Hora de inicio',tipo:'text'},
+       {id:'termino',label:'Hora de termino',tipo:'text'},
+       {id:'svpre',label:'Signos vitales PRE-transfusion',tipo:'text'},
+       {id:'sv15',label:'Signos vitales a los 15 minutos',tipo:'text'},
+       {id:'svpost',label:'Signos vitales POST-transfusion',tipo:'text'},
+       {id:'reaccion',label:'Reaccion adversa transfusional (no / si - describir)',tipo:'textarea'},
+       {id:'obs',label:'Observaciones',tipo:'textarea'}
+     ]},
+     'Hoja frontal / caratula del expediente':{key:'caratula',titulo:'HOJA FRONTAL / CARATULA DEL EXPEDIENTE',firma:'Medico responsable',campos:[
+       {id:'nombre',label:'Nombre completo del paciente',tipo:'text'},
+       {id:'sexo',label:'Sexo',tipo:'select',opts:[['Femenino','Femenino'],['Masculino','Masculino'],['Otro','Otro']]},
+       {id:'nacimiento',label:'Fecha de nacimiento',tipo:'text'},
+       {id:'edad',label:'Edad',tipo:'text'},
+       {id:'curp',label:'CURP',tipo:'text'},
+       {id:'estadocivil',label:'Estado civil',tipo:'text'},
+       {id:'ocupacion',label:'Ocupacion',tipo:'text'},
+       {id:'domicilio',label:'Domicilio',tipo:'textarea'},
+       {id:'telefono',label:'Telefono',tipo:'text'},
+       {id:'origen',label:'Lugar de origen / nacionalidad',tipo:'text'},
+       {id:'sangre',label:'Grupo sanguineo y Rh',tipo:'text'},
+       {id:'alergias',label:'Alergias',tipo:'text'},
+       {id:'responsable',label:'Familiar responsable / contacto de emergencia',tipo:'text'},
+       {id:'parentesco',label:'Parentesco',tipo:'text'},
+       {id:'telresp',label:'Telefono del responsable',tipo:'text'},
+       {id:'aseguradora',label:'Aseguradora / financiamiento',tipo:'text'},
+       {id:'antecedentes',label:'Antecedentes de importancia',tipo:'textarea'},
+       {id:'dx',label:'Diagnostico(s)',tipo:'textarea'},
+       {id:'apertura',label:'Fecha de apertura del expediente',tipo:'text'}
+     ]}
+    };
+
+    var sel=elx('fb-tipo');
+    Object.keys(TIPOS).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o);});
+
+    function fieldHTML(c){
+      var span=(c.tipo==='textarea')?' style="grid-column:1/-1"':'';
+      var ctrl;
+      if(c.tipo==='textarea')ctrl='<textarea id="fb-c-'+c.id+'" rows="2"></textarea>';
+      else if(c.tipo==='select')ctrl='<select id="fb-c-'+c.id+'"><option value="">--</option>'+c.opts.map(function(o){return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>';}).join('')+'</select>';
+      else ctrl='<input id="fb-c-'+c.id+'">';
+      return '<div class="exp-f"'+span+'><label>'+esc(c.label).replace(/<br>/g,' ')+'</label>'+ctrl+'</div>';
+    }
+
+    function render(tipo){
+      var box=elx('fb-form');var P=TIPOS[tipo];
+      if(!P){box.innerHTML='';return;}
+      var h='<div style="border:1px solid #d8e0e6;border-radius:8px;padding:10px;background:#fbfcfd">';
+      h+='<div style="font-weight:700;color:#1a3a5c;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px"><button type="button" id="fb-traer" class="exp-btn exp-btn-sec">Traer datos del paciente</button></div>';
+      h+='<div class="exp-g2"><div class="exp-f"><label>Fecha</label><input id="fb-fecha" type="date"></div><div class="exp-f"><label>'+esc(P.firma)+'</label><input id="fb-medico"></div><div class="exp-f"><label>Cedula profesional</label><input id="fb-ced"></div></div>';
+      h+='<div class="exp-g2">';
+      P.campos.forEach(function(c){h+=fieldHTML(c);});
+      h+='</div>';
+      h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" id="fb-pdf" class="exp-btn exp-btn-sec">Generar PDF / Imprimir</button><button type="button" id="fb-blank" class="exp-btn exp-btn-sec">Imprimir en blanco</button><button type="button" id="fb-guardar" class="exp-btn exp-btn-pri">Guardar formato</button><span class="exp-msg" id="fb-msg"></span></div>';
+      h+='</div>';
+      box.innerHTML=h;
+      if(!gv('fb-fecha'))elx('fb-fecha').value=new Date().toISOString().slice(0,10);
+      elx('fb-traer').onclick=function(){
+        if(gv('exp-medico')&&!gv('fb-medico'))elx('fb-medico').value=gv('exp-medico');
+        var nm=elx('fb-c-nombre');if(nm&&!nm.value&&elx('exp-pac-nombre'))nm.value=(elx('exp-pac-nombre').textContent||'').trim();
+        fmsg('Datos traidos \u2713','ok');
+      };
+      elx('fb-pdf').onclick=function(){doPDF(tipo,false);};
+      elx('fb-blank').onclick=function(){doPDF(tipo,true);};
+      elx('fb-guardar').onclick=function(){doSave(tipo);};
+    }
+    sel.onchange=function(){render(this.value);};
+
+    function valLabel(c,v){if(c.tipo==='select'&&c.opts){var f=c.opts.filter(function(o){return o[0]===v;})[0];return f?f[1]:v;}return v;}
+    function gather(P){var o={};P.campos.forEach(function(c){o[c.id]=gv('fb-c-'+c.id);});return o;}
+
+    function buildHTML(tipo,blank){
+      var P=TIPOS[tipo];var datos=blank?{}:gather(P);
+      var line='<span style="display:inline-block;border-bottom:1px solid #888;min-width:60%">&nbsp;</span>';
+      var nom=blank?'':((elx('exp-pac-nombre')&&elx('exp-pac-nombre').textContent)||'');
+      var folio=blank?'':((elx('exp-folio')&&elx('exp-folio').value)||'');
+      var fch=blank?line:(gv('fb-fecha')?esc(new Date(gv('fb-fecha')+'T00:00').toLocaleDateString('es-MX')):line);
+      var med=blank?'':gv('fb-medico'),ced=blank?'':gv('fb-ced');
+      var h='<div style="font-family:Arial,Helvetica,sans-serif;color:#1a2733;max-width:720px;margin:0 auto;font-size:12px;line-height:1.45">';
+      h+='<div style="text-align:center;border-bottom:2px solid #1a3a5c;padding-bottom:8px;margin-bottom:10px"><div style="font-size:18px;font-weight:800;color:#1a3a5c">Clinica Alejandria Salud Integral Especializada</div><div style="font-size:10px;color:#5a6474">Av. los Portones 1151, Local 14, Juriquilla, Queretaro, C.P. 76100 &middot; Tel. 446 141 6785 &middot; RFC CAS240224NH5</div></div>';
+      h+='<div style="font-size:14px;font-weight:700;text-align:center;margin-bottom:6px">'+esc(P.titulo)+'</div>';
+      h+='<div style="font-size:11px;margin-bottom:8px"><b>Folio:</b> '+(blank?line:esc(folio))+' &nbsp; <b>Paciente:</b> '+(blank?line:esc(nom))+' &nbsp; <b>Fecha:</b> '+fch+'</div>';
+      P.campos.forEach(function(c){
+        if(blank){
+          if(c.tipo==='textarea')h+='<div style="margin:7px 0"><div style="font-weight:700;color:#1a3a5c;font-size:11px">'+esc(c.label).replace(/<br>/g,' ')+'</div><div style="border:1px solid #b8c2cc;border-radius:4px;height:40px;margin-top:2px"></div></div>';
+          else h+='<div style="margin:7px 0;font-size:11.5px"><b style="color:#1a3a5c">'+esc(c.label).replace(/<br>/g,' ')+':</b> <span style="display:inline-block;border-bottom:1px solid #888;min-width:55%">&nbsp;</span></div>';
+        }else{
+          var v=datos[c.id];if(!v)return;
+          h+='<div style="margin:6px 0"><div style="font-weight:700;color:#1a3a5c;font-size:11.5px">'+esc(c.label).replace(/<br>/g,' ')+'</div><div style="text-align:justify">'+esc(valLabel(c,v))+'</div></div>';
+        }
+      });
+      h+='<div style="margin-top:34px;text-align:center"><div style="border-top:1px solid #1a2733;width:300px;margin:0 auto;padding-top:3px;font-weight:600">'+(blank?'&nbsp;':esc(med))+'</div><div style="font-size:10px;color:#5a6474">'+esc(P.firma)+(blank?' &middot; Nombre, firma y cedula':(ced?' &middot; Cedula profesional: '+esc(ced):''))+'</div></div>';
+      h+='<p style="margin-top:10px;font-size:9.5px;color:#5a6474">Documento integrante del expediente clinico, conforme a la NOM-004-SSA3-2012'+(P.key==='transfusion'?' y NOM-253-SSA1-2012':'')+'.</p>';
+      h+='</div>';
+      return h;
+    }
+
+    function doPDF(tipo,blank){
+      var w=window.open('','_blank','width=860,height=940');
+      if(!w){fmsg('Permite las ventanas emergentes para generar el PDF.','err');return;}
+      w.document.open();w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Formato</title></head><body style="margin:0;padding:16px">'+buildHTML(tipo,blank)+'</body></html>');w.document.close();
+      setTimeout(function(){try{w.focus();w.print();}catch(e){}},450);
+    }
+    async function doSave(tipo){
+      var P=TIPOS[tipo];
+      var folio=(elx('exp-folio')&&elx('exp-folio').value||'').trim();
+      if(!folio){fmsg('Escribe un folio (pestana Ficha) para guardar.','err');return;}
+      if(!window.caSupa){fmsg('Sin nube: inicia sesion para guardar. (El PDF si funciona.)','warn');return;}
+      var b=elx('fb-guardar');b.textContent='Guardando...';
+      try{
+        var med=gv('fb-medico')+(gv('fb-ced')?' (Ced. '+gv('fb-ced')+')':'');
+        var r=await window.caSupa.from('notas').insert({folio:folio,tipo:P.key,fecha:(gv('fb-fecha')?new Date(gv('fb-fecha')+'T00:00').toISOString():new Date().toISOString()),medico:med,contenido:gather(P)});
+        if(r.error)throw r.error;fmsg('Formato guardado \u2713','ok');
+      }catch(e){fmsg('No se pudo guardar: '+(e.message||e),'err');}
+      b.textContent='Guardar formato';
     }
   })();
 })();
