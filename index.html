@@ -18,6 +18,130 @@ var CA_SUPA_KEY = 'sb_publishable_79apPg1qR0ta_RqA10gG6w_CbMzB-XU';
 var caSupa = null;
 try { caSupa = supabase.createClient(CA_SUPA_URL, CA_SUPA_KEY); }
 catch(e){ console.warn('Supabase no se pudo iniciar:', e); }
+// ============================================================
+//  Funciones únicas de documentos — Clínica Alejandría
+//  Pegar dentro de index.html, en el mismo <script> donde se
+//  crea el cliente de Supabase (la variable se llama `caSupa`),
+//  justo ANTES de la línea </script> que cierra ese bloque.
+//
+//  Estas funciones usan `caSupa` (tu cliente ya creado).
+//  Todos los módulos (notas, solicitudes, enfermería, etc.)
+//  usarán estas mismas funciones. Se acaban los parches.
+// ============================================================
+
+
+/**
+ * Guarda un documento en la línea de tiempo del expediente.
+ *   - Si el doc NO trae id  -> lo crea (nuevo).
+ *   - Si el doc SÍ trae id  -> lo actualiza (ej. seguir
+ *     editando un borrador antes de firmarlo).
+ *
+ * Campos obligatorios: folio, categoria, tipo.
+ * Devuelve el documento guardado (ya con su id), o lanza error.
+ */
+async function guardarDoc(doc) {
+  // 1) Validación mínima para no guardar basura
+  if (!doc || !doc.folio || !doc.categoria || !doc.tipo) {
+    throw new Error('guardarDoc: faltan datos obligatorios (folio, categoria, tipo).');
+  }
+
+  // 2) Armamos SOLO los campos que conoce la tabla
+  const fila = {
+    folio:        doc.folio,
+    categoria:    doc.categoria,
+    tipo:         doc.tipo,
+    titulo:       doc.titulo        ?? null,
+    fecha:        doc.fecha         ?? new Date().toISOString(), // fecha clínica
+    autor:        doc.autor         ?? null,
+    autor_cedula: doc.autor_cedula  ?? null,
+    estatus:      doc.estatus       ?? 'borrador',               // borrador | firmado | cancelado
+    contenido:    doc.contenido     ?? {},                       // aquí van TODOS los campos del formato
+    creado_por:   doc.creado_por    ?? null,                     // login de quien guarda (auditoría)
+  };
+
+  let resultado;
+
+  if (doc.id) {
+    // Actualizar un documento existente
+    resultado = await caSupa
+      .from('documentos')
+      .update(fila)
+      .eq('id', doc.id)
+      .select()
+      .single();
+  } else {
+    // Crear un documento nuevo
+    resultado = await caSupa
+      .from('documentos')
+      .insert(fila)
+      .select()
+      .single();
+  }
+
+  if (resultado.error) {
+    console.error('guardarDoc error:', resultado.error);
+    throw resultado.error;
+  }
+  return resultado.data;
+}
+
+
+/**
+ * Carga la línea de tiempo de documentos de un folio.
+ *
+ * filtros (todos opcionales):
+ *   { categoria, tipo, estatus, desde, hasta }
+ *     - categoria / tipo / estatus : texto exacto
+ *     - desde / hasta              : fechas ISO para acotar por
+ *                                    rango de fecha clínica
+ *
+ * Devuelve un arreglo, del más reciente al más antiguo.
+ */
+async function cargarDocs(folio, filtros = {}) {
+  if (!folio) throw new Error('cargarDocs: falta el folio.');
+
+  let q = caSupa
+    .from('documentos')
+    .select('*')
+    .eq('folio', folio);
+
+  if (filtros.categoria) q = q.eq('categoria', filtros.categoria);
+  if (filtros.tipo)      q = q.eq('tipo',      filtros.tipo);
+  if (filtros.estatus)   q = q.eq('estatus',   filtros.estatus);
+  if (filtros.desde)     q = q.gte('fecha',    filtros.desde);
+  if (filtros.hasta)     q = q.lte('fecha',    filtros.hasta);
+
+  q = q.order('fecha', { ascending: false });
+
+  const { data, error } = await q;
+  if (error) {
+    console.error('cargarDocs error:', error);
+    throw error;
+  }
+  return data ?? [];
+}
+
+
+/**
+ * Cancela un documento (append-only: NO se borra, se marca
+ * como 'cancelado'). Conserva la trazabilidad completa.
+ */
+async function cancelarDoc(id) {
+  if (!id) throw new Error('cancelarDoc: falta el id.');
+
+  const { data, error } = await caSupa
+    .from('documentos')
+    .update({ estatus: 'cancelado' })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('cancelarDoc error:', error);
+    throw error;
+  }
+  return data;
+}   
 </script>
 <style>
 :root{--pri:#1a3a5c;--pri2:#2a6cb0;--accent:#1b7a5a;--warn:#c78c20;--err:#b83232;--bg:#f4f6f8;--card:#fff;--brd:#dce2e8;--txt:#1a1a2e;--txt2:#5a6474;--rad:8px;--shadow:0 1px 4px rgba(0,0,0,.06)}
