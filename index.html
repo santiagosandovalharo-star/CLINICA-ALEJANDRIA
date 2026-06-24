@@ -5317,7 +5317,7 @@ renderVer();render();
       var b=elx('nota-guardar');b.textContent='Guardando...';
       try{
         var r=await window.caSupa.from('notas').insert({folio:folio,tipo:gv('nota-tipo')||'Consulta',fecha:(gv('nota-fecha')?new Date(gv('nota-fecha')).toISOString():new Date().toISOString()),medico:medico(),contenido:contenido});
-        if(r.error)throw r.error;nmsg('Nota guardada \u2713','ok');
+        if(r.error)throw r.error;try{await guardarDoc({folio:folio,categoria:'nota',tipo:(gv('nota-tipo')||'Consulta'),titulo:'Nota de consulta / evolucion',fecha:(gv('nota-fecha')?new Date(gv('nota-fecha')).toISOString():new Date().toISOString()),autor:medico(),estatus:'firmado',contenido:contenido,creado_por:gv('h-user')});}catch(e2){console.warn('doble guardado documentos:',e2);}nmsg('Nota guardada \u2713','ok');
       }catch(e){nmsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar nota';
     };
