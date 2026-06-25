@@ -3728,6 +3728,28 @@ function $(id){return document.getElementById(id);}
 
 /* ====== LOGIN (Supabase Auth + respaldo local) ====== */
 var caCloudAuth=false; // true cuando la sesion de Supabase esta activa (permite guardar en la nube)
+window.usuarioActual=null; // datos del usuario logueado (tabla 'usuarios'): {id,nombre,correo,rol,activo}
+
+/* Lee el rol del usuario logueado desde la tabla 'usuarios' (auth_id = id de Auth) */
+async function cargarUsuarioActual(){
+  if(!caSupa){window.usuarioActual=null;return;}
+  try{
+    var s=await caSupa.auth.getSession();
+    var session=s&&s.data?s.data.session:null;
+    if(!session){window.usuarioActual=null;return;}
+    var r=await caSupa.from('usuarios')
+      .select('id,nombre,correo,rol,activo')
+      .eq('auth_id',session.user.id)
+      .single();
+    if(r.error){console.warn('cargarUsuarioActual',r.error);}
+    if(r.data){
+      window.usuarioActual=r.data;
+      activarRol(r.data.rol);                                   // [ROL]
+      if(document.getElementById('h-user'))document.getElementById('h-user').value=r.data.nombre;
+    }
+    console.log('Usuario actual:',window.usuarioActual);
+  }catch(e){console.warn('cargarUsuarioActual',e);}
+}
 
 function entrarApp(nombre,perfil){
   $('login-screen').style.display='none';
@@ -3746,6 +3768,7 @@ async function checkLoginCloud(){
       caCloudAuth=true;
       var email=r.data.session.user.email||'Usuario';
       entrarApp(email,'admin');
+      cargarUsuarioActual();
       caCloudArranque();
       return true;
     }
@@ -3773,6 +3796,7 @@ async function doLogin(){
     }else{
       caCloudAuth=true;
       entrarApp(email,'admin');
+      cargarUsuarioActual();
       caCloudArranque();
     }
   }catch(e){
@@ -3804,7 +3828,7 @@ try{
 // Revisa si ya hay sesion en la nube, SIN bloquear el arranque de la app
 checkLoginCloud();
 
-function fmt(n){return'$'+n.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){var num=Number(n);if(!isFinite(num))num=0;return'$'+num.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fz(q,n){var a=q.toUpperCase().trim(),b=n.toUpperCase();if(!a)return false;return b.indexOf(a)>=0||a.split(/\s+/).every(function(w){return b.indexOf(w)>=0;});}
 function gc(){return'CA-'+String(clN++).padStart(4,'0');}
 function ivaR(){return+$('sl-iva').value/100;}
@@ -5317,7 +5341,7 @@ renderVer();render();
       var b=elx('nota-guardar');b.textContent='Guardando...';
       try{
         var r=await window.caSupa.from('notas').insert({folio:folio,tipo:gv('nota-tipo')||'Consulta',fecha:(gv('nota-fecha')?new Date(gv('nota-fecha')).toISOString():new Date().toISOString()),medico:medico(),contenido:contenido});
-        if(r.error)throw r.error;try{await guardarDoc({folio:folio,categoria:'nota',tipo:(gv('nota-tipo')||'Consulta'),titulo:'Nota de consulta / evolucion',fecha:(gv('nota-fecha')?new Date(gv('nota-fecha')).toISOString():new Date().toISOString()),autor:medico(),estatus:'firmado',contenido:contenido,creado_por:gv('h-user')});}catch(e2){console.warn('doble guardado documentos:',e2);}nmsg('Nota guardada \u2713','ok');
+        if(r.error)throw r.error;nmsg('Nota guardada \u2713','ok');
       }catch(e){nmsg('No se pudo guardar: '+(e.message||e),'err');}
       b.textContent='Guardar nota';
     };
@@ -7375,6 +7399,126 @@ renderVer();render();
     });
   })();
 })();
+
+/* =========================================================================
+   CAPA DE ROLES Y PERMISOS  ·  Clínica Alejandría   (PASO A - prueba del motor)
+   -------------------------------------------------------------------------
+   ESTA VERSIÓN NO BLOQUEA NADA. Sólo activa el rol real y lo registra en
+   consola. UI_RULES está vacío a propósito. Los guardias de funciones se
+   agregan en un paso posterior, no ahora.
+   ========================================================================= */
+
+/* ---------- 1) MATRIZ DE PERMISOS ---------- */
+const PERMISSIONS = {
+  "Dirección":                          ["system:admin"],
+  "Admisión":                           ["pacientes:read","pacientes:create","pacientes:update","episodios:read","episodios:create","admision:manage","expediente:read"],
+  "Médico General":                     ["pacientes:read","episodios:read","expediente:read","expediente:create_note","enfermeria:read","cotizaciones:read","solicitudes:read","solicitudes:create"],
+  "Médico Especialista":                ["pacientes:read","episodios:read","expediente:read","expediente:create_note","expediente:sign","enfermeria:read","cotizaciones:read","solicitudes:read","solicitudes:create"],
+  "Enfermería":                         ["pacientes:read","episodios:read","expediente:read","enfermeria:read","enfermeria:create","medicamentos:apply"],
+  "Laboratorio":                        ["pacientes:read","solicitudes:read"],
+  "Imagenología":                       ["pacientes:read","solicitudes:read"],
+  "Almacén / Farmacia":                 ["almacen:read","almacen:update"],
+  "Compras":                            ["compras:read","compras:create"],
+  "Finanzas":                           ["finanzas:read","finanzas:update","cotizaciones:read"],
+  "Facturación / Cuentas por Cobrar":   ["pacientes:read","facturacion:read","facturacion:create","cotizaciones:read"],
+  "Capital Humano":                     ["capital_humano:read","capital_humano:update","admin:manage_users"],
+  "Auditoría":                          ["pacientes:read","episodios:read","expediente:read","enfermeria:read","cotizaciones:read","almacen:read","compras:read","finanzas:read","facturacion:read","capital_humano:read","auditoria:read"],
+  "Capturista":                         ["pacientes:read","pacientes:create","episodios:read"],
+  "Paciente / Responsable":             ["expediente:sign"]
+};
+
+/* ---------- 2) Normalización de rol (acentos + alias) ---------- */
+function _rolStrip(s){ return (s==null?"":String(s)).normalize("NFD").replace(/[̀-ͯ]/g,"").trim().toLowerCase(); }
+const _ROLE_ALIASES = {
+  "direccion":"Dirección","administrador":"Dirección","admin":"Dirección","direccion / administrador":"Dirección",
+  "admision":"Admisión","medico general":"Médico General","medico especialista":"Médico Especialista",
+  "enfermeria":"Enfermería","laboratorio":"Laboratorio","imagenologia":"Imagenología",
+  "almacen / farmacia":"Almacén / Farmacia","almacen":"Almacén / Farmacia","farmacia":"Almacén / Farmacia",
+  "compras":"Compras","finanzas":"Finanzas",
+  "facturacion / cuentas por cobrar":"Facturación / Cuentas por Cobrar","facturacion":"Facturación / Cuentas por Cobrar","cuentas por cobrar":"Facturación / Cuentas por Cobrar",
+  "capital humano":"Capital Humano","recursos humanos":"Capital Humano","rh":"Capital Humano",
+  "auditoria":"Auditoría","capturista":"Capturista",
+  "paciente / responsable":"Paciente / Responsable","paciente":"Paciente / Responsable","responsable":"Paciente / Responsable"
+};
+function normalizeRole(role){
+  const k=_rolStrip(role);
+  if(_ROLE_ALIASES[k])return _ROLE_ALIASES[k];
+  for(const key in PERMISSIONS){ if(_rolStrip(key)===k)return key; }
+  return role;
+}
+
+/* ---------- 3) hasPermission / canAccessModule ---------- */
+function hasPermission(role, permission){
+  const perms=PERMISSIONS[normalizeRole(role)];
+  if(!perms)return false;
+  if(perms.indexOf("system:admin")!==-1)return true;
+  return perms.indexOf(permission)!==-1;
+}
+const MODULE_PERMISSION = {
+  "expediente":"expediente:read","notas":"expediente:read","solicitudes":"solicitudes:read",
+  "cotizaciones":"cotizaciones:read","documentos":"expediente:read","admision":"admision:manage",
+  "almacen":"almacen:read","compras":"compras:read","finanzas":"finanzas:read",
+  "facturacion":"facturacion:read","capital_humano":"capital_humano:read","auditoria":"auditoria:read",
+  "admin":"admin:manage_users"
+};
+function canAccessModule(role, module){
+  if(hasPermission(role,"system:admin"))return true;
+  const need=MODULE_PERMISSION[module];
+  if(!need)return true;
+  return hasPermission(role,need);
+}
+
+/* ---------- 4) Rol activo + guardia de acciones ---------- */
+let __ROL_ACTUAL=null;
+function getRolActual(){ return __ROL_ACTUAL; }
+function activarRol(role){
+  __ROL_ACTUAL=normalizeRole(role);
+  applyRoleUI(__ROL_ACTUAL);
+}
+/* requireAction: para ACCIONES de escritura (muestra alerta amable si no hay permiso).
+   Si no hay rol activo -> deja pasar y avisa en consola (no rompe). */
+function requireAction(permission){
+  if(__ROL_ACTUAL==null){ console.warn("[ROLES] '"+permission+"' sin rol activo -> se permite (falla abierto)."); return true; }
+  if(hasPermission(__ROL_ACTUAL,permission))return true;
+  alert("Tu perfil no tiene permiso para realizar esta acción.");
+  return false;
+}
+
+/* ---------- 5) applyRoleUI: deshabilita botones según rol ----------
+   === FASE DE PRUEBA DEL MOTOR ===
+   UI_RULES queda VACÍO a propósito: applyRoleUI sólo registra en consola y
+   NO deshabilita ningún botón. Cuando pasemos a la Fase 4 (bloqueo), movés
+   las reglas de UI_RULES_PENDIENTES a UI_RULES. Los IDs ya son los reales. */
+const UI_RULES = [];
+const UI_RULES_PENDIENTES = [
+  { selector:"#nota-guardar",    requires:"expediente:create_note" }, // Guardar nota
+  { selector:"#nh-guardar",      requires:"expediente:create_note" }, // Guardar nota (otra sección)
+  { selector:"#exp-guardar",     requires:"expediente:create_note" }, // Guardar expediente
+  { selector:"#exp-dx-guardar",  requires:"expediente:create_note" }, // Guardar diagnósticos
+  { selector:"#ant-guardar",     requires:"expediente:create_note" }, // Guardar antecedentes
+  { selector:"#sol-guardar",     requires:"solicitudes:create" },     // Guardar solicitud
+  { selector:"#solc-guardar",    requires:"solicitudes:create" },     // Guardar solicitud (dinámico)
+  { selector:"#enf-guardar",     requires:"enfermeria:create" },      // Guardar formato enfermería
+  { selector:"#enf2-guardar",    requires:"enfermeria:create" }       // Guardar hoja enfermería
+  // Pendientes de decidir permiso (consentimientos/anestesia/cirugía):
+  // #con-guardar #ce-guardar #con-chk-save #anes-guardar #cseg-guardar #fb-guardar
+];
+function applyRoleUI(role){
+  const key=normalizeRole(role);
+  const perms=PERMISSIONS[key]||[];
+  console.log("[ROLES] Rol activo:",key);
+  console.log("[ROLES] Permisos ("+perms.length+"):",perms);
+  UI_RULES.forEach(function(rule){
+    const els=document.querySelectorAll(rule.selector);
+    if(!els||els.length===0)return; // si no existe aún, no pasa nada (no rompe)
+    const ok=hasPermission(key,rule.requires);
+    els.forEach(function(el){
+      if(!ok){ el.disabled=true; el.setAttribute("aria-disabled","true");
+               el.title="Tu perfil no tiene permiso para realizar esta acción."; el.classList.add("rol-bloqueado"); }
+      else   { el.disabled=false; el.removeAttribute("aria-disabled"); el.classList.remove("rol-bloqueado"); }
+    });
+  });
+}
 </script>
 </body>
 </html>
