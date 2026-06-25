@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Alejandría · Hospital Information System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0e2c47; --navy-deep:#0a2238; --blue:#1c5d99; --blue-hover:#184f83;
+    --gold:#c7a35a; --ink:#0e2c47; --muted:#64748b; --faint:#94a3b8;
+    --line:#d9e0e8; --bg:#eef1f4; --white:#ffffff;
+    --err:#b3261e; --err-bg:#fdecea; --err-bd:#f3c9c4;
+    --serif:'Source Serif 4',Georgia,serif; --sans:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased}
+  .screen{display:flex;width:100%;max-width:980px;min-height:560px;background:var(--white);
+    border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(14,44,71,.06),0 8px 30px rgba(14,44,71,.08)}
+
+  /* ---------- LEFT: institutional panel ---------- */
+  .left{flex:0 0 42%;position:relative;background:var(--navy);
+    padding:40px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+  .geo{position:absolute;inset:0;opacity:.55}
+  .left .brand{position:relative}
+  .mark{font-family:var(--serif);font-weight:500;color:#fff;font-size:34px;letter-spacing:6px;line-height:1}
+  .his{font-family:var(--sans);color:#9fb3c8;font-size:11px;letter-spacing:3px;margin-top:12px}
+  .rule{width:40px;height:1px;background:var(--gold);margin:22px 0 14px}
+  .tag{font-family:var(--serif);font-style:italic;color:var(--gold);font-size:14px;letter-spacing:.3px}
+
+  /* ---------- RIGHT: form ---------- */
+  .right{flex:1;display:flex;align-items:center;justify-content:center;padding:44px}
+  .form{width:100%;max-width:320px}
+  h1{font-family:var(--serif);font-weight:500;color:var(--ink);font-size:30px;margin:0}
+  .sub{color:var(--muted);font-size:14px;margin:8px 0 30px}
+  label{display:block;font-size:12px;color:var(--muted);margin:18px 0 6px}
+  .field{position:relative}
+  .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--faint);display:flex}
+  input[type=email],input[type=password],input[type=text].pw{
+    width:100%;font-family:var(--sans);font-size:14px;color:var(--ink);
+    padding:12px 14px 12px 40px;border:1px solid var(--line);border-radius:8px;background:#fff;outline:none;
+    transition:border-color .15s,box-shadow .15s}
+  input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,93,153,.13)}
+  .field.err input{border-color:var(--err);box-shadow:0 0 0 3px rgba(179,38,30,.10)}
+  .eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;
+    color:var(--faint);cursor:pointer;padding:6px;display:flex;border-radius:6px}
+  .eye:hover{color:var(--muted)}
+  .msg{font-size:12px;color:var(--err);margin-top:6px;min-height:0;display:none}
+  .field.err .msg{display:block}
+  .keep{display:flex;align-items:center;gap:8px;font-size:13px;color:#475569;margin:18px 0 22px;cursor:pointer}
+  .keep input{accent-color:var(--blue);width:15px;height:15px}
+  .btn{width:100%;font-family:var(--sans);font-size:15px;font-weight:500;color:#fff;background:var(--blue);
+    border:none;border-radius:8px;padding:13px;cursor:pointer;transition:background .15s;display:flex;
+    align-items:center;justify-content:center;gap:9px}
+  .btn:hover{background:var(--blue-hover)}
+  .btn:disabled{opacity:.7;cursor:default}
+  .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;
+    display:none;animation:sp .7s linear infinite}
+  .btn.loading .spin{display:inline-block}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .alert{display:none;align-items:center;gap:8px;font-size:13px;color:var(--err);background:var(--err-bg);
+    border:1px solid var(--err-bd);border-radius:8px;padding:10px 12px;margin-top:16px}
+  .alert.show{display:flex}
+  .links{display:flex;justify-content:space-between;gap:12px;margin-top:20px;font-size:13px}
+  .links a{color:var(--blue);text-decoration:none;cursor:pointer}
+  .links a.sec{color:var(--muted)}
+  .links a:hover{text-decoration:underline}
+
+  /* ---------- responsive (desktop / laptop / tablet) ---------- */
+  @media (max-width:820px){
+    body{padding:0}
+    .screen{flex-direction:column;max-width:520px;min-height:0;border-radius:0;min-height:100vh}
+    .left{flex:0 0 auto;min-height:150px;padding:28px 32px;justify-content:center}
+    .mark{font-size:26px;letter-spacing:4px}
+    .right{padding:34px 28px 44px}
+  }
+  @media (prefers-reduced-motion:reduce){ .spin{animation:none} }
+</style>
+</head>
+<body>
+  <main class="screen" role="main">
+    <!-- LEFT · marca institucional sobre trama geométrica -->
+    <section class="left" aria-hidden="true">
+      <svg class="geo" viewBox="0 0 420 560" preserveAspectRatio="xMidYMid slice">
+        <g stroke="#ffffff" stroke-width="0.6" fill="none">
+          <line x1="40" y1="0" x2="40" y2="560"/><line x1="110" y1="0" x2="110" y2="560"/>
+          <line x1="180" y1="0" x2="180" y2="560"/><line x1="250" y1="0" x2="250" y2="560"/>
+          <line x1="320" y1="0" x2="320" y2="560"/><line x1="390" y1="0" x2="390" y2="560"/>
+          <line x1="0" y1="120" x2="420" y2="120"/><line x1="0" y1="280" x2="420" y2="280"/>
+          <line x1="0" y1="440" x2="420" y2="440"/>
+        </g>
+        <g stroke="#ffffff" stroke-width="0.5" fill="none" opacity="0.6">
+          <line x1="0" y1="200" x2="420" y2="60"/><line x1="0" y1="500" x2="420" y2="360"/>
+        </g>
+        <rect x="180" y="120" width="140" height="160" fill="#ffffff" opacity="0.035"/>
+        <rect x="110" y="280" width="70" height="160" fill="#ffffff" opacity="0.025"/>
+      </svg>
+      <div class="brand">
+        <div class="mark">ALEJANDRÍA</div>
+        <div class="his">HOSPITAL INFORMATION SYSTEM</div>
+        <div class="rule"></div>
+        <div class="tag">Precision. Ethics. Innovation.</div>
+      </div>
+    </section>
+
+    <!-- RIGHT · formulario -->
+    <section class="right">
+      <form class="form" id="loginForm" novalidate autocomplete="on">
+        <h1>Bienvenido</h1>
+        <p class="sub">Ingrese sus credenciales institucionales.</p>
+
+        <div class="field" id="f-email">
+          <label for="email">Correo electrónico</label>
+          <span class="ic" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+          </span>
+          <input type="email" id="email" name="email" placeholder="nombre@alejandria.mx" autocomplete="email" />
+          <p class="msg" id="email-msg">Ingrese un correo electrónico válido.</p>
+        </div>
+
+        <div class="field" id="f-pass">
+          <label for="password">Contraseña</label>
+          <span class="ic" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          </span>
+          <input type="password" id="password" name="password" placeholder="••••••••••••" autocomplete="current-password" />
+          <button type="button" class="eye" id="toggle" aria-label="Mostrar contraseña">
+            <svg id="eyeIcon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <p class="msg" id="pass-msg">Ingrese su contraseña.</p>
+        </div>
+
+        <label class="keep"><input type="checkbox" id="keep" /> Mantener sesión iniciada</label>
+
+        <button type="submit" class="btn" id="submit">
+          <span class="spin" aria-hidden="true"></span>
+          <span id="btn-label">Iniciar sesión</span>
+        </button>
+
+        <div class="alert" id="alert" role="alert">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span id="alert-text">Correo o contraseña incorrectos.</span>
+        </div>
+
+        <div class="links">
+          <a class="sec" id="link-recover">¿Olvidó su contraseña?</a>
+          <a id="link-create">Crear usuario institucional</a>
+        </div>
+      </form>
+    </section>
+  </main>
+
+<script>
+(function(){
+  var form=document.getElementById('loginForm');
+  var email=document.getElementById('email'), pass=document.getElementById('password');
+  var fEmail=document.getElementById('f-email'), fPass=document.getElementById('f-pass');
+  var toggle=document.getElementById('toggle'), eyeIcon=document.getElementById('eyeIcon');
+  var btn=document.getElementById('submit'), btnLabel=document.getElementById('btn-label');
+  var alertBox=document.getElementById('alert'), alertText=document.getElementById('alert-text');
+
+  var EYE='<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
+  var EYE_OFF='<path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.9 5.2A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.3 3.9M6.1 6.1A17 17 0 0 0 2 12s3.5 7 10 7a9.5 9.5 0 0 0 3.1-.5"/>';
+
+  // Mostrar / ocultar contraseña
+  toggle.addEventListener('click',function(){
+    var show=pass.type==='password';
+    pass.type=show?'text':'password';
+    eyeIcon.innerHTML=show?EYE_OFF:EYE;
+    toggle.setAttribute('aria-label',show?'Ocultar contraseña':'Mostrar contraseña');
+  });
+
+  function clearErrors(){ fEmail.classList.remove('err'); fPass.classList.remove('err'); alertBox.classList.remove('show'); }
+  function validEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    clearErrors();
+    var ok=true;
+    if(!validEmail(email.value.trim())){ fEmail.classList.add('err'); ok=false; }
+    if(pass.value.length===0){ fPass.classList.add('err'); ok=false; }
+    if(!ok) return;
+
+    setLoading(true);
+    iniciarSesion(email.value.trim(), pass.value, document.getElementById('keep').checked);
+  });
+
+  function setLoading(on){
+    btn.classList.toggle('loading',on);
+    btn.disabled=on;
+    btnLabel.textContent=on?'Iniciando sesión…':'Iniciar sesión';
+  }
+
+  // Mensaje de error neutro (no revela si el correo existe — evita enumeración)
+  function mostrarError(){
+    alertText.textContent='Correo o contraseña incorrectos.';
+    alertBox.classList.add('show');
+    setLoading(false);
+  }
+
+  /* =========================================================================
+     PUNTO DE INTEGRACIÓN  (hacer al integrar, NO ahora)
+     -------------------------------------------------------------------------
+     Esta pantalla es el front-end. Para conectarla al login real, reemplazar
+     el cuerpo de iniciarSesion() por la llamada a Supabase Auth usando el
+     cliente que ya existe en index.html (window.caSupa). Patrón sugerido:
+
+       async function iniciarSesion(correo, password, mantener){
+         try{
+           var r = await window.caSupa.auth.signInWithPassword({email:correo, password:password});
+           if(r.error){ mostrarError(); return; }      // mensaje neutro
+           window.location.href = 'index.html';        // o cargar el dashboard del rol
+         }catch(e){ mostrarError(); }
+       }
+
+     Mientras tanto, abajo va una SIMULACIÓN para ver los estados sin backend.
+     ========================================================================= */
+  function iniciarSesion(correo, password, mantener){
+    // --- SIMULACIÓN (quitar al integrar) ---
+    setTimeout(function(){
+      alertText.textContent='Pantalla de demostración · conectar Supabase Auth para ingresar.';
+      alertBox.classList.add('show');
+      setLoading(false);
+    }, 900);
+  }
+
+  // Enlaces (se diseñan en los próximos bloques: recuperación y alta)
+  document.getElementById('link-recover').addEventListener('click',function(){
+    alertText.textContent='Pantalla "Recuperar contraseña": pendiente de diseño/integración.';
+    alertBox.classList.add('show');
+  });
+  document.getElementById('link-create').addEventListener('click',function(){
+    alertText.textContent='Pantalla "Crear usuario institucional": pendiente de diseño/integración.';
+    alertBox.classList.add('show');
+  });
+})();
+</script>
+</body>
+</html>
