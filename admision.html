@@ -103,6 +103,41 @@
   .dup-actions button{font-family:inherit;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;cursor:pointer;border:none}
   .f.bad input,.f.bad select{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(179,38,30,.1)}
 
+  /* Riesgos clínicos */
+  .risk{background:#fff;border:1px solid #f0d9b5;border-left:4px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+  .risk-h{font-size:12px;font-weight:600;color:#92600c;margin-bottom:10px}
+  .risk-h span{font-weight:400;color:var(--soft)}
+  .risk-chips{display:flex;flex-wrap:wrap;gap:7px}
+  .risk-chip{font-size:12px;padding:6px 12px;border-radius:20px;border:1px solid var(--line);background:#f7f9fb;color:var(--muted);cursor:pointer;user-select:none}
+  .risk-chip:hover{border-color:#d8b48a}
+  .risk-chip.on{background:#fdecea;border-color:#e9a59c;color:#b3261e;font-weight:500}
+  .risk-chip.on::before{content:'\26A0  '}
+  .risk-add{display:flex;gap:7px;margin-top:10px}
+  .risk-add input{flex:1;font-family:inherit;font-size:12.5px;padding:8px 11px;border:1px solid var(--line);border-radius:8px;outline:none}
+  .risk-add button{font-family:inherit;font-size:12.5px;padding:8px 14px;border:1px solid var(--line);background:#eef2f6;border-radius:8px;cursor:pointer}
+
+  /* Progreso */
+  .prog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:18px;position:sticky;top:10px;z-index:5}
+  .prog-top{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .prog-bar{flex:1;height:7px;background:#eef2f6;border-radius:20px;overflow:hidden}
+  .prog-fill{height:100%;width:0;background:var(--ok);border-radius:20px;transition:width .25s}
+  .prog-pct{font-size:12px;font-weight:600;color:var(--ok);min-width:34px;text-align:right}
+  .prog-steps{display:flex;flex-wrap:wrap;gap:6px 14px}
+  .prog-step{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--soft)}
+  .prog-step .dot{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:9px;line-height:1}
+  .prog-step.done{color:var(--ok)}
+  .prog-step.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+
+  /* Documentos / consentimientos */
+  .docs-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef2f6;font-size:13px;color:var(--muted);cursor:pointer}
+  .docs-row:last-child{border-bottom:none}
+  .docs-ic{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--soft)}
+  .docs-row.ok{color:var(--ink)}
+  .docs-row.ok .docs-ic{background:var(--ok);border-color:var(--ok);color:#fff}
+  .cons-row{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);margin-bottom:9px;cursor:pointer}
+  .cons-row input{width:auto;margin:0}
+  .cons-req{color:var(--danger);font-size:10.5px}
+
   .hide{display:none}
   @media(max-width:680px){.grid{grid-template-columns:1fr 1fr}.auto{grid-template-columns:1fr 1fr}}
 </style>
@@ -172,6 +207,23 @@
     </div>
     <div id="q-results"></div>
     <div id="q-using" class="using" style="display:none"></div>
+  </div>
+
+  <div class="risk">
+    <div class="risk-h">Riesgos clínicos <span>— alertas críticas, se ven en cada visita</span></div>
+    <div class="risk-chips" id="risk-chips"></div>
+    <div class="risk-add">
+      <input id="risk-input" placeholder="Otra alerta… (ej. alergia al látex)">
+      <button type="button" id="risk-add-btn">Agregar</button>
+    </div>
+  </div>
+
+  <div class="prog">
+    <div class="prog-top">
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-pct" id="prog-pct">0%</div>
+    </div>
+    <div class="prog-steps" id="prog-steps"></div>
   </div>
 
   <div id="form-zone">
@@ -270,6 +322,23 @@
       </div>
     </div>
 
+    <!-- Sección 7: Documentos (checklist visual; la subida real es Fase C) -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">7</span><h2>Documentos</h2></div>
+      <div id="docs-list"></div>
+      <p style="font-size:11px;color:var(--soft);margin:10px 0 0">Tocá para marcar como recibido. La subida del archivo (foto/escaneo) llega en la siguiente fase.</p>
+    </div>
+
+    <!-- Sección 8: Consentimientos de admisión -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">8</span><h2>Consentimientos de admisión</h2></div>
+      <label class="cons-row"><input type="checkbox" id="c-priv"> Aviso de privacidad <span class="cons-req">obligatorio</span></label>
+      <label class="cons-row"><input type="checkbox" id="c-datos"> Tratamiento de datos personales <span class="cons-req">obligatorio</span></label>
+      <label class="cons-row"><input type="checkbox" id="c-aten"> Consentimiento general de atención médica <span class="cons-req">obligatorio</span></label>
+      <label class="cons-row"><input type="checkbox" id="c-contacto"> Autorización de contacto por medios electrónicos <span style="color:var(--soft)">(opcional)</span></label>
+      <label class="cons-row"><input type="checkbox" id="c-factura"> Autorización de facturación electrónica <span style="color:var(--soft)">(opcional)</span></label>
+    </div>
+
     <div class="dup" id="dup-banner" style="display:none"></div>
 
     <div class="bar">
@@ -362,6 +431,74 @@
   }
   $('e-rl-tipo').addEventListener('change',toggleRL);
 
+  /* ---- RIESGOS CLÍNICOS (tabla alertas) ---- */
+  var COMUNES=['Alergia a Penicilina','Diabetes Mellitus','Anticoagulado','Marcapasos','Embarazo'];
+  var alertas=COMUNES.map(function(t){return {tipo:t,activa:false,fromDb:false};});
+  function renderRiesgos(){
+    var c=$('risk-chips'); if(!c)return; c.innerHTML='';
+    alertas.forEach(function(a){
+      var ch=document.createElement('span'); ch.className='risk-chip'+(a.activa?' on':'');
+      ch.textContent=a.tipo;
+      ch.addEventListener('click',function(){ a.activa=!a.activa; renderRiesgos(); });
+      c.appendChild(ch);
+    });
+  }
+  $('risk-add-btn').addEventListener('click',function(){
+    var t=val('risk-input'); if(!t)return;
+    alertas.push({tipo:t,activa:true,fromDb:false}); $('risk-input').value=''; renderRiesgos();
+  });
+  $('risk-input').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('risk-add-btn').click();}});
+  function resetRiesgos(){ alertas=COMUNES.map(function(t){return {tipo:t,activa:false,fromDb:false};}); renderRiesgos(); }
+  async function cargarAlertas(pid){
+    resetRiesgos();
+    try{
+      var r=await caSupa.from('alertas').select('id,tipo').eq('paciente_id',pid).eq('activa',true);
+      (r.data||[]).forEach(function(row){
+        var f=null; alertas.forEach(function(a){if(a.tipo===row.tipo)f=a;});
+        if(f){f.activa=true;f.fromDb=true;f.id=row.id;}
+        else alertas.push({tipo:row.tipo,activa:true,fromDb:true,id:row.id});
+      });
+    }catch(e){console.log('alertas load',e);}
+    renderRiesgos();
+  }
+  renderRiesgos();
+
+  /* ---- PROGRESO ---- */
+  var PASOS=[
+    ['Paciente',function(){return val('p-nombres')&&val('p-ap1');}],
+    ['Contacto',function(){return val('p-tel1')||val('p-correo');}],
+    ['Emergencia',function(){return val('p-em-nombre');}],
+    ['Episodio',function(){return val('e-medico');}],
+    ['Responsables',function(){return val('e-rf-nombre');}],
+    ['Consentimientos',function(){return $('c-priv').checked&&$('c-datos').checked&&$('c-aten').checked;}]
+  ];
+  function renderProgreso(){
+    var done=0, steps=$('prog-steps'); steps.innerHTML='';
+    PASOS.forEach(function(p){
+      var ok=!!p[1](); if(ok)done++;
+      var el=document.createElement('span'); el.className='prog-step'+(ok?' done':'');
+      el.innerHTML='<span class="dot">'+(ok?'\u2713':'')+'</span>'+p[0];
+      steps.appendChild(el);
+    });
+    var pct=Math.round(done/PASOS.length*100);
+    $('prog-fill').style.width=pct+'%'; $('prog-pct').textContent=pct+'%';
+  }
+  $('form-zone').addEventListener('input',renderProgreso);
+  $('form-zone').addEventListener('change',renderProgreso);
+  renderProgreso();
+
+  /* ---- DOCUMENTOS (checklist visual) ---- */
+  var DOCS=['Identificación oficial','Aviso de privacidad','Pagaré / carta responsable','Póliza','Orden médica','Pase médico','Estudios previos'];
+  (function renderDocs(){
+    var l=$('docs-list'); if(!l)return;
+    DOCS.forEach(function(d){
+      var row=document.createElement('div'); row.className='docs-row';
+      row.innerHTML='<span class="docs-ic">\u25CB</span><span>'+d+'</span>';
+      row.addEventListener('click',function(){ row.classList.toggle('ok'); row.querySelector('.docs-ic').textContent=row.classList.contains('ok')?'\u2713':'\u25CB'; });
+      l.appendChild(row);
+    });
+  })();
+
   /* ---- BUSCAR / CARGAR PACIENTE EXISTENTE ---- */
   function setv(id,v){var e=$(id);if(e)e.value=(v==null?'':v);}
   function cargarPaciente(p){
@@ -380,12 +517,14 @@
     u.innerHTML='<span>Usando paciente existente: <b>'+((p.nombres||'')+' '+(p.primer_apellido||'')).trim()+'</b> · '+(p.num_expediente||'')+'. Se creará un episodio nuevo.</span><button id="q-quitar">Quitar</button>';
     var qq=$('q-quitar'); if(qq)qq.addEventListener('click',pacienteNuevo);
     $('q-results').innerHTML='';
+    cargarAlertas(p.id);
   }
   function pacienteNuevo(){
     usandoExistente=null; existenteMRN=null; forzarNuevo=false;
     ['p-nombres','p-ap1','p-ap2','p-curp','p-fnac','p-genero','p-ocup','p-esco','p-tel1','p-tel2','p-correo','p-calle','p-numext','p-numint','p-colonia','p-municipio','p-estado','p-cp','p-em-nombre','p-em-parentesco','p-em-tel','p-em-correo','q-search'].forEach(function(id){var e=$(id);if(e)e.value='';});
     setv('p-sexo','');setv('p-edocivil','');setv('p-nac','Mexicana');setv('p-edad','');
     $('q-using').style.display='none';$('q-results').innerHTML='';$('x-mrn').textContent='— al guardar';
+    resetRiesgos();
   }
   async function buscar(){
     var term=val('q-search').replace(/,/g,' ').trim();
@@ -427,6 +566,7 @@
     var emc=val('p-em-correo'); if(emc&&!isEmail(emc)){prob.push('el correo de emergencia');mark('p-em-correo',true);}
     var rfc=val('e-rf-correo'); if(rfc&&!isEmail(rfc)){prob.push('el correo del responsable financiero');mark('e-rf-correo',true);}
     var rlc=val('e-rl-correo'); if(rlc&&!isEmail(rlc)){prob.push('el correo del responsable legal');mark('e-rl-correo',true);}
+    if(!$('c-priv').checked||!$('c-datos').checked||!$('c-aten').checked){prob.push('los consentimientos obligatorios (privacidad, datos y atención)');}
     return prob;
   }
   async function buscarDuplicado(){
@@ -497,6 +637,12 @@
         pacienteId=pi.data.id;
       }
 
+      // Guardar alertas activas que aún no están en la base
+      try{
+        var nuevas=alertas.filter(function(a){return a.activa && !a.fromDb;}).map(function(a){return {paciente_id:pacienteId, tipo:a.tipo, activa:true};});
+        if(nuevas.length){ await caSupa.from('alertas').insert(nuevas); }
+      }catch(e){ console.log('alertas save',e); }
+
       // 3) Insertar episodio
       var epi={
         paciente_id:pacienteId, tipo_paciente:val('e-tipopac'),
@@ -511,7 +657,10 @@
         resp_legal_telefono:nz(val('e-rl-tel')), resp_legal_correo:nz(val('e-rl-correo')),
         resp_fin_nombre:nz(val('e-rf-nombre')), resp_fin_parentesco:nz(val('e-rf-parentesco')),
         resp_fin_telefono:nz(val('e-rf-tel')), resp_fin_correo:nz(val('e-rf-correo')),
-        resp_fin_rfc:nz(val('e-rf-rfc')), resp_fin_domicilio_fiscal:nz(val('e-rf-domfiscal'))
+        resp_fin_rfc:nz(val('e-rf-rfc')), resp_fin_domicilio_fiscal:nz(val('e-rf-domfiscal')),
+        cons_aviso_privacidad:$('c-priv').checked, cons_datos_personales:$('c-datos').checked,
+        cons_atencion_medica:$('c-aten').checked, cons_contacto_electronico:$('c-contacto').checked,
+        cons_facturacion_electronica:$('c-factura').checked
       };
       var ei=await caSupa.from('episodios').insert(epi).select().single();
       if(ei.error){ throw ei.error; }
