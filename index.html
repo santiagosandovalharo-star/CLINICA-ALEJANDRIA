@@ -176,6 +176,13 @@ body{font-family:'Segoe UI',-apple-system,Arial,sans-serif;background:var(--bg);
 .login-error{display:none;font-size:12.5px;color:#b3261e;background:#fdecea;border:1px solid #f3c9c4;border-radius:8px;padding:9px 12px;margin-top:14px}
 .al-foot{font-size:10px;color:#94a3b8;margin-top:20px;letter-spacing:.3px}
 @media (max-width:820px){.al-card{flex-direction:column;max-width:440px;min-height:0}.al-left{flex:0 0 auto;min-height:130px;padding:26px 30px;justify-content:center}.al-mark{font-size:25px}.al-right{padding:30px 26px 38px}}
+.rec-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(14,44,71,.55);display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px;box-sizing:border-box}
+.rec-card{position:relative;background:#fff;border-radius:12px;width:340px;max-width:100%;padding:28px 26px;box-shadow:0 18px 50px rgba(14,44,71,.28);font-family:'Inter',system-ui,sans-serif}
+.rec-x{position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;line-height:1;color:#94a3b8;cursor:pointer}
+.rec-h{font-family:'Source Serif 4',Georgia,serif;font-weight:500;color:#0e2c47;font-size:21px;margin:0 0 7px}
+.rec-p{font-size:12.5px;color:#64748b;line-height:1.5;margin:0 0 4px}
+.rec-back{display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:14px}
+.rec-okic{width:42px;height:42px;border-radius:50%;background:#e7f3ec;color:#1d7a4d;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 0 12px}
 .app-hidden{display:none!important}
 
 /* === LAYOUT === */
@@ -388,8 +395,29 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
         </div>
         <button class="login-btn" id="login-btn">Iniciar sesi&oacute;n</button>
         <div class="login-error" id="login-error">Correo o contrase&ntilde;a incorrectos</div>
+        <a href="#" id="rec-open" style="display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:14px">¿Olvidó su contraseña?</a>
         <div class="al-foot">Acceso restringido &middot; Solo personal autorizado</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="rec-overlay" id="rec-screen" style="display:none">
+  <div class="rec-card">
+    <button type="button" class="rec-x" id="rec-close" aria-label="Cerrar">&times;</button>
+    <div id="rec-form">
+      <div class="rec-h">Recuperar contraseña</div>
+      <p class="rec-p">Ingrese su correo y le enviaremos un enlace para restablecer su contraseña.</p>
+      <label class="al-lab" for="rec-email">Correo electrónico</label>
+      <input class="al-in" id="rec-email" type="email" placeholder="nombre@alejandria.mx" autocomplete="email">
+      <button class="login-btn" id="rec-send" style="margin-top:16px">Enviar enlace</button>
+      <a href="#" class="rec-back" id="rec-cancel">Volver al inicio de sesión</a>
+    </div>
+    <div id="rec-done" style="display:none">
+      <div class="rec-okic">&#10003;</div>
+      <div class="rec-h" style="font-size:18px">Revise su bandeja de entrada</div>
+      <p class="rec-p">Si el correo está registrado, le enviaremos un enlace para restablecer su contraseña.</p>
+      <a href="#" class="rec-back" id="rec-done-back">Volver al inicio de sesión</a>
     </div>
   </div>
 </div>
@@ -7551,6 +7579,35 @@ function applyRoleUI(role){
     });
   });
 }
+</script>
+<script>
+(function(){
+  function $(id){return document.getElementById(id);}
+  var open=$('rec-open'),screen=$('rec-screen'),close=$('rec-close'),cancel=$('rec-cancel'),
+      send=$('rec-send'),email=$('rec-email'),form=$('rec-form'),done=$('rec-done'),doneBack=$('rec-done-back');
+  if(!open||!screen)return;
+  function show(){if(form)form.style.display='block';if(done)done.style.display='none';screen.style.display='flex';if(email){email.value='';setTimeout(function(){email.focus();},50);}}
+  function hide(){screen.style.display='none';}
+  open.addEventListener('click',function(e){e.preventDefault();show();});
+  if(close)close.addEventListener('click',hide);
+  if(cancel)cancel.addEventListener('click',function(e){e.preventDefault();hide();});
+  if(doneBack)doneBack.addEventListener('click',function(e){e.preventDefault();hide();});
+  screen.addEventListener('click',function(e){if(e.target===screen)hide();});
+  function enviar(){
+    var correo=(email&&email.value||'').trim();
+    if(!correo){if(email)email.focus();return;}
+    if(send){send.disabled=true;send.textContent='Enviando...';}
+    var redir=window.location.origin+window.location.pathname;
+    function finish(){if(form)form.style.display='none';if(done)done.style.display='block';if(send){send.disabled=false;send.textContent='Enviar enlace';}}
+    try{
+      if(window.caSupa&&caSupa.auth&&caSupa.auth.resetPasswordForEmail){
+        caSupa.auth.resetPasswordForEmail(correo,{redirectTo:redir}).then(finish).catch(function(err){console.log('[RECUPERAR]',err&&err.message);finish();});
+      }else{finish();}
+    }catch(e){console.log('[RECUPERAR]',e);finish();}
+  }
+  if(send)send.addEventListener('click',enviar);
+  if(email)email.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();enviar();}});
+})();
 </script>
 </body>
 </html>
