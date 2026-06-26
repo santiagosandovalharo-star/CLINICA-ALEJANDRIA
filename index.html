@@ -397,6 +397,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
         <div class="login-error" id="login-error">Correo o contrase&ntilde;a incorrectos</div>
         <a href="#" id="rec-open" style="display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:14px">¿Olvidó su contraseña?</a>
         <div class="al-foot">Acceso restringido &middot; Solo personal autorizado</div>
+        <a href="#" id="sol-open" style="display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:10px">¿Personal nuevo? Solicitar acceso</a>
       </div>
     </div>
   </div>
@@ -418,6 +419,51 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
       <div class="rec-h" style="font-size:18px">Revise su bandeja de entrada</div>
       <p class="rec-p">Si el correo está registrado, le enviaremos un enlace para restablecer su contraseña.</p>
       <a href="#" class="rec-back" id="rec-done-back">Volver al inicio de sesión</a>
+    </div>
+  </div>
+</div>
+
+<div class="rec-overlay" id="sol-screen" style="display:none">
+  <div class="rec-card">
+    <button type="button" class="rec-x" id="sol-close" aria-label="Cerrar">&times;</button>
+    <div id="sol-form">
+      <div class="rec-h">Solicitar acceso</div>
+      <p class="rec-p">Complete sus datos. Su solicitud quedará pendiente de autorización.</p>
+      <label class="al-lab" for="sol-nombre">Nombre completo</label>
+      <input class="al-in" id="sol-nombre" type="text" placeholder="Nombre y apellido">
+      <label class="al-lab" for="sol-correo">Correo electrónico</label>
+      <input class="al-in" id="sol-correo" type="email" placeholder="nombre@alejandria.mx" autocomplete="email">
+      <label class="al-lab" for="sol-puesto">Puesto solicitado</label>
+      <select class="al-in" id="sol-puesto">
+        <option value="">Seleccione&hellip;</option>
+        <option data-clinico="1">Médico general</option>
+        <option data-clinico="1">Médico especialista</option>
+        <option data-clinico="1">Enfermería</option>
+        <option data-clinico="1">Laboratorio</option>
+        <option data-clinico="1">Imagenología</option>
+        <option data-clinico="1">Farmacia</option>
+        <option>Admisión</option>
+        <option>Almacén</option>
+        <option>Compras</option>
+        <option>Finanzas</option>
+        <option>Facturación</option>
+        <option>Capital Humano</option>
+        <option>Auditoría</option>
+        <option>Capturista</option>
+      </select>
+      <div id="sol-cedula-wrap" style="display:none">
+        <label class="al-lab" for="sol-cedula">Cédula profesional</label>
+        <input class="al-in" id="sol-cedula" type="text" placeholder="0000000">
+      </div>
+      <div id="sol-err" style="display:none;color:#b3261e;font-size:12px;margin-top:10px"></div>
+      <button class="login-btn" id="sol-send" style="margin-top:16px">Solicitar acceso</button>
+      <a href="#" class="rec-back" id="sol-cancel">Volver al inicio de sesión</a>
+    </div>
+    <div id="sol-done" style="display:none">
+      <div class="rec-okic">&#10003;</div>
+      <div class="rec-h" style="font-size:18px">Solicitud enviada</div>
+      <p class="rec-p">Su solicitud quedó registrada y está pendiente de autorización por Dirección. Le avisaremos por correo cuando se active su cuenta.</p>
+      <a href="#" class="rec-back" id="sol-done-back">Volver al inicio de sesión</a>
     </div>
   </div>
 </div>
@@ -7607,6 +7653,40 @@ function applyRoleUI(role){
   }
   if(send)send.addEventListener('click',enviar);
   if(email)email.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();enviar();}});
+})();
+</script>
+<script>
+(function(){
+  function $(id){return document.getElementById(id);}
+  var open=$('sol-open'),screen=$('sol-screen'),close=$('sol-close'),cancel=$('sol-cancel'),
+      send=$('sol-send'),form=$('sol-form'),done=$('sol-done'),doneBack=$('sol-done-back'),
+      nombre=$('sol-nombre'),correo=$('sol-correo'),puesto=$('sol-puesto'),
+      cedWrap=$('sol-cedula-wrap'),cedula=$('sol-cedula'),err=$('sol-err');
+  if(!open||!screen)return;
+  function show(){if(form)form.style.display='block';if(done)done.style.display='none';if(err)err.style.display='none';screen.style.display='flex';}
+  function hide(){screen.style.display='none';}
+  function toggleCedula(){var opt=puesto&&puesto.options[puesto.selectedIndex];var clin=opt&&opt.getAttribute('data-clinico')==='1';if(cedWrap)cedWrap.style.display=clin?'block':'none';}
+  open.addEventListener('click',function(e){e.preventDefault();show();});
+  if(close)close.addEventListener('click',hide);
+  if(cancel)cancel.addEventListener('click',function(e){e.preventDefault();hide();});
+  if(doneBack)doneBack.addEventListener('click',function(e){e.preventDefault();hide();});
+  screen.addEventListener('click',function(e){if(e.target===screen)hide();});
+  if(puesto)puesto.addEventListener('change',toggleCedula);
+  function enviar(){
+    var n=(nombre&&nombre.value||'').trim(),c=(correo&&correo.value||'').trim(),p=(puesto&&puesto.value||'').trim();
+    var opt=puesto&&puesto.options[puesto.selectedIndex];var clin=opt&&opt.getAttribute('data-clinico')==='1';
+    var ced=(cedula&&cedula.value||'').trim();
+    function fail(m){if(err){err.textContent=m;err.style.display='block';}}
+    if(!n||!c||!p){fail('Complete nombre, correo y puesto.');return;}
+    if(clin&&!ced){fail('El puesto clínico requiere cédula profesional.');return;}
+    if(err)err.style.display='none';
+    /* PUNTO DE INTEGRACION BACKEND (pendiente): aqui ira el guardado en Supabase,
+       p.ej. caSupa.from('solicitudes_acceso').insert({nombre:n,correo:c,puesto:p,cedula:ced,estado:'pendiente'})
+       Por ahora solo mostramos la confirmacion. */
+    if(form)form.style.display='none';
+    if(done)done.style.display='block';
+  }
+  if(send)send.addEventListener('click',enviar);
 })();
 </script>
 </body>
