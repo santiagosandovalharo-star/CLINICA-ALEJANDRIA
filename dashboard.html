@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.31.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --navy:#0e2c47; --navy-deep:#0a2238; --navy-line:#1b3d5c;
@@ -123,6 +124,41 @@
   .construct p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 auto;max-width:360px}
   .construct .tag{display:inline-block;margin-top:16px;font-size:11px;letter-spacing:1px;color:var(--blue);background:#e9f1fa;border-radius:20px;padding:4px 14px;text-transform:uppercase}
 
+  /* ===== LOGIN INSTITUCIONAL ===== */
+  .al-overlay{position:fixed;inset:0;background:#eef1f4;display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px}
+  .al-card{display:flex;width:100%;max-width:900px;min-height:520px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(14,44,71,.06),0 12px 40px rgba(14,44,71,.10)}
+  .al-left{flex:0 0 42%;position:relative;background:#0e2c47;padding:38px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+  .al-geo2{position:absolute;inset:0;opacity:.55}
+  .al-loginbrand{position:relative}
+  .al-mark{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:#fff;font-size:32px;letter-spacing:4px;line-height:1}
+  .al-his{color:#9fb3c8;font-size:10px;letter-spacing:3px;margin-top:11px}
+  .al-rule2{width:38px;height:1px;background:#c7a35a;margin:20px 0 13px}
+  .al-tag{font-family:'Source Serif 4',Georgia,serif;font-style:italic;color:#c7a35a;font-size:13.5px}
+  .al-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+  .al-form{width:100%;max-width:300px}
+  .al-h{font-family:'Source Serif 4',Georgia,serif;font-weight:500;color:#0e2c47;font-size:29px;margin:0}
+  .al-sub{color:#64748b;font-size:13px;margin:7px 0 26px}
+  .al-lab{display:block;font-size:11px;color:#64748b;margin:16px 0 6px}
+  .al-in{width:100%;box-sizing:border-box;font-family:'Inter',sans-serif;font-size:14px;color:#0e2c47;padding:11px 13px;border:1px solid #d9e0e8;border-radius:8px;outline:none}
+  .al-in:focus{border-color:#1c5d99;box-shadow:0 0 0 3px rgba(28,93,153,.13)}
+  .al-pw{position:relative}
+  .al-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;font-family:inherit}
+  .al-btn-login{width:100%;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:#fff;background:#1c5d99;border:none;border-radius:8px;padding:12px;cursor:pointer;margin-top:22px}
+  .al-btn-login:hover{background:#184f83}
+  .al-err{display:none;font-size:12.5px;color:#b3261e;background:#fdecea;border:1px solid #f3c9c4;border-radius:8px;padding:9px 12px;margin-top:14px}
+  .al-foot2{font-size:10px;color:#94a3b8;margin-top:20px;letter-spacing:.3px}
+  @media(max-width:820px){.al-card{flex-direction:column;max-width:420px;min-height:0}.al-left{min-height:120px;padding:24px}.al-right{padding:28px 24px}}
+  .logout{background:none;border:none;color:#9fb3c8;cursor:pointer;font-size:18px;padding:6px;border-radius:8px}
+  .logout:hover{color:var(--gold);background:#15375a}
+
+  .rec-overlay{position:fixed;inset:0;background:rgba(14,44,71,.55);display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px}
+  .rec-card{position:relative;background:#fff;border-radius:12px;width:340px;max-width:100%;padding:28px 26px;box-shadow:0 18px 50px rgba(14,44,71,.28)}
+  .rec-x{position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;line-height:1;color:#94a3b8;cursor:pointer}
+  .rec-h{font-family:'Source Serif 4',Georgia,serif;font-weight:500;color:#0e2c47;font-size:21px;margin:0 0 7px}
+  .rec-p{font-size:12.5px;color:#64748b;line-height:1.5;margin:0 0 4px}
+  .rec-back{display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:14px}
+  .rec-okic{width:42px;height:42px;border-radius:50%;background:#e7f3ec;color:#1d7a4d;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 0 12px}
+
   .hide{display:none}
 
   /* mobile */
@@ -142,6 +178,118 @@
 </style>
 </head>
 <body>
+
+<!-- LOGIN INSTITUCIONAL (puerta de entrada del dashboard) -->
+<div class="al-overlay" id="d-screen">
+  <div class="al-card">
+    <div class="al-left" aria-hidden="true">
+      <svg class="al-geo2" viewBox="0 0 420 560" preserveAspectRatio="xMidYMid slice">
+        <g stroke="#ffffff" stroke-width="0.6" fill="none">
+          <line x1="40" y1="0" x2="40" y2="560"/><line x1="110" y1="0" x2="110" y2="560"/>
+          <line x1="180" y1="0" x2="180" y2="560"/><line x1="250" y1="0" x2="250" y2="560"/>
+          <line x1="320" y1="0" x2="320" y2="560"/><line x1="390" y1="0" x2="390" y2="560"/>
+          <line x1="0" y1="120" x2="420" y2="120"/><line x1="0" y1="280" x2="420" y2="280"/>
+          <line x1="0" y1="440" x2="420" y2="440"/>
+        </g>
+        <g stroke="#ffffff" stroke-width="0.5" fill="none" opacity="0.6">
+          <line x1="0" y1="200" x2="420" y2="60"/><line x1="0" y1="500" x2="420" y2="360"/>
+        </g>
+      </svg>
+      <div class="al-loginbrand">
+        <div class="al-mark">ALEJANDRÍA</div>
+        <div class="al-his">HOSPITAL INFORMATION SYSTEM</div>
+        <div class="al-rule2"></div>
+        <div class="al-tag">Precision. Ethics. Innovation.</div>
+      </div>
+    </div>
+    <div class="al-right">
+      <div class="al-form">
+        <div class="al-h">Bienvenido</div>
+        <div class="al-sub">Ingrese sus credenciales institucionales.</div>
+        <label class="al-lab" for="d-user">Correo electrónico</label>
+        <input class="al-in" id="d-user" type="email" placeholder="nombre@alejandria.mx" autocomplete="email">
+        <label class="al-lab" for="d-pass">Contraseña</label>
+        <div class="al-pw">
+          <input class="al-in" id="d-pass" type="password" placeholder="••••••••••••" autocomplete="current-password">
+          <button type="button" class="al-eye" id="d-eye" aria-label="Mostrar contraseña">Ver</button>
+        </div>
+        <button class="al-btn-login" id="d-btn">Iniciar sesión</button>
+        <div class="al-err" id="d-error">Correo o contraseña incorrectos</div>
+        <a href="#" id="rec-open" style="display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:14px">¿Olvidó su contraseña?</a>
+        <div class="al-foot2">Acceso restringido · Solo personal autorizado</div>
+        <a href="#" id="sol-open" style="display:block;text-align:center;font-size:11.5px;color:#1c5d99;text-decoration:none;margin-top:10px">¿Personal nuevo? Solicitar acceso</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Recuperar contraseña -->
+<div class="rec-overlay" id="rec-screen" style="display:none">
+  <div class="rec-card">
+    <button type="button" class="rec-x" id="rec-close" aria-label="Cerrar">&times;</button>
+    <div id="rec-form">
+      <div class="rec-h">Recuperar contraseña</div>
+      <p class="rec-p">Ingrese su correo y le enviaremos un enlace para restablecer su contraseña.</p>
+      <label class="al-lab" for="rec-email">Correo electrónico</label>
+      <input class="al-in" id="rec-email" type="email" placeholder="nombre@alejandria.mx" autocomplete="email">
+      <button class="al-btn-login" id="rec-send" style="margin-top:16px">Enviar enlace</button>
+      <a href="#" class="rec-back" id="rec-cancel">Volver al inicio de sesión</a>
+    </div>
+    <div id="rec-done" style="display:none">
+      <div class="rec-okic">&#10003;</div>
+      <div class="rec-h" style="font-size:18px">Revise su bandeja de entrada</div>
+      <p class="rec-p">Si el correo está registrado, le enviaremos un enlace para restablecer su contraseña.</p>
+      <a href="#" class="rec-back" id="rec-done-back">Volver al inicio de sesión</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Solicitar acceso -->
+<div class="rec-overlay" id="sol-screen" style="display:none">
+  <div class="rec-card">
+    <button type="button" class="rec-x" id="sol-close" aria-label="Cerrar">&times;</button>
+    <div id="sol-form">
+      <div class="rec-h">Solicitar acceso</div>
+      <p class="rec-p">Complete sus datos. Su solicitud quedará pendiente de autorización.</p>
+      <label class="al-lab" for="sol-nombre">Nombre completo</label>
+      <input class="al-in" id="sol-nombre" type="text" placeholder="Nombre y apellido">
+      <label class="al-lab" for="sol-correo">Correo electrónico</label>
+      <input class="al-in" id="sol-correo" type="email" placeholder="nombre@alejandria.mx" autocomplete="email">
+      <label class="al-lab" for="sol-puesto">Puesto solicitado</label>
+      <select class="al-in" id="sol-puesto">
+        <option value="">Seleccione&hellip;</option>
+        <option data-clinico="1">Médico general</option>
+        <option data-clinico="1">Médico especialista</option>
+        <option data-clinico="1">Enfermería</option>
+        <option data-clinico="1">Laboratorio</option>
+        <option data-clinico="1">Imagenología</option>
+        <option data-clinico="1">Farmacia</option>
+        <option>Admisión</option>
+        <option>Almacén</option>
+        <option>Compras</option>
+        <option>Finanzas</option>
+        <option>Facturación</option>
+        <option>Capital Humano</option>
+        <option>Auditoría</option>
+        <option>Capturista</option>
+      </select>
+      <div id="sol-cedula-wrap" style="display:none">
+        <label class="al-lab" for="sol-cedula">Cédula profesional</label>
+        <input class="al-in" id="sol-cedula" type="text" placeholder="0000000">
+      </div>
+      <div id="sol-err" style="display:none;color:#b3261e;font-size:12px;margin-top:10px"></div>
+      <button class="al-btn-login" id="sol-send" style="margin-top:16px">Solicitar acceso</button>
+      <a href="#" class="rec-back" id="sol-cancel">Volver al inicio de sesión</a>
+    </div>
+    <div id="sol-done" style="display:none">
+      <div class="rec-okic">&#10003;</div>
+      <div class="rec-h" style="font-size:18px">Solicitud enviada</div>
+      <p class="rec-p">Su solicitud quedó registrada y está pendiente de autorización por Dirección. Le avisaremos por correo cuando se active su cuenta.</p>
+      <a href="#" class="rec-back" id="sol-done-back">Volver al inicio de sesión</a>
+    </div>
+  </div>
+</div>
+
 <div class="layout">
 
   <!-- SIDEBAR -->
@@ -200,10 +348,11 @@
 
     <div class="userbox">
       <div class="avatar">SS</div>
-      <div>
+      <div style="flex:1">
         <div class="user-name">Santiago Sandoval</div>
         <div class="user-role">Dirección</div>
       </div>
+      <button class="logout" id="logoutBtn" aria-label="Cerrar sesión"><i class="ti ti-logout"></i></button>
     </div>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -338,6 +487,129 @@
   // Menú móvil
   $('menuBtn').addEventListener('click',function(){$('sidebar').classList.add('open');$('scrim').classList.add('show');});
   $('scrim').addEventListener('click',function(){$('sidebar').classList.remove('open');$('scrim').classList.remove('show');});
+})();
+</script>
+<script>
+(function(){
+  var CA_SUPA_URL='https://thidufcrovsdaevlhklc.supabase.co';
+  var CA_SUPA_KEY='sb_publishable_79apPg1qR0ta_RqA10gG6w_CbMzB-XU';
+  var caSupa=null;
+  try{ caSupa=supabase.createClient(CA_SUPA_URL,CA_SUPA_KEY); }catch(e){ console.warn('Supabase no se pudo iniciar:',e); }
+  window.caSupa=caSupa;
+
+  function $(id){return document.getElementById(id);}
+  var screen=$('d-screen'),user=$('d-user'),pass=$('d-pass'),btn=$('d-btn'),err=$('d-error'),eye=$('d-eye');
+
+  if(eye)eye.addEventListener('click',function(){var s=pass.type==='password';pass.type=s?'text':'password';eye.textContent=s?'Ocultar':'Ver';});
+
+  function iniciales(n){n=(n||'').trim();if(!n)return 'US';var p=n.split(/\s+/);var a=((p[0]||'')[0]||'');var b=((p[1]||'')[0]||'');return (a+b||a||'U').toUpperCase();}
+
+  async function entrar(){
+    if(screen)screen.style.display='none';
+    var nombre='Santiago Sandoval', rol='Dirección';
+    try{
+      var gu=await caSupa.auth.getUser();
+      var email=gu&&gu.data&&gu.data.user?gu.data.user.email:'';
+      if(email){
+        try{
+          var r=await caSupa.from('usuarios').select('nombre,rol').eq('correo',email).single();
+          if(r&&r.data){ if(r.data.nombre)nombre=r.data.nombre; if(r.data.rol)rol=r.data.rol; }
+        }catch(e){ console.log('[DASH] usuarios:',e&&e.message); }
+      }
+    }catch(e){}
+    var h=new Date().getHours();
+    var saludo=(h<6||h>=20)?'Buenas noches':(h<12?'Buenos días':'Buenas tardes');
+    var primer=(nombre.split(/\s+/)[0])||'Santiago';
+    var g=$('greet'); if(g)g.textContent=saludo+', '+primer;
+    var un=document.querySelector('.user-name'); if(un)un.textContent=nombre;
+    var ur=document.querySelector('.user-role'); if(ur)ur.textContent=rol;
+    var av=document.querySelector('.avatar'); if(av)av.textContent=iniciales(nombre);
+    var pf=document.querySelector('.perfil b'); if(pf)pf.textContent=rol;
+    console.log('[DASH] sesión iniciada:',nombre,'·',rol);
+  }
+
+  async function doLogin(){
+    var email=(user.value||'').trim(), p=pass.value;
+    if(!email||!p){return;}
+    if(!caSupa){ err.textContent='Sin conexión a la nube.'; err.style.display='block'; return; }
+    err.style.display='none'; btn.textContent='Entrando...'; btn.disabled=true;
+    try{
+      var r=await caSupa.auth.signInWithPassword({email:email,password:p});
+      if(r.error){ err.textContent='Correo o contraseña incorrectos.'; err.style.display='block'; }
+      else { entrar(); }
+    }catch(e){ err.textContent='No se pudo conectar.'; err.style.display='block'; }
+    btn.textContent='Iniciar sesión'; btn.disabled=false;
+  }
+  if(btn)btn.addEventListener('click',doLogin);
+  if(pass)pass.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doLogin();}});
+  if(user)user.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();pass.focus();}});
+
+  var lo=$('logoutBtn'); if(lo)lo.addEventListener('click',function(){ if(caSupa)caSupa.auth.signOut().then(function(){location.reload();}); else location.reload(); });
+
+  (async function(){
+    try{
+      if(!caSupa)return;
+      var s=await caSupa.auth.getSession();
+      if(s&&s.data&&s.data.session){ entrar(); }
+    }catch(e){}
+  })();
+})();
+</script>
+<script>
+/* Modal recuperación */
+(function(){
+  function $(id){return document.getElementById(id);}
+  var open=$('rec-open'),screen=$('rec-screen'),close=$('rec-close'),cancel=$('rec-cancel'),send=$('rec-send'),email=$('rec-email'),form=$('rec-form'),done=$('rec-done'),doneBack=$('rec-done-back');
+  if(!open||!screen)return;
+  function show(){if(form)form.style.display='block';if(done)done.style.display='none';screen.style.display='flex';if(email){email.value='';setTimeout(function(){email.focus();},50);}}
+  function hide(){screen.style.display='none';}
+  open.addEventListener('click',function(e){e.preventDefault();show();});
+  if(close)close.addEventListener('click',hide);
+  if(cancel)cancel.addEventListener('click',function(e){e.preventDefault();hide();});
+  if(doneBack)doneBack.addEventListener('click',function(e){e.preventDefault();hide();});
+  screen.addEventListener('click',function(e){if(e.target===screen)hide();});
+  function enviar(){
+    var correo=(email&&email.value||'').trim();
+    if(!correo){if(email)email.focus();return;}
+    if(send){send.disabled=true;send.textContent='Enviando...';}
+    var redir=window.location.origin+window.location.pathname;
+    function finish(){if(form)form.style.display='none';if(done)done.style.display='block';if(send){send.disabled=false;send.textContent='Enviar enlace';}}
+    try{
+      if(window.caSupa&&caSupa.auth&&caSupa.auth.resetPasswordForEmail){
+        caSupa.auth.resetPasswordForEmail(correo,{redirectTo:redir}).then(finish).catch(function(err){console.log('[RECUPERAR]',err&&err.message);finish();});
+      }else{finish();}
+    }catch(e){console.log('[RECUPERAR]',e);finish();}
+  }
+  if(send)send.addEventListener('click',enviar);
+  if(email)email.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();enviar();}});
+})();
+/* Modal solicitar acceso */
+(function(){
+  function $(id){return document.getElementById(id);}
+  var open=$('sol-open'),screen=$('sol-screen'),close=$('sol-close'),cancel=$('sol-cancel'),send=$('sol-send'),form=$('sol-form'),done=$('sol-done'),doneBack=$('sol-done-back'),nombre=$('sol-nombre'),correo=$('sol-correo'),puesto=$('sol-puesto'),cedWrap=$('sol-cedula-wrap'),cedula=$('sol-cedula'),err=$('sol-err');
+  if(!open||!screen)return;
+  function show(){if(form)form.style.display='block';if(done)done.style.display='none';if(err)err.style.display='none';screen.style.display='flex';}
+  function hide(){screen.style.display='none';}
+  function toggleCedula(){var opt=puesto&&puesto.options[puesto.selectedIndex];var clin=opt&&opt.getAttribute('data-clinico')==='1';if(cedWrap)cedWrap.style.display=clin?'block':'none';}
+  open.addEventListener('click',function(e){e.preventDefault();show();});
+  if(close)close.addEventListener('click',hide);
+  if(cancel)cancel.addEventListener('click',function(e){e.preventDefault();hide();});
+  if(doneBack)doneBack.addEventListener('click',function(e){e.preventDefault();hide();});
+  screen.addEventListener('click',function(e){if(e.target===screen)hide();});
+  if(puesto)puesto.addEventListener('change',toggleCedula);
+  function enviar(){
+    var n=(nombre&&nombre.value||'').trim(),c=(correo&&correo.value||'').trim(),p=(puesto&&puesto.value||'').trim();
+    var opt=puesto&&puesto.options[puesto.selectedIndex];var clin=opt&&opt.getAttribute('data-clinico')==='1';
+    var ced=(cedula&&cedula.value||'').trim();
+    function fail(m){if(err){err.textContent=m;err.style.display='block';}}
+    if(!n||!c||!p){fail('Complete nombre, correo y puesto.');return;}
+    if(clin&&!ced){fail('El puesto clínico requiere cédula profesional.');return;}
+    if(err)err.style.display='none';
+    /* PUNTO DE INTEGRACION BACKEND (pendiente): guardar en Supabase (tabla solicitudes_acceso) */
+    if(form)form.style.display='none';
+    if(done)done.style.display='block';
+  }
+  if(send)send.addEventListener('click',enviar);
 })();
 </script>
 </body>
