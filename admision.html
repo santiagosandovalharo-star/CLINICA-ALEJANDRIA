@@ -85,6 +85,24 @@
   .done .id-lab{font-size:10px;letter-spacing:1.5px;color:var(--soft);text-transform:uppercase}
   .done .id-val{font-size:22px;font-weight:600;color:var(--navy);margin-top:4px;font-variant-numeric:tabular-nums}
 
+  .sbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:18px}
+  .sbox-lab{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .sbox-lab span{color:var(--soft)}
+  .sbox-row{display:flex;gap:8px}
+  .sbox-row input{flex:1;font-family:inherit;font-size:13.5px;color:var(--ink);padding:10px 12px;border:1px solid var(--line);border-radius:8px;outline:none}
+  .sbox-row input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,93,153,.12)}
+  #q-results{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .q-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink)}
+  .q-item:hover{background:#f4f8fc;border-color:var(--blue)}
+  .q-item .mrn{margin-left:auto;font-size:11px;color:var(--soft)}
+  .using{margin-top:10px;display:flex;align-items:center;gap:10px;background:var(--ok-bg);border:1px solid #bfe3cd;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--ok)}
+  .using b{color:var(--ink)}
+  .using button{margin-left:auto;background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px;font-family:inherit;text-decoration:underline}
+  .dup{background:#fff7ed;border:1px solid #f0d9b5;border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:#92600c;line-height:1.5}
+  .dup-actions{display:flex;gap:8px;margin-top:10px}
+  .dup-actions button{font-family:inherit;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;cursor:pointer;border:none}
+  .f.bad input,.f.bad select{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(179,38,30,.1)}
+
   .hide{display:none}
   @media(max-width:680px){.grid{grid-template-columns:1fr 1fr}.auto{grid-template-columns:1fr 1fr}}
 </style>
@@ -143,6 +161,17 @@
     <div><div class="a-lab">Expediente</div><div class="a-val" id="x-mrn">— al guardar</div></div>
     <div><div class="a-lab">Ingreso</div><div class="a-val" id="x-ingreso">—</div></div>
     <div><div class="a-lab">Usuario</div><div class="a-val" id="x-user">—</div></div>
+  </div>
+
+  <div class="sbox">
+    <div class="sbox-lab">Buscar paciente <span>— por nombre o CURP, para no duplicar</span></div>
+    <div class="sbox-row">
+      <input id="q-search" placeholder="Nombre o CURP…">
+      <button class="btn btn-pri" id="btn-search" style="padding:10px 18px">Buscar</button>
+      <button class="btn btn-sec" id="btn-clear" style="padding:10px 18px">Paciente nuevo</button>
+    </div>
+    <div id="q-results"></div>
+    <div id="q-using" class="using" style="display:none"></div>
   </div>
 
   <div id="form-zone">
@@ -241,6 +270,8 @@
       </div>
     </div>
 
+    <div class="dup" id="dup-banner" style="display:none"></div>
+
     <div class="bar">
       <button class="btn btn-pri" id="btn-save">Guardar admisión</button>
       <span class="msg" id="save-msg"></span>
@@ -267,6 +298,7 @@
   try{ caSupa=supabase.createClient(CA_SUPA_URL,CA_SUPA_KEY); }catch(e){ console.warn('Supabase',e); }
   window.caSupa=caSupa;
   function $(id){return document.getElementById(id);}
+  var usandoExistente=null, existenteMRN=null, forzarNuevo=false;
 
   /* ---- LOGIN ---- */
   var screen=$('d-screen'),user=$('d-user'),pass=$('d-pass'),btn=$('d-btn'),err=$('d-error'),eye=$('d-eye');
@@ -330,43 +362,140 @@
   }
   $('e-rl-tipo').addEventListener('change',toggleRL);
 
+  /* ---- BUSCAR / CARGAR PACIENTE EXISTENTE ---- */
+  function setv(id,v){var e=$(id);if(e)e.value=(v==null?'':v);}
+  function cargarPaciente(p){
+    setv('p-nombres',p.nombres);setv('p-ap1',p.primer_apellido);setv('p-ap2',p.segundo_apellido);
+    setv('p-curp',p.curp);setv('p-fnac',p.fecha_nacimiento);setv('p-sexo',p.sexo);setv('p-genero',p.genero);
+    setv('p-edocivil',p.estado_civil);setv('p-nac',p.nacionalidad);setv('p-ocup',p.ocupacion);setv('p-esco',p.escolaridad);
+    setv('p-tel1',p.telefono_principal);setv('p-tel2',p.telefono_alterno);setv('p-correo',p.correo);
+    setv('p-calle',p.calle);setv('p-numext',p.num_exterior);setv('p-numint',p.num_interior);
+    setv('p-colonia',p.colonia);setv('p-municipio',p.municipio);setv('p-estado',p.estado);setv('p-cp',p.codigo_postal);
+    setv('p-em-nombre',p.emergencia_nombre);setv('p-em-parentesco',p.emergencia_parentesco);
+    setv('p-em-tel',p.emergencia_telefono);setv('p-em-correo',p.emergencia_correo);
+    calcEdad();
+    usandoExistente=p.id; existenteMRN=p.num_expediente; forzarNuevo=false;
+    $('x-mrn').textContent=p.num_expediente||'—';
+    var u=$('q-using'); u.style.display='flex';
+    u.innerHTML='<span>Usando paciente existente: <b>'+((p.nombres||'')+' '+(p.primer_apellido||'')).trim()+'</b> · '+(p.num_expediente||'')+'. Se creará un episodio nuevo.</span><button id="q-quitar">Quitar</button>';
+    var qq=$('q-quitar'); if(qq)qq.addEventListener('click',pacienteNuevo);
+    $('q-results').innerHTML='';
+  }
+  function pacienteNuevo(){
+    usandoExistente=null; existenteMRN=null; forzarNuevo=false;
+    ['p-nombres','p-ap1','p-ap2','p-curp','p-fnac','p-genero','p-ocup','p-esco','p-tel1','p-tel2','p-correo','p-calle','p-numext','p-numint','p-colonia','p-municipio','p-estado','p-cp','p-em-nombre','p-em-parentesco','p-em-tel','p-em-correo','q-search'].forEach(function(id){var e=$(id);if(e)e.value='';});
+    setv('p-sexo','');setv('p-edocivil','');setv('p-nac','Mexicana');setv('p-edad','');
+    $('q-using').style.display='none';$('q-results').innerHTML='';$('x-mrn').textContent='— al guardar';
+  }
+  async function buscar(){
+    var term=val('q-search').replace(/,/g,' ').trim();
+    var res=$('q-results');
+    if(!term){res.innerHTML='';return;}
+    res.innerHTML='<div style="font-size:12px;color:var(--soft);padding:4px 2px">Buscando…</div>';
+    try{
+      var r=await caSupa.from('pacientes').select('*')
+        .or('curp.ilike.%'+term+'%,nombres.ilike.%'+term+'%,primer_apellido.ilike.%'+term+'%,segundo_apellido.ilike.%'+term+'%')
+        .limit(8);
+      if(r.error)throw r.error;
+      var rows=r.data||[];
+      if(!rows.length){res.innerHTML='<div style="font-size:12px;color:var(--soft);padding:6px 2px">Sin resultados. Podés registrarlo como paciente nuevo abajo.</div>';return;}
+      res.innerHTML='';
+      rows.forEach(function(p){
+        var it=document.createElement('div'); it.className='q-item';
+        var nom=((p.nombres||'')+' '+(p.primer_apellido||'')+' '+(p.segundo_apellido||'')).trim();
+        it.innerHTML='<span>'+nom+(p.fecha_nacimiento?(' · '+p.fecha_nacimiento):'')+'</span><span class="mrn">'+(p.num_expediente||'')+'</span>';
+        it.addEventListener('click',function(){cargarPaciente(p);});
+        res.appendChild(it);
+      });
+    }catch(e){console.log('buscar',e);res.innerHTML='<div style="font-size:12px;color:var(--danger);padding:6px 2px">No se pudo buscar.</div>';}
+  }
+  $('btn-search').addEventListener('click',buscar);
+  $('q-search').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();buscar();}});
+  $('btn-clear').addEventListener('click',pacienteNuevo);
+
+  /* ---- VALIDACIONES ---- */
+  function isEmail(s){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);}
+  function digitos(s){return (s||'').replace(/\D/g,'');}
+  function mark(id,bad){var e=$(id);if(!e)return;var f=e.closest?e.closest('.f'):null;if(f)f.classList.toggle('bad',!!bad);}
+  function validar(){
+    ['p-correo','p-curp','p-tel1','p-fnac','p-em-correo','e-rf-correo','e-rl-correo'].forEach(function(id){mark(id,false);});
+    var prob=[];
+    var correo=val('p-correo'); if(correo&&!isEmail(correo)){prob.push('el correo del paciente');mark('p-correo',true);}
+    var curp=val('p-curp'); if(curp&&curp.length!==18){prob.push('la CURP (deben ser 18 caracteres)');mark('p-curp',true);}
+    var tel=digitos(val('p-tel1')); if(tel&&tel.length!==10){prob.push('el teléfono (10 dígitos)');mark('p-tel1',true);}
+    var fn=val('p-fnac'); if(fn){var d=new Date(fn),hoy=new Date(); if(d>hoy){prob.push('la fecha de nacimiento (está en el futuro)');mark('p-fnac',true);} else if((hoy.getFullYear()-d.getFullYear())>140){prob.push('la fecha de nacimiento (revisá el año)');mark('p-fnac',true);}}
+    var emc=val('p-em-correo'); if(emc&&!isEmail(emc)){prob.push('el correo de emergencia');mark('p-em-correo',true);}
+    var rfc=val('e-rf-correo'); if(rfc&&!isEmail(rfc)){prob.push('el correo del responsable financiero');mark('e-rf-correo',true);}
+    var rlc=val('e-rl-correo'); if(rlc&&!isEmail(rlc)){prob.push('el correo del responsable legal');mark('e-rl-correo',true);}
+    return prob;
+  }
+  async function buscarDuplicado(){
+    var curp=val('p-curp'),nombres=val('p-nombres'),ap1=val('p-ap1'),fnac=val('p-fnac');
+    try{
+      if(curp){
+        var r=await caSupa.from('pacientes').select('id,num_expediente,nombres,primer_apellido').eq('curp',curp).limit(1);
+        if(r.data&&r.data.length)return r.data[0];
+      }
+      if(nombres&&ap1&&fnac){
+        var r2=await caSupa.from('pacientes').select('id,num_expediente,nombres,primer_apellido').ilike('nombres',nombres).ilike('primer_apellido',ap1).eq('fecha_nacimiento',fnac).limit(1);
+        if(r2.data&&r2.data.length)return r2.data[0];
+      }
+    }catch(e){console.log('dup',e);}
+    return null;
+  }
+  function mostrarDup(d){
+    var b=$('dup-banner'); b.style.display='block';
+    b.innerHTML='⚠ Ya existe un paciente con estos datos: <b>'+((d.nombres||'')+' '+(d.primer_apellido||'')).trim()+'</b> ('+(d.num_expediente||'')+'). ¿Qué querés hacer?<div class="dup-actions"><button id="dup-use" style="background:var(--blue);color:#fff">Usar el existente</button><button id="dup-new" style="background:#eef2f6;color:var(--ink)">Crear uno nuevo igual</button></div>';
+    $('dup-use').addEventListener('click',function(){b.style.display='none';usandoExistente=d.id;existenteMRN=d.num_expediente;$('x-mrn').textContent=d.num_expediente||'—';doGuardar();});
+    $('dup-new').addEventListener('click',function(){b.style.display='none';forzarNuevo=true;doGuardar();});
+  }
+
   /* ---- GUARDAR ---- */
   function val(id){var e=$(id);return e?String(e.value||'').trim():'';}
   function nz(s){return s===''?null:s;}
 
   var saveBtn=$('btn-save'), msg=$('save-msg');
-  saveBtn.addEventListener('click', async function(){
+  async function doGuardar(){
     var nombres=val('p-nombres'), ap1=val('p-ap1');
-    msg.className='msg';
+    msg.className='msg'; msg.textContent='';
     if(!nombres||!ap1){ msg.className='msg err'; msg.textContent='Falta nombre y primer apellido.'; return; }
     if(!caSupa){ msg.className='msg err'; msg.textContent='Sin conexión a la nube.'; return; }
-    saveBtn.disabled=true; saveBtn.textContent='Guardando...'; msg.textContent='';
+    var prob=validar();
+    if(prob.length){ msg.className='msg err'; msg.textContent='Revisá '+prob.join(', ')+'.'; return; }
+    if(!usandoExistente && !forzarNuevo){
+      var dup=await buscarDuplicado();
+      if(dup){ mostrarDup(dup); return; }
+    }
+    saveBtn.disabled=true; saveBtn.textContent='Guardando...';
 
     try{
-      // 1) Número de expediente (MRN) por conteo simple
-      var mrn='MRN-00001';
-      try{
-        var c=await caSupa.from('pacientes').select('id',{count:'exact',head:true});
-        var n=(c&&typeof c.count==='number')?c.count:0;
-        mrn='MRN-'+String(n+1).padStart(5,'0');
-      }catch(e){}
-
-      // 2) Insertar paciente
-      var pac={
-        num_expediente:mrn, nombres:nombres, primer_apellido:ap1,
-        segundo_apellido:nz(val('p-ap2')), curp:nz(val('p-curp')),
-        fecha_nacimiento:nz(val('p-fnac')), sexo:nz(val('p-sexo')),
-        genero:nz(val('p-genero')), estado_civil:nz(val('p-edocivil')),
-        nacionalidad:nz(val('p-nac')), ocupacion:nz(val('p-ocup')), escolaridad:nz(val('p-esco')),
-        telefono_principal:nz(val('p-tel1')), telefono_alterno:nz(val('p-tel2')), correo:nz(val('p-correo')),
-        calle:nz(val('p-calle')), num_exterior:nz(val('p-numext')), num_interior:nz(val('p-numint')),
-        colonia:nz(val('p-colonia')), municipio:nz(val('p-municipio')), estado:nz(val('p-estado')), codigo_postal:nz(val('p-cp')),
-        emergencia_nombre:nz(val('p-em-nombre')), emergencia_parentesco:nz(val('p-em-parentesco')),
-        emergencia_telefono:nz(val('p-em-tel')), emergencia_correo:nz(val('p-em-correo'))
-      };
-      var pi=await caSupa.from('pacientes').insert(pac).select().single();
-      if(pi.error){ throw pi.error; }
-      var pacienteId=pi.data.id;
+      var pacienteId, mrn;
+      if(usandoExistente){
+        pacienteId=usandoExistente; mrn=existenteMRN||'—';
+      } else {
+        // Número de expediente (MRN) por conteo simple
+        mrn='MRN-00001';
+        try{
+          var c=await caSupa.from('pacientes').select('id',{count:'exact',head:true});
+          var n=(c&&typeof c.count==='number')?c.count:0;
+          mrn='MRN-'+String(n+1).padStart(5,'0');
+        }catch(e){}
+        var pac={
+          num_expediente:mrn, nombres:nombres, primer_apellido:ap1,
+          segundo_apellido:nz(val('p-ap2')), curp:nz(val('p-curp')),
+          fecha_nacimiento:nz(val('p-fnac')), sexo:nz(val('p-sexo')),
+          genero:nz(val('p-genero')), estado_civil:nz(val('p-edocivil')),
+          nacionalidad:nz(val('p-nac')), ocupacion:nz(val('p-ocup')), escolaridad:nz(val('p-esco')),
+          telefono_principal:nz(val('p-tel1')), telefono_alterno:nz(val('p-tel2')), correo:nz(val('p-correo')),
+          calle:nz(val('p-calle')), num_exterior:nz(val('p-numext')), num_interior:nz(val('p-numint')),
+          colonia:nz(val('p-colonia')), municipio:nz(val('p-municipio')), estado:nz(val('p-estado')), codigo_postal:nz(val('p-cp')),
+          emergencia_nombre:nz(val('p-em-nombre')), emergencia_parentesco:nz(val('p-em-parentesco')),
+          emergencia_telefono:nz(val('p-em-tel')), emergencia_correo:nz(val('p-em-correo'))
+        };
+        var pi=await caSupa.from('pacientes').insert(pac).select().single();
+        if(pi.error){ throw pi.error; }
+        pacienteId=pi.data.id;
+      }
 
       // 3) Insertar episodio
       var epi={
@@ -402,7 +531,8 @@
       msg.textContent='Error al guardar: '+((e&&e.message)?e.message:e);
     }
     saveBtn.disabled=false; saveBtn.textContent='Guardar admisión';
-  });
+  }
+  saveBtn.addEventListener('click',doGuardar);
 
   $('btn-new').addEventListener('click', function(){ location.reload(); });
 })();
