@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admisión · ALEJANDRÍA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --navy:#0e2c47; --navy-deep:#0a2238; --gold:#c7a35a; --blue:#1c5d99; --blue-deep:#184f83;
+    --ink:#0e2c47; --muted:#64748b; --soft:#94a3b8; --page:#eef4fb; --card:#fff; --line:#dce2e8;
+    --ok:#1d7a4d; --ok-bg:#e7f3ec; --danger:#b3261e; --danger-bg:#fdecea;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--page);-webkit-font-smoothing:antialiased}
+
+  /* ===== LOGIN ===== */
+  .al-overlay{position:fixed;inset:0;background:#eef1f4;display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px}
+  .al-card{display:flex;width:100%;max-width:900px;min-height:520px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(14,44,71,.06),0 12px 40px rgba(14,44,71,.10)}
+  .al-left{flex:0 0 42%;position:relative;background:#0e2c47;padding:38px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+  .al-geo2{position:absolute;inset:0;opacity:.55}
+  .al-loginbrand{position:relative}
+  .al-mark{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:#fff;font-size:32px;letter-spacing:4px;line-height:1}
+  .al-his{color:#9fb3c8;font-size:10px;letter-spacing:3px;margin-top:11px}
+  .al-rule2{width:38px;height:1px;background:#c7a35a;margin:20px 0 13px}
+  .al-tag{font-family:'Source Serif 4',Georgia,serif;font-style:italic;color:#c7a35a;font-size:13.5px}
+  .al-right{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+  .al-form{width:100%;max-width:300px}
+  .al-h{font-family:'Source Serif 4',Georgia,serif;font-weight:500;color:#0e2c47;font-size:29px;margin:0}
+  .al-sub{color:#64748b;font-size:13px;margin:7px 0 26px}
+  .al-lab{display:block;font-size:11px;color:#64748b;margin:16px 0 6px}
+  .al-in{width:100%;box-sizing:border-box;font-family:'Inter',sans-serif;font-size:14px;color:#0e2c47;padding:11px 13px;border:1px solid #d9e0e8;border-radius:8px;outline:none}
+  .al-in:focus{border-color:#1c5d99;box-shadow:0 0 0 3px rgba(28,93,153,.13)}
+  .al-pw{position:relative}
+  .al-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;font-family:inherit}
+  .al-btn-login{width:100%;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:#fff;background:#1c5d99;border:none;border-radius:8px;padding:12px;cursor:pointer;margin-top:22px}
+  .al-btn-login:hover{background:#184f83}
+  .al-err{display:none;font-size:12.5px;color:#b3261e;background:#fdecea;border:1px solid #f3c9c4;border-radius:8px;padding:9px 12px;margin-top:14px}
+  .al-foot2{font-size:10px;color:#94a3b8;margin-top:20px;letter-spacing:.3px}
+  @media(max-width:820px){.al-card{flex-direction:column;max-width:420px;min-height:0}.al-left{min-height:120px;padding:24px}.al-right{padding:28px 24px}}
+
+  /* ===== ADMISION ===== */
+  .wrap{max-width:920px;margin:0 auto;padding:26px 24px 60px}
+  .top{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+  .top .ic{width:40px;height:40px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .top h1{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:24px;margin:0;flex:1}
+  .chip{font-size:11px;letter-spacing:.5px;color:var(--blue);background:#e9f1fa;border-radius:20px;padding:4px 12px}
+
+  .auto{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:var(--navy);border-radius:12px;padding:14px 18px;margin-bottom:22px}
+  .auto .a-lab{font-size:9.5px;letter-spacing:1.5px;color:#9fb3c8;text-transform:uppercase}
+  .auto .a-val{font-size:14px;color:#fff;font-weight:500;margin-top:3px;font-variant-numeric:tabular-nums}
+  .auto .a-val.gold{color:var(--gold)}
+
+  .sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px}
+  .sec-h{display:flex;align-items:center;gap:9px;margin-bottom:16px}
+  .sec-n{width:22px;height:22px;border-radius:50%;background:#e9f1fa;color:var(--blue);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+  .sec-h h2{font-size:14px;font-weight:600;margin:0;color:var(--ink)}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .f{display:flex;flex-direction:column;gap:5px}
+  .f label{font-size:11px;color:var(--muted)}
+  .f .req{color:var(--danger)}
+  .f input,.f select{font-family:inherit;font-size:13.5px;color:var(--ink);padding:10px 12px;border:1px solid var(--line);border-radius:8px;outline:none;background:#fff}
+  .f input:focus,.f select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,93,153,.12)}
+  .f input:disabled{background:#f4f6f8;color:var(--soft)}
+  .f .auto-tag{font-size:9px;color:var(--blue)}
+
+  .bar{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;position:sticky;bottom:14px}
+  .btn{font-family:inherit;font-size:14px;font-weight:500;border:none;border-radius:8px;padding:12px 20px;cursor:pointer}
+  .btn-pri{background:var(--blue);color:#fff}
+  .btn-pri:hover{background:var(--blue-deep)}
+  .btn-pri:disabled{opacity:.6;cursor:default}
+  .btn-sec{background:#eef2f6;color:var(--ink);border:1px solid var(--line)}
+  .msg{font-size:13px;margin-left:auto}
+  .msg.ok{color:var(--ok)}
+  .msg.err{color:var(--danger)}
+
+  .done{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:40px 30px;text-align:center;display:none}
+  .done .check{width:60px;height:60px;border-radius:50%;background:var(--ok-bg);color:var(--ok);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px}
+  .done h2{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:24px;margin:0 0 18px}
+  .done .ids{display:flex;gap:30px;justify-content:center;margin-bottom:24px}
+  .done .id-lab{font-size:10px;letter-spacing:1.5px;color:var(--soft);text-transform:uppercase}
+  .done .id-val{font-size:22px;font-weight:600;color:var(--navy);margin-top:4px;font-variant-numeric:tabular-nums}
+
+  .hide{display:none}
+  @media(max-width:680px){.grid{grid-template-columns:1fr 1fr}.auto{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="al-overlay" id="d-screen">
+  <div class="al-card">
+    <div class="al-left" aria-hidden="true">
+      <svg class="al-geo2" viewBox="0 0 420 560" preserveAspectRatio="xMidYMid slice">
+        <g stroke="#ffffff" stroke-width="0.6" fill="none">
+          <line x1="40" y1="0" x2="40" y2="560"/><line x1="110" y1="0" x2="110" y2="560"/>
+          <line x1="180" y1="0" x2="180" y2="560"/><line x1="250" y1="0" x2="250" y2="560"/>
+          <line x1="320" y1="0" x2="320" y2="560"/><line x1="390" y1="0" x2="390" y2="560"/>
+          <line x1="0" y1="120" x2="420" y2="120"/><line x1="0" y1="280" x2="420" y2="280"/>
+          <line x1="0" y1="440" x2="420" y2="440"/>
+        </g>
+      </svg>
+      <div class="al-loginbrand">
+        <div class="al-mark">ALEJANDRÍA</div>
+        <div class="al-his">HOSPITAL INFORMATION SYSTEM</div>
+        <div class="al-rule2"></div>
+        <div class="al-tag">Admisión de pacientes</div>
+      </div>
+    </div>
+    <div class="al-right">
+      <div class="al-form">
+        <div class="al-h">Bienvenido</div>
+        <div class="al-sub">Ingrese sus credenciales institucionales.</div>
+        <label class="al-lab" for="d-user">Correo electrónico</label>
+        <input class="al-in" id="d-user" type="email" placeholder="nombre@alejandria.mx" autocomplete="email">
+        <label class="al-lab" for="d-pass">Contraseña</label>
+        <div class="al-pw">
+          <input class="al-in" id="d-pass" type="password" placeholder="••••••••••••" autocomplete="current-password">
+          <button type="button" class="al-eye" id="d-eye" aria-label="Mostrar contraseña">Ver</button>
+        </div>
+        <button class="al-btn-login" id="d-btn">Iniciar sesión</button>
+        <div class="al-err" id="d-error">Correo o contraseña incorrectos</div>
+        <div class="al-foot2">Acceso restringido · Solo personal autorizado</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMISION -->
+<div class="wrap" id="app" style="display:none">
+  <div class="top">
+    <div class="ic"><span>+</span></div>
+    <h1>Admisión de paciente</h1>
+    <span class="chip">Episodio nuevo</span>
+  </div>
+
+  <div class="auto">
+    <div><div class="a-lab">Folio</div><div class="a-val gold" id="x-folio">— al guardar</div></div>
+    <div><div class="a-lab">Expediente</div><div class="a-val" id="x-mrn">— al guardar</div></div>
+    <div><div class="a-lab">Ingreso</div><div class="a-val" id="x-ingreso">—</div></div>
+    <div><div class="a-lab">Usuario</div><div class="a-val" id="x-user">—</div></div>
+  </div>
+
+  <div id="form-zone">
+    <!-- Sección 1 -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">1</span><h2>Identificación del paciente</h2></div>
+      <div class="grid">
+        <div class="f"><label>Nombre(s) <span class="req">*</span></label><input id="p-nombres"></div>
+        <div class="f"><label>Primer apellido <span class="req">*</span></label><input id="p-ap1"></div>
+        <div class="f"><label>Segundo apellido</label><input id="p-ap2"></div>
+        <div class="f"><label>CURP</label><input id="p-curp" placeholder="18 caracteres" maxlength="18"></div>
+        <div class="f"><label>Fecha de nacimiento</label><input id="p-fnac" type="date"></div>
+        <div class="f"><label>Edad <span class="auto-tag">automática</span></label><input id="p-edad" disabled placeholder="—"></div>
+        <div class="f"><label>Sexo</label><select id="p-sexo"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
+        <div class="f"><label>Género</label><input id="p-genero"></div>
+        <div class="f"><label>Estado civil</label><select id="p-edocivil"><option value="">—</option><option>Soltero(a)</option><option>Casado(a)</option><option>Unión libre</option><option>Divorciado(a)</option><option>Viudo(a)</option></select></div>
+        <div class="f"><label>Nacionalidad</label><input id="p-nac" value="Mexicana"></div>
+        <div class="f"><label>Ocupación</label><input id="p-ocup"></div>
+        <div class="f"><label>Escolaridad</label><input id="p-esco"></div>
+      </div>
+    </div>
+
+    <!-- Sección 2: Contacto -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">2</span><h2>Contacto</h2></div>
+      <div class="grid">
+        <div class="f"><label>Teléfono principal</label><input id="p-tel1"></div>
+        <div class="f"><label>Teléfono alterno</label><input id="p-tel2"></div>
+        <div class="f"><label>Correo electrónico</label><input id="p-correo" type="email" placeholder="nombre@correo.com"></div>
+        <div class="f"><label>Calle</label><input id="p-calle"></div>
+        <div class="f"><label>Número exterior</label><input id="p-numext"></div>
+        <div class="f"><label>Número interior</label><input id="p-numint"></div>
+        <div class="f"><label>Colonia</label><input id="p-colonia"></div>
+        <div class="f"><label>Municipio</label><input id="p-municipio"></div>
+        <div class="f"><label>Estado</label><input id="p-estado"></div>
+        <div class="f"><label>Código postal</label><input id="p-cp" maxlength="5"></div>
+      </div>
+    </div>
+
+    <!-- Sección 3: Emergencia -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">3</span><h2>Contacto de emergencia</h2></div>
+      <div class="grid">
+        <div class="f"><label>Nombre completo</label><input id="p-em-nombre"></div>
+        <div class="f"><label>Parentesco</label><input id="p-em-parentesco"></div>
+        <div class="f"><label>Teléfono</label><input id="p-em-tel"></div>
+        <div class="f"><label>Correo electrónico</label><input id="p-em-correo" type="email"></div>
+      </div>
+    </div>
+
+    <!-- Sección 4: Datos administrativos del episodio -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">4</span><h2>Datos del episodio</h2></div>
+      <div class="grid">
+        <div class="f"><label>Tipo de paciente</label><select id="e-tipopac"><option>Particular</option><option>Aseguradora</option><option>Medicina laboral</option><option>Convenio</option><option>Gobierno</option></select></div>
+        <div class="f"><label>Tipo de atención</label><select id="e-tipoaten"><option>Consulta</option><option>Urgencias</option><option>Hospitalización</option><option>Cirugía ambulatoria</option><option>Procedimiento</option></select></div>
+        <div class="f"><label>Médico tratante</label><input id="e-medico"></div>
+        <div class="f"><label>Especialidad</label><input id="e-esp"></div>
+        <div class="f"><label>Hospital</label><input id="e-hospital" value="Clínica Alejandría"></div>
+        <div class="f"><label>Sucursal</label><input id="e-sucursal"></div>
+        <div class="f"><label>Cama <span style="color:var(--soft)">(si aplica)</span></label><input id="e-cama"></div>
+        <div class="f"><label>Habitación <span style="color:var(--soft)">(si aplica)</span></label><input id="e-habitacion"></div>
+      </div>
+    </div>
+
+    <!-- Sección 5: Aseguramiento (aparece solo si no es Particular) -->
+    <div class="sec" id="sec-aseg" style="display:none">
+      <div class="sec-h"><span class="sec-n">5</span><h2>Aseguramiento</h2></div>
+      <div class="grid">
+        <div class="f"><label>Aseguradora</label><input id="e-aseguradora"></div>
+        <div class="f"><label>Número de póliza</label><input id="e-poliza"></div>
+        <div class="f"><label>Número de siniestro</label><input id="e-siniestro"></div>
+        <div class="f"><label>Ajustador <span style="color:var(--soft)">(opcional)</span></label><input id="e-ajustador"></div>
+        <div class="f" id="f-empresa" style="display:none"><label>Empresa responsable</label><input id="e-empresa"></div>
+      </div>
+    </div>
+
+    <!-- Sección 6: Responsables -->
+    <div class="sec">
+      <div class="sec-h"><span class="sec-n">6</span><h2>Responsables</h2></div>
+      <div class="grid">
+        <div class="f"><label>Responsable legal</label><select id="e-rl-tipo"><option>Paciente</option><option>Tutor</option><option>Padre</option><option>Madre</option><option>Representante legal</option><option>Empresa</option></select></div>
+        <div class="f rl-extra" style="display:none"><label>Nombre del responsable legal</label><input id="e-rl-nombre"></div>
+        <div class="f rl-extra" style="display:none"><label>Teléfono</label><input id="e-rl-tel"></div>
+        <div class="f rl-extra" style="display:none"><label>Correo</label><input id="e-rl-correo" type="email"></div>
+      </div>
+      <div style="border-top:1px solid var(--line);margin:16px 0"></div>
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px">Responsable financiero</div>
+      <div class="grid">
+        <div class="f"><label>Nombre</label><input id="e-rf-nombre"></div>
+        <div class="f"><label>Parentesco</label><input id="e-rf-parentesco"></div>
+        <div class="f"><label>Teléfono</label><input id="e-rf-tel"></div>
+        <div class="f"><label>Correo</label><input id="e-rf-correo" type="email"></div>
+        <div class="f"><label>RFC <span style="color:var(--soft)">(opcional)</span></label><input id="e-rf-rfc"></div>
+        <div class="f"><label>Domicilio fiscal <span style="color:var(--soft)">(opcional)</span></label><input id="e-rf-domfiscal"></div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <button class="btn btn-pri" id="btn-save">Guardar admisión</button>
+      <span class="msg" id="save-msg"></span>
+    </div>
+  </div>
+
+  <!-- Éxito -->
+  <div class="done" id="done">
+    <div class="check">&#10003;</div>
+    <h2>Admisión registrada</h2>
+    <div class="ids">
+      <div><div class="id-lab">Folio del episodio</div><div class="id-val" id="d-folio">—</div></div>
+      <div><div class="id-lab">Número de expediente</div><div class="id-val" id="d-mrn">—</div></div>
+    </div>
+    <button class="btn btn-sec" id="btn-new">Registrar otra admisión</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var CA_SUPA_URL='https://thidufcrovsdaevlhklc.supabase.co';
+  var CA_SUPA_KEY='sb_publishable_79apPg1qR0ta_RqA10gG6w_CbMzB-XU';
+  var caSupa=null;
+  try{ caSupa=supabase.createClient(CA_SUPA_URL,CA_SUPA_KEY); }catch(e){ console.warn('Supabase',e); }
+  window.caSupa=caSupa;
+  function $(id){return document.getElementById(id);}
+
+  /* ---- LOGIN ---- */
+  var screen=$('d-screen'),user=$('d-user'),pass=$('d-pass'),btn=$('d-btn'),err=$('d-error'),eye=$('d-eye');
+  if(eye)eye.addEventListener('click',function(){var s=pass.type==='password';pass.type=s?'text':'password';eye.textContent=s?'Ocultar':'Ver';});
+
+  async function entrar(){
+    screen.style.display='none';
+    $('app').style.display='block';
+    var nombre='Usuario';
+    try{
+      var gu=await caSupa.auth.getUser();
+      var email=gu&&gu.data&&gu.data.user?gu.data.user.email:'';
+      if(email){
+        try{
+          var r=await caSupa.from('usuarios').select('nombre').eq('correo',email).single();
+          if(r&&r.data&&r.data.nombre)nombre=r.data.nombre;
+        }catch(e){ if(email)nombre=email.split('@')[0]; }
+      }
+    }catch(e){}
+    $('x-user').textContent=nombre;
+    var ahora=new Date();
+    $('x-ingreso').textContent=ahora.toLocaleDateString('es-MX')+' '+ahora.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+  }
+  async function doLogin(){
+    var email=(user.value||'').trim(), p=pass.value;
+    if(!email||!p){return;}
+    if(!caSupa){ err.textContent='Sin conexión a la nube.'; err.style.display='block'; return; }
+    err.style.display='none'; btn.textContent='Entrando...'; btn.disabled=true;
+    try{
+      var r=await caSupa.auth.signInWithPassword({email:email,password:p});
+      if(r.error){ err.textContent='Correo o contraseña incorrectos.'; err.style.display='block'; }
+      else { entrar(); }
+    }catch(e){ err.textContent='No se pudo conectar.'; err.style.display='block'; }
+    btn.textContent='Iniciar sesión'; btn.disabled=false;
+  }
+  if(btn)btn.addEventListener('click',doLogin);
+  if(pass)pass.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doLogin();}});
+  (async function(){ try{ if(!caSupa)return; var s=await caSupa.auth.getSession(); if(s&&s.data&&s.data.session){ entrar(); } }catch(e){} })();
+
+  /* ---- EDAD AUTOMÁTICA ---- */
+  function calcEdad(){
+    var v=$('p-fnac').value; if(!v){$('p-edad').value='';return;}
+    var n=new Date(v), h=new Date(); if(isNaN(n)){$('p-edad').value='';return;}
+    var e=h.getFullYear()-n.getFullYear(); var m=h.getMonth()-n.getMonth();
+    if(m<0||(m===0&&h.getDate()<n.getDate()))e--;
+    $('p-edad').value = (e>=0&&e<140) ? (e+' años') : '';
+  }
+  $('p-fnac').addEventListener('change',calcEdad);
+
+  /* ---- DINÁMICO: aseguramiento y responsable legal ---- */
+  function toggleAseg(){
+    var t=$('e-tipopac').value;
+    $('sec-aseg').style.display = (t==='Particular') ? 'none' : 'block';
+    $('f-empresa').style.display = (t==='Medicina laboral') ? 'flex' : 'none';
+  }
+  $('e-tipopac').addEventListener('change',toggleAseg);
+  function toggleRL(){
+    var show = ($('e-rl-tipo').value !== 'Paciente');
+    var ex=document.querySelectorAll('.rl-extra');
+    for(var i=0;i<ex.length;i++){ ex[i].style.display = show ? 'flex' : 'none'; }
+  }
+  $('e-rl-tipo').addEventListener('change',toggleRL);
+
+  /* ---- GUARDAR ---- */
+  function val(id){var e=$(id);return e?String(e.value||'').trim():'';}
+  function nz(s){return s===''?null:s;}
+
+  var saveBtn=$('btn-save'), msg=$('save-msg');
+  saveBtn.addEventListener('click', async function(){
+    var nombres=val('p-nombres'), ap1=val('p-ap1');
+    msg.className='msg';
+    if(!nombres||!ap1){ msg.className='msg err'; msg.textContent='Falta nombre y primer apellido.'; return; }
+    if(!caSupa){ msg.className='msg err'; msg.textContent='Sin conexión a la nube.'; return; }
+    saveBtn.disabled=true; saveBtn.textContent='Guardando...'; msg.textContent='';
+
+    try{
+      // 1) Número de expediente (MRN) por conteo simple
+      var mrn='MRN-00001';
+      try{
+        var c=await caSupa.from('pacientes').select('id',{count:'exact',head:true});
+        var n=(c&&typeof c.count==='number')?c.count:0;
+        mrn='MRN-'+String(n+1).padStart(5,'0');
+      }catch(e){}
+
+      // 2) Insertar paciente
+      var pac={
+        num_expediente:mrn, nombres:nombres, primer_apellido:ap1,
+        segundo_apellido:nz(val('p-ap2')), curp:nz(val('p-curp')),
+        fecha_nacimiento:nz(val('p-fnac')), sexo:nz(val('p-sexo')),
+        genero:nz(val('p-genero')), estado_civil:nz(val('p-edocivil')),
+        nacionalidad:nz(val('p-nac')), ocupacion:nz(val('p-ocup')), escolaridad:nz(val('p-esco')),
+        telefono_principal:nz(val('p-tel1')), telefono_alterno:nz(val('p-tel2')), correo:nz(val('p-correo')),
+        calle:nz(val('p-calle')), num_exterior:nz(val('p-numext')), num_interior:nz(val('p-numint')),
+        colonia:nz(val('p-colonia')), municipio:nz(val('p-municipio')), estado:nz(val('p-estado')), codigo_postal:nz(val('p-cp')),
+        emergencia_nombre:nz(val('p-em-nombre')), emergencia_parentesco:nz(val('p-em-parentesco')),
+        emergencia_telefono:nz(val('p-em-tel')), emergencia_correo:nz(val('p-em-correo'))
+      };
+      var pi=await caSupa.from('pacientes').insert(pac).select().single();
+      if(pi.error){ throw pi.error; }
+      var pacienteId=pi.data.id;
+
+      // 3) Insertar episodio
+      var epi={
+        paciente_id:pacienteId, tipo_paciente:val('e-tipopac'),
+        tipo_atencion:val('e-tipoaten'), medico_tratante:nz(val('e-medico')),
+        especialidad:nz(val('e-esp')),
+        hospital:nz(val('e-hospital')), sucursal:nz(val('e-sucursal')),
+        cama:nz(val('e-cama')), habitacion:nz(val('e-habitacion')),
+        aseguradora:nz(val('e-aseguradora')), num_poliza:nz(val('e-poliza')),
+        num_siniestro:nz(val('e-siniestro')), ajustador:nz(val('e-ajustador')),
+        empresa_responsable:nz(val('e-empresa')),
+        resp_legal_tipo:val('e-rl-tipo'), resp_legal_nombre:nz(val('e-rl-nombre')),
+        resp_legal_telefono:nz(val('e-rl-tel')), resp_legal_correo:nz(val('e-rl-correo')),
+        resp_fin_nombre:nz(val('e-rf-nombre')), resp_fin_parentesco:nz(val('e-rf-parentesco')),
+        resp_fin_telefono:nz(val('e-rf-tel')), resp_fin_correo:nz(val('e-rf-correo')),
+        resp_fin_rfc:nz(val('e-rf-rfc')), resp_fin_domicilio_fiscal:nz(val('e-rf-domfiscal'))
+      };
+      var ei=await caSupa.from('episodios').insert(epi).select().single();
+      if(ei.error){ throw ei.error; }
+
+      // 4) Folio: AL-AÑO-NNNNNN
+      var anio=new Date(ei.data.ingreso_en||Date.now()).getFullYear();
+      var folio='AL-'+anio+'-'+String(ei.data.numero).padStart(6,'0');
+
+      // 5) Mostrar éxito
+      $('x-folio').textContent=folio; $('x-mrn').textContent=mrn;
+      $('d-folio').textContent=folio; $('d-mrn').textContent=mrn;
+      $('form-zone').style.display='none';
+      $('done').style.display='block';
+    }catch(e){
+      console.log('GUARDAR ERROR:',e);
+      msg.className='msg err';
+      msg.textContent='Error al guardar: '+((e&&e.message)?e.message:e);
+    }
+    saveBtn.disabled=false; saveBtn.textContent='Guardar admisión';
+  });
+
+  $('btn-new').addEventListener('click', function(){ location.reload(); });
+})();
+</script>
+</body>
+</html>
