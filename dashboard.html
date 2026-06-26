@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ALEJANDRÍA · Sistema Hospitalario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.31.0/tabler-icons.min.css">
+<style>
+  :root{
+    --navy:#0e2c47; --navy-deep:#0a2238; --navy-line:#1b3d5c;
+    --gold:#c7a35a; --blue:#1c5d99; --blue-deep:#184f83;
+    --ink:#0e2c47; --muted:#64748b; --soft:#94a3b8;
+    --page:#f4f6f8; --card:#ffffff; --line:#e4e9ee;
+    --ok:#1d7a4d; --ok-bg:#e7f3ec; --warn:#b9831f; --warn-bg:#faf1dd;
+    --danger:#b3261e; --danger-bg:#fdecea;
+    --sb:262px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--page);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  /* ===== SIDEBAR ===== */
+  .layout{display:flex;min-height:100vh}
+  .sidebar{width:var(--sb);flex:0 0 var(--sb);background:var(--navy);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40}
+  .brand{padding:26px 24px 18px}
+  .brand-row{display:flex;align-items:center;gap:13px}
+  .brand-mark{width:44px;height:44px;border-radius:11px;background:#fff;color:var(--navy);display:flex;align-items:center;justify-content:center;flex:0 0 44px}
+  .brand-mark i{font-size:24px}
+  .brand-name{font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:21px;letter-spacing:2.5px;line-height:1}
+  .brand-sub{color:#9fb3c8;font-size:9px;letter-spacing:2.5px;margin-top:6px}
+  .brand-rule{height:1px;background:var(--gold);width:34px;margin:18px 0 2px}
+
+  .nav{flex:1;overflow-y:auto;padding:8px 14px 18px}
+  .nav::-webkit-scrollbar{width:6px}
+  .nav::-webkit-scrollbar-thumb{background:#21456a;border-radius:3px}
+  .nav-group{margin-top:18px}
+  .nav-label{color:#6f8aa6;font-size:9.5px;letter-spacing:2px;padding:0 12px 8px;text-transform:uppercase}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;color:#c7d4e1;font-size:13.5px;cursor:pointer;transition:background .14s,color .14s;position:relative;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+  .nav-item i{font-size:18px;flex:0 0 18px;color:#8ba3bd;transition:color .14s}
+  .nav-item:hover{background:#15375a;color:#fff}
+  .nav-item:hover i{color:#cdb784}
+  .nav-item.active{background:#1c466e;color:#fff;box-shadow:inset 0 0 0 1px #2a5683}
+  .nav-item.active i{color:var(--gold)}
+  .nav-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);margin-left:auto;flex:0 0 6px}
+  .nav-soon{margin-left:auto;font-size:8.5px;letter-spacing:.5px;color:#5f7a96;border:1px solid #29476a;border-radius:20px;padding:1px 7px}
+
+  .userbox{padding:14px 18px;border-top:1px solid var(--navy-line);display:flex;align-items:center;gap:11px}
+  .avatar{width:38px;height:38px;border-radius:50%;background:#163a5d;border:1px solid #2a5683;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#cdb784;flex:0 0 38px}
+  .user-name{font-size:13px;font-weight:500;color:#fff;line-height:1.2}
+  .user-role{font-size:11px;color:#9fb3c8}
+
+  /* ===== MAIN ===== */
+  .main{flex:1;margin-left:var(--sb);min-width:0;display:flex;flex-direction:column}
+  .topbar{height:70px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:18px;padding:0 28px;position:sticky;top:0;z-index:30}
+  .crumb{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--muted)}
+  .crumb b{color:var(--ink);font-weight:600}
+  .crumb i{font-size:15px;color:var(--soft)}
+  .topspring{flex:1}
+  .search{display:flex;align-items:center;gap:8px;background:var(--page);border:1px solid var(--line);border-radius:9px;padding:8px 13px;color:var(--soft);min-width:210px}
+  .search input{border:none;background:none;outline:none;font-family:inherit;font-size:13px;color:var(--ink);width:100%}
+  .folio{display:flex;align-items:center;gap:9px;border:1px solid #e6d9b8;background:#faf6ec;border-radius:9px;padding:7px 13px}
+  .folio span{font-size:9px;letter-spacing:1.5px;color:#9a7b2e}
+  .folio b{font-size:13px;color:var(--ink);font-weight:600}
+  .perfil{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-size:13px}
+  .perfil span{font-size:9px;letter-spacing:1.5px;color:var(--soft)}
+  .perfil b{font-weight:600}
+
+  .content{flex:1;padding:30px 34px 50px;max-width:1180px}
+
+  /* ===== HOME VIEW ===== */
+  .eyebrow{font-size:11.5px;letter-spacing:2px;color:var(--blue);font-weight:600;text-transform:uppercase}
+  .greet{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:38px;letter-spacing:-.5px;margin:9px 0 8px;color:var(--ink)}
+  .greet-sub{color:var(--muted);font-size:15px;line-height:1.55;max-width:680px;margin:0 0 6px}
+  .sample{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--warn);background:var(--warn-bg);border-radius:20px;padding:3px 11px;margin-top:6px}
+
+  .section-head{display:flex;align-items:center;gap:14px;margin:34px 0 16px}
+  .section-head h2{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);margin:0;font-weight:600}
+  .section-head .ln{flex:1;height:1px;background:var(--line)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card-ic{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px}
+  .ic-blue{background:#e9f1fa;color:var(--blue)}
+  .ic-navy{background:#eef1f5;color:var(--navy)}
+  .ic-ok{background:var(--ok-bg);color:var(--ok)}
+  .ic-warn{background:var(--warn-bg);color:var(--warn)}
+  .ic-danger{background:var(--danger-bg);color:var(--danger)}
+  .card-num{font-size:30px;font-weight:600;line-height:1;color:var(--ink)}
+  .card-lab{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.4}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;margin-top:18px}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .panel-head h3{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:20px;margin:0;color:var(--ink)}
+  .panel-head .meta{font-size:13px;color:var(--soft)}
+
+  .beds{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+  .bed{border-radius:12px;padding:16px 10px;text-align:center;border:1.5px solid transparent}
+  .bed .n{font-size:18px;font-weight:600;line-height:1}
+  .bed .s{font-size:9.5px;letter-spacing:1px;margin-top:6px}
+  .bed.ocup{background:var(--navy);color:#fff}
+  .bed.ocup .s{color:#9fb3c8}
+  .bed.libre{background:#fff;border-color:#cfe6d8;color:var(--ok)}
+  .bed.aseo{background:var(--warn-bg);border-color:#ecdcb4;color:var(--warn)}
+  .bed.aisl{background:var(--danger-bg);border-color:#f3c9c4;color:var(--danger)}
+  .legend{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+  .chip{width:12px;height:12px;border-radius:4px}
+
+  /* ===== COTIZACIONES (iframe) ===== */
+  .frame-bar{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);margin-bottom:12px}
+  .frame-bar .live{display:inline-flex;align-items:center;gap:6px;color:var(--ok);background:var(--ok-bg);border-radius:20px;padding:3px 11px;font-size:11px;font-weight:500}
+  .framewrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;height:calc(100vh - 190px);min-height:520px}
+  .framewrap iframe{width:100%;height:100%;border:none;display:block}
+
+  /* ===== CONSTRUCTION ===== */
+  .construct{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:54px 30px;text-align:center;max-width:520px;margin:30px auto}
+  .construct .ic{width:64px;height:64px;border-radius:16px;background:#eef1f5;color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
+  .construct h3{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:23px;margin:0 0 6px}
+  .construct p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 auto;max-width:360px}
+  .construct .tag{display:inline-block;margin-top:16px;font-size:11px;letter-spacing:1px;color:var(--blue);background:#e9f1fa;border-radius:20px;padding:4px 14px;text-transform:uppercase}
+
+  .hide{display:none}
+
+  /* mobile */
+  .menu-btn{display:none;background:none;border:none;color:var(--ink);font-size:22px;cursor:pointer}
+  @media(max-width:900px){
+    .sidebar{transform:translateX(-100%);transition:transform .2s;box-shadow:0 0 40px rgba(0,0,0,.3)}
+    .sidebar.open{transform:translateX(0)}
+    .main{margin-left:0}
+    .menu-btn{display:block}
+    .search{display:none}
+    .beds{grid-template-columns:repeat(3,1fr)}
+    .content{padding:22px 18px 40px}
+    .greet{font-size:30px}
+  }
+  .scrim{display:none;position:fixed;inset:0;background:rgba(10,34,56,.45);z-index:35}
+  .scrim.show{display:block}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-row">
+        <div class="brand-mark"><i class="ti ti-plus"></i></div>
+        <div>
+          <div class="brand-name">ALEJANDRÍA</div>
+          <div class="brand-sub">SISTEMA HOSPITALARIO</div>
+        </div>
+      </div>
+      <div class="brand-rule"></div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="nav-group" style="margin-top:6px">
+        <button class="nav-item active" data-view="dashboard"><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Atención al paciente</div>
+        <button class="nav-item" data-view="soon" data-name="Pacientes"><i class="ti ti-users"></i> Pacientes <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Admisión"><i class="ti ti-door-enter"></i> Admisión <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="cotizaciones"><i class="ti ti-file-text"></i> Cotizaciones <span class="nav-dot" title="Activo"></span></button>
+        <button class="nav-item" data-view="soon" data-name="Cuenta del paciente"><i class="ti ti-receipt"></i> Cuenta del paciente <span class="nav-soon">pronto</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Clínico</div>
+        <button class="nav-item" data-view="soon" data-name="Expediente médico" data-exists="1"><i class="ti ti-stethoscope"></i> Expediente médico <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Enfermería" data-exists="1"><i class="ti ti-activity"></i> Enfermería <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Laboratorio"><i class="ti ti-flask"></i> Laboratorio <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Imagenología"><i class="ti ti-photo"></i> Imagenología <span class="nav-soon">pronto</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Operación</div>
+        <button class="nav-item" data-view="soon" data-name="Almacén / Farmacia"><i class="ti ti-package"></i> Almacén / Farmacia <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Órdenes de compra"><i class="ti ti-shopping-cart"></i> Órdenes de compra <span class="nav-soon">pronto</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Finanzas</div>
+        <button class="nav-item" data-view="soon" data-name="Finanzas"><i class="ti ti-chart-bar"></i> Finanzas <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Facturación"><i class="ti ti-file-invoice"></i> Facturación <span class="nav-soon">pronto</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Sistema</div>
+        <button class="nav-item" data-view="soon" data-name="Administración" data-exists="1"><i class="ti ti-settings"></i> Administración <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Auditoría"><i class="ti ti-shield-check"></i> Auditoría <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="soon" data-name="Capital Humano"><i class="ti ti-users-group"></i> Capital Humano <span class="nav-soon">pronto</span></button>
+      </div>
+    </nav>
+
+    <div class="userbox">
+      <div class="avatar">SS</div>
+      <div>
+        <div class="user-name">Santiago Sandoval</div>
+        <div class="user-role">Dirección</div>
+      </div>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Menú"><i class="ti ti-menu-2"></i></button>
+      <div class="crumb"><span>Alejandría</span> <i class="ti ti-chevron-right"></i> <b id="crumbNow">Inicio</b></div>
+      <div class="topspring"></div>
+      <div class="search"><i class="ti ti-search"></i><input placeholder="Buscar paciente, folio…"></div>
+      <div class="folio"><span>FOLIO</span><b>AL-1042</b></div>
+      <div class="perfil"><span>PERFIL</span><b>Dirección</b></div>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- HOME -->
+      <section id="view-home">
+        <div class="eyebrow" id="todayLine">JUEVES, 26 DE JUNIO DE 2026</div>
+        <h1 class="greet" id="greet">Hola, Santiago</h1>
+        <p class="greet-sub">Centro de control hospitalario · perfil <b>Dirección</b>. Vista administrativa con panorama operativo, clínico y financiero.</p>
+        <div class="sample"><i class="ti ti-info-circle"></i> Datos de muestra · aún sin conectar a la base</div>
+
+        <div class="section-head"><h2>Área hospitalaria</h2><div class="ln"></div></div>
+        <div class="cards">
+          <div class="card"><div class="card-ic ic-blue"><i class="ti ti-activity-heartbeat"></i></div><div class="card-num">78%</div><div class="card-lab">Ocupación hospitalaria</div></div>
+          <div class="card"><div class="card-ic ic-navy"><i class="ti ti-bed"></i></div><div class="card-num">39</div><div class="card-lab">Camas ocupadas</div></div>
+          <div class="card"><div class="card-ic ic-ok"><i class="ti ti-bed-off"></i></div><div class="card-num">9</div><div class="card-lab">Camas disponibles</div></div>
+          <div class="card"><div class="card-ic ic-warn"><i class="ti ti-droplet"></i></div><div class="card-num">1</div><div class="card-lab">Camas en limpieza</div></div>
+          <div class="card"><div class="card-ic ic-danger"><i class="ti ti-shield"></i></div><div class="card-num">1</div><div class="card-lab">Aislamientos</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Mapa de camas</h3><div class="meta">39 / 50 ocupadas</div></div>
+          <div class="beds" id="beds"></div>
+          <div class="legend">
+            <span><span class="chip" style="background:var(--navy)"></span> Ocupada</span>
+            <span><span class="chip" style="background:#fff;border:1.5px solid #cfe6d8"></span> Libre</span>
+            <span><span class="chip" style="background:var(--warn-bg);border:1.5px solid #ecdcb4"></span> Aseo</span>
+            <span><span class="chip" style="background:var(--danger-bg);border:1.5px solid #f3c9c4"></span> Aislamiento</span>
+          </div>
+        </div>
+
+        <div class="section-head"><h2>Área quirúrgica</h2><div class="ln"></div></div>
+        <div class="cards">
+          <div class="card"><div class="card-ic ic-blue"><i class="ti ti-cut"></i></div><div class="card-num">1</div><div class="card-lab">Quirófanos activos</div></div>
+          <div class="card"><div class="card-ic ic-navy"><i class="ti ti-calendar-event"></i></div><div class="card-num">6</div><div class="card-lab">Cirugías programadas hoy</div></div>
+          <div class="card"><div class="card-ic ic-ok"><i class="ti ti-activity"></i></div><div class="card-num">1</div><div class="card-lab">Cirugías en curso</div></div>
+          <div class="card"><div class="card-ic ic-warn"><i class="ti ti-clock"></i></div><div class="card-num">82<span style="font-size:15px"> min</span></div><div class="card-lab">Tiempo promedio</div></div>
+        </div>
+      </section>
+
+      <!-- COTIZACIONES -->
+      <section id="view-cotizaciones" class="hide">
+        <div class="eyebrow">Atención al paciente</div>
+        <h1 class="greet" style="font-size:30px;margin-bottom:12px">Cotizaciones</h1>
+        <div class="frame-bar"><span class="live"><i class="ti ti-circle-check"></i> Módulo activo</span> Cargado desde el sistema actual.</div>
+        <div class="framewrap"><iframe id="cotizaFrame" title="Cotizaciones"></iframe></div>
+      </section>
+
+      <!-- CONSTRUCTION -->
+      <section id="view-soon" class="hide">
+        <div class="construct">
+          <div class="ic"><i class="ti ti-tools"></i></div>
+          <h3 id="soonTitle">Módulo en construcción</h3>
+          <p id="soonText">Esta sección es parte del plan del sistema. La construiremos en una próxima etapa.</p>
+          <div class="tag">Próximamente</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function $(id){return document.getElementById(id);}
+
+  // Saludo según la hora + fecha en español
+  try{
+    var h=new Date().getHours();
+    var saludo = (h<6||h>=20) ? 'Buenas noches' : (h<12 ? 'Buenos días' : 'Buenas tardes');
+    $('greet').textContent = saludo + ', Santiago';
+    var f=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    $('todayLine').textContent = f.toUpperCase();
+  }catch(e){}
+
+  // Mapa de camas (datos de muestra)
+  var estados=['ocup','ocup','ocup','libre','ocup','aseo','ocup','aisl','ocup','ocup','libre','ocup'];
+  var etiquetas={ocup:'OCUP.',libre:'LIBRE',aseo:'ASEO',aisl:'AISL.'};
+  var beds=$('beds'), html='';
+  for(var i=0;i<estados.length;i++){
+    var st=estados[i];
+    html+='<div class="bed '+st+'"><div class="n">'+(i+1)+'</div><div class="s">'+etiquetas[st]+'</div></div>';
+  }
+  beds.innerHTML=html;
+
+  // Navegación entre vistas
+  var views={home:$('view-home'),cotizaciones:$('view-cotizaciones'),soon:$('view-soon')};
+  var crumb=$('crumbNow');
+  var frame=$('cotizaFrame'), frameLoaded=false;
+  function setView(v,label){
+    for(var k in views){views[k].classList.add('hide');}
+    if(v==='dashboard'){views.home.classList.remove('hide');crumb.textContent='Inicio';}
+    else if(v==='cotizaciones'){
+      views.cotizaciones.classList.remove('hide');crumb.textContent='Cotizaciones';
+      if(!frameLoaded){frame.src='index.html';frameLoaded=true;}
+    } else {
+      views.soon.classList.remove('hide');crumb.textContent=label||'Módulo';
+      $('soonTitle').textContent=label||'Módulo en construcción';
+      var exists=this&&this.getAttribute&&this.getAttribute('data-exists')==='1';
+      $('soonText').textContent = exists
+        ? 'Este módulo ya existe dentro del sistema actual. Lo conectaremos al dashboard en un próximo paso.'
+        : 'Esta sección es parte del plan del sistema. La construiremos en una próxima etapa.';
+    }
+    window.scrollTo(0,0);
+  }
+
+  var items=document.querySelectorAll('.nav-item');
+  items.forEach(function(btn){
+    btn.addEventListener('click',function(){
+      items.forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      var v=btn.getAttribute('data-view');
+      setView.call(btn, v, btn.getAttribute('data-name'));
+      // cerrar menú en móvil
+      $('sidebar').classList.remove('open');$('scrim').classList.remove('show');
+    });
+  });
+
+  // Menú móvil
+  $('menuBtn').addEventListener('click',function(){$('sidebar').classList.add('open');$('scrim').classList.add('show');});
+  $('scrim').addEventListener('click',function(){$('sidebar').classList.remove('open');$('scrim').classList.remove('show');});
+})();
+</script>
+</body>
+</html>
