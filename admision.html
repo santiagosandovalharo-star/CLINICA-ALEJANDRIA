@@ -138,6 +138,16 @@
   .cons-row input{width:auto;margin:0}
   .cons-req{color:var(--danger);font-size:10.5px}
 
+  .cap-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #eef2f6}
+  .cap-row:last-child{border-bottom:none}
+  .cap-info{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted)}
+  .cap-ic{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--soft)}
+  .cap-actions{display:flex;align-items:center;gap:10px}
+  .cap-thumb{width:42px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+  .cap-btn{font-family:inherit;font-size:12px;padding:7px 12px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:8px;cursor:pointer}
+  .cap-btn:hover{background:#eef4fb}
+  .cap-btn:disabled{opacity:.6;cursor:default}
+
   .hide{display:none}
   @media(max-width:680px){.grid{grid-template-columns:1fr 1fr}.auto{grid-template-columns:1fr 1fr}}
 </style>
@@ -355,7 +365,13 @@
       <div><div class="id-lab">Folio del episodio</div><div class="id-val" id="d-folio">—</div></div>
       <div><div class="id-lab">Número de expediente</div><div class="id-val" id="d-mrn">—</div></div>
     </div>
-    <button class="btn btn-sec" id="btn-new">Registrar otra admisión</button>
+    <div id="doc-capture" style="margin-top:26px;text-align:left;max-width:520px;margin-left:auto;margin-right:auto">
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px">Documentos del episodio</div>
+      <div style="font-size:12px;color:var(--soft);margin-bottom:12px">Capturá con la cámara o subí cada documento firmado. Se limpian a escala de grises y se guardan en este episodio.</div>
+      <div id="doc-cap-list"></div>
+    </div>
+
+    <button class="btn btn-sec" id="btn-new" style="margin-top:22px">Registrar otra admisión</button>
   </div>
 </div>
 
@@ -498,6 +514,59 @@
       l.appendChild(row);
     });
   })();
+
+  /* ---- CAPTURA DE DOCUMENTOS (cámara + escaneo + Storage) ---- */
+  var ultimoEpisodioId=null, ultimoPacienteId=null;
+  function renderCaptura(){
+    var l=$('doc-cap-list'); if(!l)return; l.innerHTML='';
+    DOCS.forEach(function(tipo){
+      var row=document.createElement('div'); row.className='cap-row';
+      row.innerHTML='<div class="cap-info"><span class="cap-ic">\u25CB</span><span>'+tipo+'</span></div><div class="cap-actions"><img class="cap-thumb" alt="" style="display:none"><button class="cap-btn" type="button">Capturar</button><input type="file" accept="image/*" capture="environment" style="display:none"></div>';
+      var btn=row.querySelector('.cap-btn'), inp=row.querySelector('input'), thumb=row.querySelector('.cap-thumb'), ic=row.querySelector('.cap-ic');
+      btn.addEventListener('click',function(){inp.click();});
+      inp.addEventListener('change',function(){ if(inp.files&&inp.files[0]){ procesarYsubir(inp.files[0],tipo,btn,thumb,ic); } });
+      l.appendChild(row);
+    });
+  }
+  function procesarYsubir(file,tipo,btn,thumb,ic){
+    btn.disabled=true; btn.textContent='Procesando...';
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var img=new Image();
+      img.onload=function(){
+        var maxW=1400, scale=Math.min(1,maxW/img.width);
+        var canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+        var ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        try{
+          var dataObj=ctx.getImageData(0,0,canvas.width,canvas.height), d=dataObj.data;
+          var contrast=1.35, intercept=128*(1-contrast);
+          for(var i=0;i<d.length;i+=4){
+            var g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+            g=g*contrast+intercept; if(g<0)g=0; if(g>255)g=255;
+            d[i]=d[i+1]=d[i+2]=g;
+          }
+          ctx.putImageData(dataObj,0,0);
+        }catch(e){ console.log('filtro',e); }
+        thumb.src=canvas.toDataURL('image/jpeg',0.8); thumb.style.display='inline-block';
+        canvas.toBlob(async function(blob){
+          if(!blob){ btn.textContent='Reintentar'; btn.disabled=false; return; }
+          btn.textContent='Subiendo...';
+          try{
+            var ruta=ultimoEpisodioId+'/'+tipo.replace(/[^a-zA-Z0-9]/g,'_')+'_'+Date.now()+'.jpg';
+            var up=await caSupa.storage.from('documentos').upload(ruta,blob,{contentType:'image/jpeg'});
+            if(up.error)throw up.error;
+            await caSupa.from('documentos').insert({episodio_id:ultimoEpisodioId,paciente_id:ultimoPacienteId,tipo:tipo,nombre_archivo:(file.name||'captura.jpg'),ruta:ruta,estado:'Recibido'});
+            ic.textContent='\u2713'; ic.style.color='#fff'; ic.style.background='#1d7a4d'; ic.style.borderColor='#1d7a4d';
+            btn.textContent='Recapturar'; btn.disabled=false;
+          }catch(err){ console.log('subir documento',err); btn.textContent='Reintentar'; btn.disabled=false; alert('No se pudo guardar el documento: '+((err&&err.message)?err.message:err)); }
+        },'image/jpeg',0.8);
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 
   /* ---- BUSCAR / CARGAR PACIENTE EXISTENTE ---- */
   function setv(id,v){var e=$(id);if(e)e.value=(v==null?'':v);}
@@ -674,6 +743,7 @@
       $('d-folio').textContent=folio; $('d-mrn').textContent=mrn;
       $('form-zone').style.display='none';
       $('done').style.display='block';
+      ultimoEpisodioId=ei.data.id; ultimoPacienteId=pacienteId; renderCaptura();
     }catch(e){
       console.log('GUARDAR ERROR:',e);
       msg.className='msg err';
