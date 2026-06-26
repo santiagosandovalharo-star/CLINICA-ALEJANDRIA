@@ -313,14 +313,14 @@
       <div class="nav-group">
         <div class="nav-label">Atención al paciente</div>
         <button class="nav-item" data-view="soon" data-name="Pacientes"><i class="ti ti-users"></i> Pacientes <span class="nav-soon">pronto</span></button>
-        <button class="nav-item" data-view="soon" data-name="Admisión"><i class="ti ti-door-enter"></i> Admisión <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="admision"><i class="ti ti-door-enter"></i> Admisión <span class="nav-dot" title="Activo"></span></button>
         <button class="nav-item" data-view="cotizaciones"><i class="ti ti-file-text"></i> Cotizaciones <span class="nav-dot" title="Activo"></span></button>
         <button class="nav-item" data-view="soon" data-name="Cuenta del paciente"><i class="ti ti-receipt"></i> Cuenta del paciente <span class="nav-soon">pronto</span></button>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Clínico</div>
-        <button class="nav-item" data-view="soon" data-name="Expediente médico" data-exists="1"><i class="ti ti-stethoscope"></i> Expediente médico <span class="nav-soon">pronto</span></button>
+        <button class="nav-item" data-view="expediente"><i class="ti ti-stethoscope"></i> Expediente médico <span class="nav-dot" title="Activo"></span></button>
         <button class="nav-item" data-view="soon" data-name="Enfermería" data-exists="1"><i class="ti ti-activity"></i> Enfermería <span class="nav-soon">pronto</span></button>
         <button class="nav-item" data-view="soon" data-name="Laboratorio"><i class="ti ti-flask"></i> Laboratorio <span class="nav-soon">pronto</span></button>
         <button class="nav-item" data-view="soon" data-name="Imagenología"><i class="ti ti-photo"></i> Imagenología <span class="nav-soon">pronto</span></button>
@@ -414,6 +414,22 @@
         <div class="framewrap"><iframe id="cotizaFrame" title="Cotizaciones"></iframe></div>
       </section>
 
+      <!-- EXPEDIENTE -->
+      <section id="view-expediente" class="hide">
+        <div class="eyebrow">Clínico</div>
+        <h1 class="greet" style="font-size:30px;margin-bottom:12px">Expediente médico</h1>
+        <div class="frame-bar"><span class="live"><i class="ti ti-circle-check"></i> Módulo activo</span> Registro clínico del paciente.</div>
+        <div class="framewrap"><iframe id="expedienteFrame" title="Expediente médico"></iframe></div>
+      </section>
+
+      <!-- ADMISIÓN -->
+      <section id="view-admision" class="hide">
+        <div class="eyebrow">Atención al paciente</div>
+        <h1 class="greet" style="font-size:30px;margin-bottom:12px">Admisión</h1>
+        <div class="frame-bar"><span class="live"><i class="ti ti-circle-check"></i> Módulo activo</span> Registro de pacientes y episodios.</div>
+        <div class="framewrap"><iframe id="admisionFrame" title="Admisión"></iframe></div>
+      </section>
+
       <!-- CONSTRUCTION -->
       <section id="view-soon" class="hide">
         <div class="construct">
@@ -452,15 +468,25 @@
   beds.innerHTML=html;
 
   // Navegación entre vistas
-  var views={home:$('view-home'),cotizaciones:$('view-cotizaciones'),soon:$('view-soon')};
+  var views={home:$('view-home'),cotizaciones:$('view-cotizaciones'),expediente:$('view-expediente'),admision:$('view-admision'),soon:$('view-soon')};
   var crumb=$('crumbNow');
   var frame=$('cotizaFrame'), frameLoaded=false;
+  var expFrame=$('expedienteFrame'), expLoaded=false;
+  var admFrame=$('admisionFrame'), admLoaded=false;
   function setView(v,label){
     for(var k in views){views[k].classList.add('hide');}
     if(v==='dashboard'){views.home.classList.remove('hide');crumb.textContent='Inicio';}
     else if(v==='cotizaciones'){
       views.cotizaciones.classList.remove('hide');crumb.textContent='Cotizaciones';
       if(!frameLoaded){frame.src='index.html';frameLoaded=true;}
+    }
+    else if(v==='expediente'){
+      views.expediente.classList.remove('hide');crumb.textContent='Expediente médico';
+      if(!expLoaded){expFrame.src='expediente.html';expLoaded=true;}
+    }
+    else if(v==='admision'){
+      views.admision.classList.remove('hide');crumb.textContent='Admisión';
+      if(!admLoaded){admFrame.src='admision.html';admLoaded=true;}
     } else {
       views.soon.classList.remove('hide');crumb.textContent=label||'Módulo';
       $('soonTitle').textContent=label||'Módulo en construcción';
