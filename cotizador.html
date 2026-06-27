@@ -4604,10 +4604,10 @@ $('btn-opt').addEventListener('click',function(){
     if(fz)fz.addEventListener('click',function(){ resEl.innerHTML='<span style="color:var(--warn)">&#10004; Forzado por Dirección. Activá Modo manual para ajustar precios.</span>'; setManual(true); });
     return;
   }
+  var avisoCaso2='';
   if(target < pisos.pisoReal){
-    // CASO 2: posible reduciendo cantidades — solo avisa, continúa el optimizador.
-    resEl.innerHTML='<div style="border:1px solid #f0d9a8;background:#fff7e6;border-radius:8px;padding:10px 12px;color:#9a6a00;font-size:12px">'
-      +'&#9888; Para llegar a '+fmt(target)+' hay que reducir cantidades. Costo actual del caso: <b>'+fmt(pisos.pisoReal)+'</b> &middot; mínimo posible: <b>'+fmt(pisos.pisoAbsoluto)+'</b>. Optimizando&hellip;</div>';
+    // CASO 2: posible reduciendo cantidades — guardamos el aviso para no perderlo.
+    avisoCaso2='<br><span style="color:#9a6a00">&#9888; El objetivo está por debajo del costo del caso completo ('+fmt(pisos.pisoReal)+'); se reducen cantidades para acercarse.</span>';
   }
   // --- fin alerta de viabilidad ---
   saveVersion('Pre-optimizacion');
@@ -4643,7 +4643,7 @@ $('btn-opt').addEventListener('click',function(){
     msg+='<span style="color:var(--warn)">&#9888; Ya no se pueden bajar mas las cantidades (varias quedaron en 1). Para acercarte mas, activa el <b>Modo manual</b> y ajusta los precios a mano.</span>'
        +'<br><button class="btn-opt" id="btn-manual2" style="margin-top:6px">&#9999; Activar modo manual</button>';
   }
-  $('opt-res').innerHTML=msg;
+  $('opt-res').innerHTML=msg+avisoCaso2;
   var bm2=$('btn-manual2');if(bm2)bm2.addEventListener('click',function(){setManual(true);$('opt-res').innerHTML+='<br><span style="color:var(--warn)">&#10004; Modo manual activado: edita los precios unitarios directo en la tabla.</span>';});
 });
 
