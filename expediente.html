@@ -273,6 +273,11 @@ window.caSupa=caSupa;
             <span class="exp-msg" id="con-chk-msg"></span>
           </div>
           <hr style="border:none;border-top:1px solid #d8e0e6;margin:10px 0">
+          <div class="ant-h">Procedimiento &middot; consentimientos requeridos</div>
+          <div class="exp-f"><label>Procedimiento programado</label><select id="mc-proc"><option value="">-- Selecciona --</option></select></div>
+          <div id="mc-list" style="margin:8px 0"></div>
+          <div id="mc-empty" style="font-size:12px;color:#5a6474;margin:4px 0">Elige un procedimiento para ver los consentimientos que exige.</div>
+          <hr style="border:none;border-top:1px solid #d8e0e6;margin:10px 0">
           <div class="ant-h">CI-020 &middot; Consentimiento informado y carta responsiva (tercer pagador)</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
             <button type="button" id="con-traer" class="exp-btn exp-btn-sec">Traer datos del paciente (de la Ficha)</button>
@@ -2886,6 +2891,64 @@ window.caSupa=caSupa;
 <script>
 /* Abrir el panel del expediente automaticamente al cargar */
 setTimeout(function(){ var f=document.getElementById('exp-fab'); if(f) f.click(); }, 200);
+</script>
+<script>
+/* ===== Motor de consentimientos por procedimiento (aditivo · D2) ===== */
+(function initMotorConsent(){
+  function escc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  var sel=document.getElementById('mc-proc');
+  if(!sel) return;
+  var listEl=document.getElementById('mc-list'), emptyEl=document.getElementById('mc-empty');
+  if(!window.caSupa){ if(emptyEl)emptyEl.textContent='Sin conexion a la nube. Inicia sesion para usar el motor.'; return; }
+
+  (async function(){
+    try{
+      var r=await window.caSupa.from('procedimientos').select('clave,nombre,categoria').eq('vigente',true).order('nombre');
+      if(r.error) throw r.error;
+      (r.data||[]).forEach(function(p){
+        var o=document.createElement('option');
+        o.value=p.clave; o.textContent=p.nombre+(p.categoria?(' \u00b7 '+p.categoria):'');
+        sel.appendChild(o);
+      });
+    }catch(e){ console.log('motor: procedimientos',e); }
+  })();
+
+  sel.addEventListener('change', async function(){
+    var clave=sel.value;
+    listEl.innerHTML='';
+    if(!clave){ emptyEl.style.display='block'; emptyEl.textContent='Elige un procedimiento para ver los consentimientos que exige.'; return; }
+    emptyEl.style.display='block'; emptyEl.textContent='Consultando reglas\u2026';
+    try{
+      var rr=await window.caSupa.from('reglas_consentimiento').select('tipo_clave,obligatorio,nota').eq('procedimiento_clave',clave);
+      if(rr.error) throw rr.error;
+      var reglas=rr.data||[];
+      if(!reglas.length){ emptyEl.textContent='Este procedimiento no tiene consentimientos configurados.'; return; }
+      var claves=reglas.map(function(x){return x.tipo_clave;});
+      var tt=await window.caSupa.from('tipos_consentimiento').select('clave,nombre').in('clave',claves);
+      var nombres={}; (tt.data||[]).forEach(function(t){ nombres[t.clave]=t.nombre; });
+      reglas.sort(function(a,b){ return (a.obligatorio===b.obligatorio)?0:(a.obligatorio?-1:1); });
+      var oblig=reglas.filter(function(x){return x.obligatorio;}).length, cond=reglas.length-oblig;
+      emptyEl.style.display='none';
+      var head='<div style="font-size:12px;color:#5a6474;margin-bottom:8px">El motor encontro <b>'+reglas.length+'</b> consentimiento(s): '+oblig+' obligatorio(s)'+(cond?(' \u00b7 '+cond+' condicional(es)'):'')+'.</div>';
+      var cards=reglas.map(function(x){
+        var nom=nombres[x.tipo_clave]||x.tipo_clave;
+        var color=x.obligatorio?'#b3261e':'#9a6a00';
+        var bg=x.obligatorio?'#fdecea':'#fff7e6';
+        var bd=x.obligatorio?'#e9a59c':'#f0d9a8';
+        var etiqueta=x.obligatorio?'Obligatorio':'Si aplica';
+        var dot=x.obligatorio?'\u25CF':'\u25CB';
+        var nota=x.nota?('<div style="font-size:11px;color:#5a6474;margin-top:3px">'+escc(x.nota)+'</div>'):'';
+        return '<div style="display:flex;align-items:flex-start;gap:10px;border:1px solid '+bd+';background:'+bg+';border-radius:8px;padding:10px 12px;margin-bottom:7px">'
+          +'<span style="color:'+color+';font-size:13px;line-height:1.5">'+dot+'</span>'
+          +'<div style="flex:1"><div style="font-size:13px;font-weight:600;color:#1a2b3c">'+escc(nom)+'</div>'+nota+'</div>'
+          +'<span style="font-size:10.5px;color:'+color+';background:#fff;border:1px solid '+bd+';border-radius:20px;padding:2px 9px;white-space:nowrap">'+etiqueta+'</span>'
+          +'</div>';
+      }).join('');
+      var foot='<div style="font-size:11px;color:#8a94a0;margin-top:4px">Pendiente de generar y firmar. El llenado y guardado llegan en la siguiente fase.</div>';
+      listEl.innerHTML=head+cards+foot;
+    }catch(e){ console.log('motor: reglas',e); emptyEl.style.display='block'; emptyEl.textContent='No se pudieron leer las reglas.'; }
+  });
+})();
 </script>
 </body>
 </html>
