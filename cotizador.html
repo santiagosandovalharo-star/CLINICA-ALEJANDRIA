@@ -4481,6 +4481,15 @@ function render(){
   tb.innerHTML='';
   cart.forEach(function(it){
     var cU=it.c,cT=cU*it.q;
+    var diasEstancia=(window.recorrido?(window.recorrido.urg+window.recorrido.rec+window.recorrido.ter+window.recorrido.pis+window.recorrido.ais):0);
+    var flagQtyMax=(it.q>10);
+    var flagQtyDay=(diasEstancia>0 && it.q>diasEstancia);
+    var flagQty=(flagQtyMax||flagQtyDay);
+    var flagCostU=((Number(cU)||0)>1000);
+    var qTip=flagQty?('title="Revisar cantidad: '+(flagQtyMax?'mayor a 10 unidades':'')+(flagQtyMax&&flagQtyDay?' y ':'')+(flagQtyDay?('mas de 1 por dia ('+it.q+' uds / '+diasEstancia+' dias)'):'')+'"'):'';
+    var qBg=flagQty?' style="background:#ffd9b3"':'';
+    var cuTip=flagCostU?' title="Costo unitario alto (mayor a $1,000)"':'';
+    var cuBg=flagCostU?'background:#ffd9b3;':'';
     var precioU=it.p;
     var precioT=precioU*it.q;
     var descT=Math.round(precioT*desc*100)/100;
@@ -4505,14 +4514,14 @@ function render(){
     h+='<td class="no-print" style="font-size:9px;color:#888">'+it.cl+'</td>';
     h+='<td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+it.n+'">'+it.n+'</td>';
     h+='<td class="no-print"><span class="cat">'+it.cat+'</span></td>';
-    h+='<td class="c"><input class="tq no-print" type="number" min="1" value="'+it.q+'" data-cl="'+it.cl+'"><span class="print-only">'+it.q+'</span></td>';
+    h+='<td class="c"'+qBg+' '+qTip+'><input class="tq no-print" type="number" min="1" value="'+it.q+'" data-cl="'+it.cl+'"><span class="print-only">'+it.q+'</span></td>';
     var bcNote=bajoCosto?'<div class="no-print" style="font-size:9px;color:var(--warn);margin-top:2px;line-height:1.2;white-space:normal">&#9888; Este concepto quedo por debajo de su costo ('+fmt(cU)+').</div>':'';
     if(optManual){
       h+='<td class="r no-print"><input class="tp no-print" type="number" min="0" step="0.01" value="'+precioU+'" data-cl="'+it.cl+'" style="width:84px;text-align:right;border:1px solid var(--warn);border-radius:5px;padding:2px 4px"><span class="print-only">'+fmt(precioU)+'</span>'+bcNote+'</td>';
     }else{
       h+='<td class="r no-print">'+fmt(precioU)+bcNote+'</td>';
     }
-    h+='<td class="r cost-col no-print"'+(hideCost?' style="display:none"':'')+'>'+fmt(cU)+'</td>';
+    h+='<td class="r cost-col no-print"'+(hideCost?' style="display:none"':' style="'+cuBg+'"')+cuTip+'>'+fmt(cU)+'</td>';
     h+='<td class="r">'+fmt(precioT)+'</td>';
     h+='<td class="r" style="color:var(--err)">-'+fmt(descT)+'</td>';
     h+='<td class="r no-print" style="font-weight:600;color:var(--pri2)">'+fmt(subT)+'</td>';
@@ -7724,6 +7733,7 @@ function leerRecorrido(){
   });
   var td=document.getElementById('rec-tot-dias'); if(td)td.textContent=totDias;
   var th=document.getElementById('rec-tot-hrs'); if(th)th.textContent=qhrs;
+  if(typeof render==='function')render();
 }
 /* Conecta los checkboxes e inputs del recorrido */
 ['urg','qui','rec','ter','pis','ais'].forEach(function(a){
