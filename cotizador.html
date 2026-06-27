@@ -4468,6 +4468,8 @@ function addToCart(x,q){var e=cart.find(function(c){return c.n===x.n;});if(e)e.q
 
 /* ====== RENDER ====== */
 function render(){
+  var _scrollY=window.scrollY;
+  var _focusCl=(document.activeElement&&document.activeElement.dataset)?document.activeElement.dataset.cl:null,_focusClass=(document.activeElement)?document.activeElement.className:null;
   var tb=$('tbody'),tf=$('tfoot'),emp=$('empty-t');
   var iva=ivaR(),desc=descR(),hon=honR();
   var perfil=$('sel-perfil').value;
@@ -4534,7 +4536,7 @@ function render(){
     tr.innerHTML=h;
 
     var qi=tr.querySelector('.tq');
-    if(qi)qi.addEventListener('change',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.q=Math.max(1,parseInt(this.value)||1);bumpVer();render();}});
+    if(qi)qi.addEventListener('input',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.q=Math.max(1,parseInt(this.value)||1);bumpVer();render();}});
     var ppi=tr.querySelector('.tp');
     if(ppi)ppi.addEventListener('change',function(){
       var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));
@@ -4573,6 +4575,8 @@ function render(){
   updateSidebar(cart.length,tPrecio,tDesc,tSub,tIVA,tHon,tUtil,tMarg,tTotal,tRent);
   // Update PDF summary
   if($('pdf-precio')){$('pdf-precio').textContent=fmt(tPrecio);$('pdf-desc').textContent='-'+fmt(tDesc);$('pdf-sub').textContent=fmt(tSub);$('pdf-iva').textContent=fmt(tIVA);$('pdf-total').textContent=fmt(tTotal);}
+  window.scrollTo(0,_scrollY);
+  if(_focusCl&&_focusClass){var _re=document.querySelector('.'+_focusClass.split(' ').join('.')+'[data-cl="'+_focusCl+'"]');if(_re){_re.focus();}}
 }
 
 function updateSidebar(n,precio,descuento,sub,iva,hon,util,marg,total,rent){
