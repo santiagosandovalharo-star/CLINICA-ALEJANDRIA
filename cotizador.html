@@ -4543,10 +4543,49 @@ function setManual(v){
 }
 var bmn=$('btn-manual');if(bmn)bmn.addEventListener('click',function(){setManual(!optManual);});
 
+/* Calcula los dos pisos de costo de una cotización (para alertas de viabilidad).
+   pisoReal     = costo con las cantidades REALES del carrito (+IVA)
+   pisoAbsoluto = costo con todo en cantidad 1 (+IVA) — el mínimo físico */
+function calcularPisos(){
+  var iva = ivaR();
+  var real = 0, abs = 0;
+  cart.forEach(function(it){
+    var c = Number(it.c) || 0;
+    real += c * it.q;
+    abs  += c * 1;
+  });
+  return {
+    pisoReal: real * (1 + iva),
+    pisoAbsoluto: abs * (1 + iva)
+  };
+}
+
 $('btn-opt').addEventListener('click',function(){
   var target=parseFloat($('opt-monto').value);
   if(!target||target<=0){alert('Ingresa un monto objetivo valido');return;}
   if(!cart.length){alert('Agrega conceptos primero');return;}
+  // --- Alerta de viabilidad: compara el objetivo contra los pisos de costo ---
+  var pisos = calcularPisos();
+  var resEl = $('opt-res'); resEl.style.display='block';
+  if(target < pisos.pisoAbsoluto){
+    // CASO 3: imposible — ni a cantidad 1 y a costo se llega. Solo Dirección puede forzar.
+    var esDir = (getRolActual()==='Dirección');
+    resEl.innerHTML='<div style="border:1px solid #e9a59c;background:#fdecea;border-radius:8px;padding:10px 12px;color:#b3261e;font-size:12px">'
+      +'&#9940; <b>Precio inviable.</b> A pesar de poner cantidades en 1 y precio a costo, no es posible llegar a ese precio final ('+fmt(target)+'). El piso real es <b>'+fmt(pisos.pisoAbsoluto)+'</b>.'
+      +(esDir
+         ? '<br><br><button class="btn-opt" id="opt-forzar" style="background:#b3261e">Forzar de todos modos (Dirección)</button>'
+         : '<br><br><span style="color:#7a1d16">Solo Dirección puede autorizar un precio por debajo del costo.</span>')
+      +'</div>';
+    var fz=$('opt-forzar');
+    if(fz)fz.addEventListener('click',function(){ resEl.innerHTML='<span style="color:var(--warn)">&#10004; Forzado por Dirección. Activá Modo manual para ajustar precios.</span>'; setManual(true); });
+    return;
+  }
+  if(target < pisos.pisoReal){
+    // CASO 2: posible reduciendo cantidades — solo avisa, continúa el optimizador.
+    resEl.innerHTML='<div style="border:1px solid #f0d9a8;background:#fff7e6;border-radius:8px;padding:10px 12px;color:#9a6a00;font-size:12px">'
+      +'&#9888; Para llegar a '+fmt(target)+' hay que reducir cantidades. Costo actual del caso: <b>'+fmt(pisos.pisoReal)+'</b> &middot; mínimo posible: <b>'+fmt(pisos.pisoAbsoluto)+'</b>. Optimizando&hellip;</div>';
+  }
+  // --- fin alerta de viabilidad ---
   saveVersion('Pre-optimizacion');
   var iva=ivaR(),desc=descR();
   function totalNow(){var t=0;cart.forEach(function(it){t+=it.p*(1-desc)*it.q*(1+iva);});return t;}
