@@ -274,6 +274,8 @@ tbody tr:hover{background:#eef3f8}
 tbody tr.m-ok{border-left:3px solid var(--accent)}
 tbody tr.m-wn{border-left:3px solid var(--warn)}
 tbody tr.m-err{border-left:3px solid var(--err)}
+tbody tr.bajo-costo td{background:#fff7e6}
+tbody tr.bajo-costo{border-left:3px solid var(--warn)}
 tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-size:10px}
 .tq{width:38px;text-align:center;font-size:10px;padding:2px;border:1px solid var(--brd);border-radius:3px}
 .td-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#bbb;padding:1px}
@@ -529,6 +531,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
     <div class="fbar" id="fbar"><span style="font-size:16px">&#128196;</span><div style="flex:1"><div class="fn" id="fname"></div><div style="font-size:9px;color:var(--accent)">Listo para analizar</div></div><button class="btn-az" id="btn-az">&#128270; Analizar</button><button class="btn-sm" id="btn-ch">Cambiar</button></div>
     <div class="log" id="lg"></div>
   </div>
+  <div id="bajo-costo-resumen" class="no-print" style="display:none;margin:4px 0 6px;font-size:11px;font-weight:700;color:var(--warn);background:#fff7e6;border:1px solid #f0d9a8;border-radius:6px;padding:6px 10px"></div>
   <div class="tw"><table><thead><tr>
     <th style="width:22px" class="no-print"></th>
     <th class="no-print">Clave</th><th>Concepto</th><th class="no-print">Cat.</th><th class="c">Cant</th>
@@ -4450,10 +4453,11 @@ function render(){
   var perfil=$('sel-perfil').value;
   var hideCost=(perfil==='capturista'||perfil==='medico');
 
-  if(!cart.length){tb.innerHTML='';tf.style.display='none';emp.style.display='';updateSidebar(0,0,0,0,0,0,0,0);return;}
+  if(!cart.length){tb.innerHTML='';tf.style.display='none';emp.style.display='';var _bcr=$('bajo-costo-resumen');if(_bcr){_bcr.style.display='none';_bcr.innerHTML='';}updateSidebar(0,0,0,0,0,0,0,0);return;}
   emp.style.display='none';tf.style.display='';
 
   var tQ=0,tCost=0,tPrecio=0,tDesc=0,tSub=0,tIVA=0,tTotal=0,tUtil=0,tHon=0;
+  var nBajo=0;
   tb.innerHTML='';
   cart.forEach(function(it){
     var cU=it.c,cT=cU*it.q;
@@ -4472,18 +4476,21 @@ function render(){
     var mc=marg>=25?'m-ok':marg>=10?'m-wn':'m-err';
     var mC=marg>=25?'var(--accent)':marg>=10?'var(--warn)':'var(--err)';
     var uC=uT>=0?'var(--accent)':'var(--err)';
+    var bajoCosto=(precioU<cU);
+    if(bajoCosto)nBajo++;
 
-    var tr=document.createElement('tr');tr.className=mc;
+    var tr=document.createElement('tr');tr.className=mc+(bajoCosto?' bajo-costo':'');
     var h='';
     h+='<td class="no-print c"><button class="td-lock'+(it.locked?' on':'')+'" data-cl="'+it.cl+'">'+(it.locked?'&#128274;':'&#128275;')+'</button></td>';
     h+='<td class="no-print" style="font-size:9px;color:#888">'+it.cl+'</td>';
     h+='<td style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+it.n+'">'+it.n+'</td>';
     h+='<td class="no-print"><span class="cat">'+it.cat+'</span></td>';
     h+='<td class="c"><input class="tq no-print" type="number" min="1" value="'+it.q+'" data-cl="'+it.cl+'"><span class="print-only">'+it.q+'</span></td>';
+    var bcNote=bajoCosto?'<div class="no-print" style="font-size:9px;color:var(--warn);margin-top:2px;line-height:1.2;white-space:normal">&#9888; Este concepto quedo por debajo de su costo ('+fmt(cU)+').</div>':'';
     if(optManual){
-      h+='<td class="r no-print"><input class="tp no-print" type="number" min="0" step="0.01" value="'+precioU+'" data-cl="'+it.cl+'" style="width:84px;text-align:right;border:1px solid var(--warn);border-radius:5px;padding:2px 4px"><span class="print-only">'+fmt(precioU)+'</span></td>';
+      h+='<td class="r no-print"><input class="tp no-print" type="number" min="0" step="0.01" value="'+precioU+'" data-cl="'+it.cl+'" style="width:84px;text-align:right;border:1px solid var(--warn);border-radius:5px;padding:2px 4px"><span class="print-only">'+fmt(precioU)+'</span>'+bcNote+'</td>';
     }else{
-      h+='<td class="r no-print">'+fmt(precioU)+'</td>';
+      h+='<td class="r no-print">'+fmt(precioU)+bcNote+'</td>';
     }
     h+='<td class="r">'+fmt(precioT)+'</td>';
     h+='<td class="r" style="color:var(--err)">-'+fmt(descT)+'</td>';
@@ -4499,13 +4506,30 @@ function render(){
     var qi=tr.querySelector('.tq');
     if(qi)qi.addEventListener('change',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.q=Math.max(1,parseInt(this.value)||1);bumpVer();render();}});
     var ppi=tr.querySelector('.tp');
-    if(ppi)ppi.addEventListener('change',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f){f.p=Math.max(0,parseFloat(this.value)||0);bumpVer();render();}});
+    if(ppi)ppi.addEventListener('change',function(){
+      var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));
+      if(!f)return;
+      var nuevo=Math.max(0,parseFloat(this.value)||0);
+      var costo=Number(f.c)||0;
+      if(nuevo<costo && getRolActual()!=='Dirección'){
+        // Bloqueo: solo Dirección puede vender bajo costo
+        alert('Este concepto («'+f.n+'») quedaría por debajo de su costo ('+fmt(costo)+'). Solo Dirección puede autorizar un precio bajo costo.');
+        this.value=f.p;   // revierte al precio anterior
+        return;
+      }
+      f.p=nuevo;
+      f.bajoCosto=(nuevo<costo);   // marca para el aviso visual
+      bumpVer();render();
+    });
     var db=tr.querySelector('.td-btn');
     if(db)db.addEventListener('click',function(){cart=cart.filter(function(c){return c.cl!==this.dataset.cl;}.bind(this));bumpVer();render();});
     var lb=tr.querySelector('.td-lock');
     if(lb)lb.addEventListener('click',function(){var f=cart.find(function(c){return c.cl===this.dataset.cl;}.bind(this));if(f)f.locked=!f.locked;render();});
     tb.appendChild(tr);
   });
+
+  var bcr=$('bajo-costo-resumen');
+  if(bcr){if(nBajo>0){bcr.style.display='';bcr.innerHTML='&#9888; '+nBajo+(nBajo===1?' concepto por debajo de costo.':' conceptos por debajo de costo.');}else{bcr.style.display='none';bcr.innerHTML='';}}
 
   var tMarg=tCost>0?((tUtil/tCost)*100):0;
   var tRent=tSub>0?((tUtil/tSub)*100):0;
