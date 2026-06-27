@@ -357,6 +357,11 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 .exp-soon{padding:40px 20px;text-align:center;color:#8a95a3;font-size:13px}
 @media print{#exp-fab,#exp-overlay{display:none!important}}
 @media(max-width:600px){.exp-g2{grid-template-columns:1fr}}
+.rec-row{display:flex;align-items:center;gap:10px;padding:4px 0;justify-content:center}
+.rec-l{flex:0 0 210px;min-width:0;font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none}
+.rec-q{flex:0 0 70px;width:70px!important;min-width:0;text-align:center;border:1px solid #cfd8e0;border-radius:5px;padding:3px 5px;font-size:12px;box-sizing:border-box}
+.rec-u{flex:0 0 40px;width:40px;font-size:11px;color:#888;text-align:left}
+.rec-l input[type=checkbox]{width:auto!important;flex:0 0 auto;margin:0}
 </style>
 </head>
 <body>
@@ -514,6 +519,19 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
   <div class="sl"><label>IVA</label><input type="range" id="sl-iva" min="0" max="16" value="0" step="1"><span class="sl-v" id="v-iva">0%</span></div>
   <div class="sl"><label>Descuento autorizado</label><input type="range" id="sl-desc" min="0" max="30" value="0" step="1"><span class="sl-v" id="v-desc">0%</span></div>
   <div class="sl"><label>Utilidad minima</label><input type="range" id="sl-umin" min="5" max="30" value="10" step="1"><span class="sl-v" id="v-umin">10%</span></div>
+</div>
+
+<!-- RECORRIDO DEL PACIENTE (E1) -->
+<div class="sec no-print">
+  <div class="sec-t"><span class="ic">&#128657;</span> Recorrido del paciente</div>
+  <div style="font-size:10px;color:#888;margin:-4px 0 8px">Marca por donde paso el paciente y cuanto. Base para dimensionar insumos (proximamente).</div>
+  <div class="rec-row"><label class="rec-l"><input type="checkbox" class="rec-on" id="rec-urg-on" checked> Urgencias</label><input type="number" class="rec-q" id="rec-urg-q" min="0" value="0"><span class="rec-u">dias</span></div>
+  <div class="rec-row"><label class="rec-l"><input type="checkbox" class="rec-on" id="rec-qui-on"> Quirofano</label><input type="number" class="rec-q" id="rec-qui-q" min="0" value="0"><span class="rec-u">horas</span></div>
+  <div class="rec-row"><label class="rec-l"><input type="checkbox" class="rec-on" id="rec-rec-on"> Recuperacion</label><input type="number" class="rec-q" id="rec-rec-q" min="0" value="0"><span class="rec-u">dias</span></div>
+  <div class="rec-row"><label class="rec-l"><input type="checkbox" class="rec-on" id="rec-ter-on"> Terapia intensiva</label><input type="number" class="rec-q" id="rec-ter-q" min="0" value="0"><span class="rec-u">dias</span></div>
+  <div class="rec-row"><label class="rec-l"><input type="checkbox" class="rec-on" id="rec-pis-on"> Piso (hospitalizacion)</label><input type="number" class="rec-q" id="rec-pis-q" min="0" value="0"><span class="rec-u">dias</span></div>
+  <div class="rec-row"><label class="rec-l"><input type="checkbox" class="rec-on" id="rec-ais-on"> Aislamiento</label><input type="number" class="rec-q" id="rec-ais-q" min="0" value="0"><span class="rec-u">dias</span></div>
+  <div style="font-size:11px;color:var(--pri2);margin-top:8px;border-top:1px solid #dce2e8;padding-top:6px">Estancia: <b id="rec-tot-dias">0</b> dias &middot; Quirofano: <b id="rec-tot-hrs">0</b> hrs</div>
 </div>
 
 <!-- CONCEPTOS -->
@@ -7691,6 +7709,30 @@ function applyRoleUI(role){
     });
   });
 }
+
+/* ====== RECORRIDO DEL PACIENTE (E1) ====== */
+window.recorrido = {urg:0, qui:0, rec:0, ter:0, pis:0, ais:0};
+function leerRecorrido(){
+  var areas=['urg','qui','rec','ter','pis','ais'];
+  var totDias=0, qhrs=0;
+  areas.forEach(function(a){
+    var on=document.getElementById('rec-'+a+'-on');
+    var q=document.getElementById('rec-'+a+'-q');
+    var val=(on&&on.checked)?(Math.max(0,parseFloat(q.value)||0)):0;
+    window.recorrido[a]=val;
+    if(a==='qui'){ qhrs=val; } else { totDias+=val; }
+  });
+  var td=document.getElementById('rec-tot-dias'); if(td)td.textContent=totDias;
+  var th=document.getElementById('rec-tot-hrs'); if(th)th.textContent=qhrs;
+}
+/* Conecta los checkboxes e inputs del recorrido */
+['urg','qui','rec','ter','pis','ais'].forEach(function(a){
+  var on=document.getElementById('rec-'+a+'-on');
+  var q=document.getElementById('rec-'+a+'-q');
+  if(on)on.addEventListener('change',leerRecorrido);
+  if(q)q.addEventListener('input',leerRecorrido);
+});
+leerRecorrido();
 </script>
 <script>
 (function(){
