@@ -4270,6 +4270,7 @@ $('btn-paste').addEventListener('click',function(){
 });
 function pTxt(t,lg){pRows(t.split(/\r?\n/).filter(function(l){return l.trim();}).map(function(l){var p=l.split(/[,;\t|]/);return p.length>=2?p:[l.trim(),'1'];}),lg);}
 function pRows(rows,lg){
+  cart=[];                       // cada análisis empieza limpio (el respaldo ya quedó en saveVersion)
   var ok=0,wn=0,nc=0,qc=1;
   // Scan first 10 rows for header
   var headerRow=-1;
@@ -4295,6 +4296,7 @@ function pRows(rows,lg){
 
 /* ====== PDF PARSER ====== */
 function parsePdfText(text,lg){
+  cart=[];                       // cada análisis empieza limpio (el respaldo ya quedó en saveVersion)
   // Clean the full text
   var lines=text.split(/[\n\r]+/);
   var found=[];
