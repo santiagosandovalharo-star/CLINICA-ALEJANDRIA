@@ -573,7 +573,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
 <!-- OPTIMIZACION -->
 <div class="sec no-print">
   <div class="sec-t"><span class="ic">&#127919;</span> Optimizacion por monto objetivo</div>
-  <div class="opt-box"><input id="opt-monto" type="number" placeholder="Monto objetivo ($)"><button class="btn-opt" id="btn-opt">&#9889; Optimizar</button><button class="btn-opt" id="btn-manual">&#9999; Modo manual</button></div>
+  <div class="opt-box"><input id="opt-monto" type="number" placeholder="Monto objetivo ($)"><button class="btn-opt" id="btn-opt">&#9889; Optimizar</button><button class="btn-opt" id="btn-manual">&#9999; Modo manual</button><button class="btn-opt" id="btn-aplicar" style="display:none;background:var(--accent)">&#10004; Aplicar cambios</button></div>
   <div style="font-size:10px;color:#888;margin-top:3px">Optimizar reduce <b>cantidades</b> (no precios), con piso en 1 y respetando candados. El <b>Modo manual</b> habilita editar precios unitarios a mano.</div>
   <div class="opt-res" id="opt-res"></div>
 </div>
@@ -4597,9 +4597,18 @@ function setManual(v){
   optManual=!!v;
   var b=$('btn-manual');
   if(b){b.innerHTML=optManual?'&#9999; Modo manual: ON':'&#9999; Modo manual';b.style.background=optManual?'var(--warn)':'';}
+  var ba=$('btn-aplicar');if(ba)ba.style.display=optManual?'':'none';
   render();
 }
 var bmn=$('btn-manual');if(bmn)bmn.addEventListener('click',function(){setManual(!optManual);});
+var bap=$('btn-aplicar');if(bap)bap.addEventListener('click',function(){
+  if(!cart.length){alert('No hay conceptos que aplicar');return;}
+  saveVersion('Cambios manuales aplicados');
+  setManual(false);
+  var iva=ivaR(),desc=descR(),tot=0;
+  cart.forEach(function(it){tot+=it.p*(1-desc)*it.q*(1+iva);});
+  var res=$('opt-res');if(res){res.style.display='block';res.innerHTML='<span style="color:var(--accent)">&#10004; Cambios aplicados. Cuenta: <b>'+fmt(tot)+'</b></span>';}
+});
 
 /* Calcula los dos pisos de costo de una cotización (para alertas de viabilidad).
    pisoReal     = costo con las cantidades REALES del carrito (+IVA)
