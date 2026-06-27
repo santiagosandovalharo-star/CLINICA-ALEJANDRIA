@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modelo de costeo · Alejandría</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="catalogo.js"></script>
+<style>
+:root{
+  --navy:#0e2c47; --gold:#c7a35a; --blue:#1c5d99; --blue-deep:#184f83;
+  --ink:#0e2c47; --muted:#64748b; --soft:#94a3b8;
+  --page:#f4f6f8; --card:#fff; --line:#e4e9ee;
+  --ok:#1d7a4d; --ok-bg:#e7f3ec; --warn:#b9831f; --warn-bg:#faf1dd;
+  --danger:#b3261e; --danger-bg:#fdecea;
+  --A:#1c5d99; --B:#6c3fa0; --C:#b9831f;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--page);-webkit-font-smoothing:antialiased;font-size:13px;line-height:1.5}
+
+/* HEADER */
+.hero{background:var(--navy);color:#fff;padding:22px 26px;position:relative;overflow:hidden}
+.hero .geo{position:absolute;inset:0;opacity:.10}
+.hero-in{position:relative;max-width:1180px;margin:0 auto}
+.hero .ey{font-size:10.5px;letter-spacing:2.5px;color:var(--gold);font-weight:600;text-transform:uppercase}
+.hero h1{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:27px;margin:7px 0 6px;letter-spacing:-.3px}
+.hero p{color:#a9c0d6;font-size:13px;max-width:680px;margin:0;line-height:1.55}
+.hero .principio{display:inline-flex;align-items:center;gap:8px;margin-top:13px;background:rgba(199,163,90,.13);border:1px solid rgba(199,163,90,.4);border-radius:8px;padding:7px 13px;font-size:12px;color:#e7d6ad}
+.hero .principio b{color:#fff}
+
+/* WARN BANNER */
+.warnbar{max-width:1180px;margin:14px auto 0;padding:0 26px}
+.warnbar .w{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);border:1px solid #ecdcb4;border-radius:10px;padding:11px 14px;font-size:12px;color:#7a5a16}
+.warnbar .w b{color:#5e4410}
+
+/* LAYOUT */
+.wrap{max-width:1180px;margin:0 auto;padding:18px 26px 60px;display:flex;gap:20px;align-items:flex-start}
+.col{flex:1;min-width:0}
+.aside{width:300px;flex:0 0 300px;position:sticky;top:18px}
+
+/* SECTION CARD */
+.sec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:16px}
+.sec-h{display:flex;align-items:center;gap:11px;margin:0 0 4px}
+.sec-tag{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex:0 0 26px}
+.tag-A{background:var(--A)} .tag-B{background:var(--B)} .tag-C{background:var(--C)}
+.tag-R{background:var(--navy)} .tag-P{background:var(--ok)} .tag-N{background:var(--gold)}
+.sec-h h2{font-family:'Source Serif 4',Georgia,serif;font-weight:500;font-size:19px;margin:0;color:var(--ink)}
+.sec-h .sub{font-size:11.5px;color:var(--soft);margin-left:auto;text-align:right;max-width:230px;line-height:1.35}
+.sec-note{font-size:11.5px;color:var(--muted);margin:2px 0 14px;line-height:1.5}
+
+/* LINE INPUTS */
+.line{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f0f2f5}
+.line:last-child{border-bottom:none}
+.line .lab{flex:1;font-size:12.5px;min-width:0}
+.line .lab small{display:block;color:var(--soft);font-size:10.5px}
+.line .mid{font-size:11px;color:var(--soft);white-space:nowrap}
+.num{width:120px;text-align:center;border:1px solid #d9e0e8;border-radius:8px;padding:7px 10px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);outline:none}
+.num:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,93,153,.13)}
+.num.calc{background:#f4f6f8;border-style:dashed;color:var(--muted)}
+.num.sm{width:78px}
+.pct{position:relative}
+.subt{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:2px solid #eef1f4;font-size:13px}
+.subt b{font-size:15px}
+.subt .A{color:var(--A)} .subt .B{color:var(--B)} .subt .C{color:var(--C)}
+
+/* AREA TABLE */
+.atab{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.atab th{text-align:right;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--soft);font-weight:600;padding:0 6px 7px}
+.atab th:first-child{text-align:left}
+.atab td{padding:4px 6px;border-bottom:1px solid #f0f2f5}
+.atab td:first-child{font-size:12px}
+.atab input{width:100%;text-align:center;border:1px solid #d9e0e8;border-radius:7px;padding:5px 7px;font-family:'Inter',sans-serif;font-size:12px;outline:none}
+.atab input:focus{border-color:var(--blue)}
+.atab .chk{display:flex;align-items:center;gap:7px}
+.atab .chk input[type=checkbox]{width:16px;height:16px;flex:0 0 16px}
+.atab tfoot td{font-weight:600;color:var(--ink);border-top:2px solid #eef1f4;border-bottom:none;padding-top:8px}
+
+/* TOOLBAR */
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.bar .proc{flex:1;min-width:200px}
+.bar input.proc-in{width:100%;border:1px solid #d9e0e8;border-radius:9px;padding:9px 13px;font-family:'Source Serif 4',serif;font-size:15px;color:var(--ink);outline:none}
+.bar input.proc-in:focus{border-color:var(--blue)}
+.btn{border:none;border-radius:9px;padding:9px 15px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+
+/* ASIDE SUMMARY */
+.sum{background:var(--navy);color:#fff;border-radius:14px;overflow:hidden}
+.sum-h{padding:15px 18px 12px;border-bottom:1px solid #1b3d5c}
+.sum-h .t{font-family:'Source Serif 4',serif;font-size:16px;font-weight:500}
+.sum-h .s{font-size:10.5px;color:#9fb3c8;letter-spacing:.5px;margin-top:2px}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:8px 18px;font-size:12.5px;color:#c7d4e1}
+.sum-row .v{font-weight:600;color:#fff}
+.sum-row.A .v{color:#7fb3e0} .sum-row.B .v{color:#c0a4e0} .sum-row.C .v{color:#e7c47e}
+.sum-piso{background:#0a2238;padding:13px 18px;border-top:1px solid #1b3d5c;border-bottom:1px solid #1b3d5c}
+.sum-piso .l{font-size:10px;letter-spacing:1.5px;color:#9fb3c8;text-transform:uppercase}
+.sum-piso .n{font-size:25px;font-weight:600;line-height:1.1;margin-top:3px}
+.sum-precio{background:#10395c;padding:13px 18px}
+.sum-precio .l{font-size:10px;letter-spacing:1.5px;color:#a9c0d6;text-transform:uppercase}
+.sum-precio .n{font-size:25px;font-weight:600;line-height:1.1;margin-top:3px;color:#fff}
+.sum-precio .sub{font-size:11px;color:#9fb3c8;margin-top:3px}
+.sum-foot{padding:11px 18px;font-size:10.5px;color:#7e98b3;line-height:1.5;border-top:1px solid #1b3d5c}
+
+/* BRECHA */
+.brecha{border-radius:12px;padding:14px 16px;margin-top:14px;font-size:12.5px;line-height:1.55}
+.brecha.ok{background:var(--ok-bg);border:1px solid #cfe6d8;color:#155c39}
+.brecha.gap{background:var(--warn-bg);border:1px solid #ecdcb4;color:#7a5a16}
+.brecha .big{font-size:20px;font-weight:600;display:block;margin:3px 0 6px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.split .b{border-radius:10px;padding:11px 12px;font-size:11.5px;line-height:1.45}
+.split .neg{background:#eef5ff;border:1px solid #cfe0f5}
+.split .fix{background:#f3f5f7;border:1px solid #e3e8ee}
+.split .b .h{font-weight:600;font-size:12px;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.split .b .mn{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600}
+.split .neg .h{color:var(--blue)} .split .fix .h{color:var(--muted)}
+
+/* FLOW */
+.flow{display:flex;flex-direction:column;gap:2px}
+.flow .step{display:flex;align-items:flex-start;gap:13px;padding:9px 0}
+.flow .n{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex:0 0 24px}
+.flow .step.neg .n{background:var(--gold)}
+.flow .tx{font-size:12.5px;line-height:1.45}
+.flow .tx b{color:var(--ink)}
+.flow .tx small{color:var(--muted)}
+.flow .arrow{margin-left:11px;color:var(--soft);font-size:13px;line-height:.6}
+
+/* CUENTA DE INSUMOS */
+.dz{border:2px dashed #c7d2dd;border-radius:12px;padding:18px;text-align:center;cursor:pointer;background:#f8fafc;transition:.15s}
+.dz:hover,.dz.drag{border-color:var(--blue);background:#eef5ff}
+.dz-ic{font-size:24px;color:var(--blue);line-height:1}
+.dz-t{font-weight:600;font-size:13px;margin-top:5px}
+.dz-s{font-size:11px;color:var(--muted);margin-top:3px}
+.dz-log{font-size:11px;margin-top:8px;max-height:96px;overflow:auto;line-height:1.5}
+.dz-log .ok{color:var(--ok)} .dz-log .wn{color:var(--warn)}
+.itab{width:100%;border-collapse:collapse;font-size:12px;margin-top:14px}
+.itab th{text-align:right;font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--soft);font-weight:600;padding:0 6px 7px}
+.itab th:first-child{text-align:left}
+.itab td{padding:3px 6px;border-bottom:1px solid #f0f2f5}
+.itab td.imp{text-align:right;white-space:nowrap;color:var(--muted)}
+.itab input{width:100%;text-align:center;border:1px solid #d9e0e8;border-radius:7px;padding:5px 7px;font-family:'Inter',sans-serif;font-size:12px;outline:none}
+.itab input:focus{border-color:var(--blue)}
+.itab input.nm{text-align:left}
+.itab tfoot td{font-weight:600;border-top:2px solid #eef1f4;border-bottom:none;padding-top:8px}
+.xrm{background:none;border:none;color:#c0c8d2;font-size:16px;cursor:pointer;padding:0 4px;line-height:1}
+.xrm:hover{color:var(--danger)}
+.csrch{position:relative;margin-top:12px}
+.csrch input{width:100%;border:1px solid #d9e0e8;border-radius:9px;padding:9px 12px;font-family:'Inter',sans-serif;font-size:13px;outline:none}
+.csrch input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(28,93,153,.13)}
+.cat-dd{display:none;position:absolute;left:0;right:0;top:calc(100% + 3px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(14,44,71,.14);max-height:240px;overflow:auto;z-index:20}
+.cat-dd .it{display:flex;justify-content:space-between;gap:10px;padding:7px 11px;font-size:12px;cursor:pointer;border-bottom:1px solid #f2f4f6}
+.cat-dd .it:hover{background:#eef5ff}
+.cat-dd .it small{color:var(--soft)}
+.cat-dd .it .c{color:var(--soft);white-space:nowrap}
+.obj{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-top:16px}
+.obj-l{flex:1;min-width:220px}
+.obj-t{font-weight:600;font-size:13px}
+.obj-s{font-size:11px;color:var(--muted);line-height:1.45;margin-top:2px}
+.btn-apply{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:500;cursor:pointer}
+.btn-apply:hover{background:var(--blue-deep)}
+.msg{border-radius:10px;padding:11px 14px;margin-top:12px;font-size:12px;line-height:1.55}
+.msg.ok{background:var(--ok-bg);border:1px solid #cfe6d8;color:#155c39}
+.msg.wn{background:var(--warn-bg);border:1px solid #ecdcb4;color:#7a5a16}
+
+@media(max-width:880px){
+  .wrap{flex-direction:column;padding:16px}
+  .aside{width:100%;flex:0 0 auto;position:static}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <svg class="geo" viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true">
+    <g stroke="#fff" stroke-width="0.5" fill="none">
+      <line x1="120" y1="0" x2="120" y2="200"/><line x1="320" y1="0" x2="320" y2="200"/>
+      <line x1="560" y1="0" x2="560" y2="200"/><line x1="820" y1="0" x2="820" y2="200"/>
+      <line x1="1040" y1="0" x2="1040" y2="200"/>
+      <line x1="0" y1="70" x2="1200" y2="70"/><line x1="0" y1="140" x2="1200" y2="140"/>
+    </g>
+  </svg>
+  <div class="hero-in">
+    <div class="ey">Finanzas · Modelo de costeo</div>
+    <h1>Costeo hospitalario sostenible</h1>
+    <p>Calcula el costo real de un episodio por capas, fija el precio con un margen sostenible y mide la brecha contra la tarifa de la aseguradora. El costo manda; el precio es su consecuencia.</p>
+    <div class="principio">⚖️ <span><b>El precio sale del costo.</b> Nunca al revés.</span></div>
+  </div>
+</header>
+
+<div class="warnbar">
+  <div class="w">⚠️ <div><b>Estructura, no recomendación.</b> Las tarifas y porcentajes vienen con valores de muestra. Antes de operar con pacientes reales, valida los números con un contador y la negociación con un abogado sanitario/fiscal.</div></div>
+</div>
+
+<div class="wrap">
+  <!-- COLUMNA PRINCIPAL -->
+  <div class="col">
+
+    <div class="bar">
+      <div class="proc">
+        <input class="proc-in" id="proc" type="text" placeholder="Procedimiento (ej. Artroscopia de rodilla)">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)">IVA <input id="iva-pct" type="number" min="0" value="16" style="width:54px;text-align:center;border:1px solid #d9e0e8;border-radius:8px;padding:6px 7px;font-family:'Inter',sans-serif;font-size:13px;outline:none"> %</div>
+      <button class="btn btn-ghost" id="btn-print">Imprimir precio (PDF)</button>
+      <button class="btn btn-ghost" id="btn-reset">Reiniciar</button>
+    </div>
+
+    <!-- RECORRIDO -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-R">↻</span>
+        <h2>Recorrido del paciente</h2>
+        <span class="sub">Dimensiona enfermería, día-cama y quirófano según dónde estuvo y cuánto.</span>
+      </div>
+      <div class="sec-note">Marca cada área por la que pasó el paciente e indica los días. La <b>enfermería</b> (capa A) y el <b>día-cama</b> (capa B) se calculan por área × días. El quirófano va aparte, por horas.</div>
+      <table class="atab">
+        <thead><tr><th>Área</th><th>Días</th><th>Enfermería / día</th><th>Día-cama / día</th></tr></thead>
+        <tbody id="area-body"></tbody>
+        <tfoot><tr><td>Estancia total</td><td style="text-align:right" id="estancia">0 días</td><td colspan="2"></td></tr></tfoot>
+      </table>
+      <div class="line" style="margin-top:10px">
+        <div class="lab">Quirófano <small>tiempo de uso</small></div>
+        <input class="num sm" id="qx-horas" type="number" min="0" step="0.5" value="0"><span class="mid">horas ×</span>
+        <input class="num sm" id="qx-hora" type="number" min="0" value="4000"><span class="mid">$/hora</span>
+      </div>
+    </div>
+
+    <!-- CUENTA DE INSUMOS -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-A">⬚</span>
+        <h2>Cuenta de insumos</h2>
+        <span class="sub">Materiales y medicamentos reales. Alimenta la capa A.</span>
+      </div>
+      <div class="sec-note">Sube la cuenta hospitalaria (Excel/CSV) o captura los insumos a mano. Cada producto trae su <b>costo</b> y su <b>precio de lista</b> del catálogo. El botón de precio total objetivo sube las cantidades (hasta 3× su base) hasta que el <b>total a precio de lista</b> alcanza el objetivo, sin tocar los precios unitarios.</div>
+
+      <div class="dz" id="dz">
+        <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+        <div class="dz-ic">&#8593;</div>
+        <div class="dz-t">Subir Excel de cuenta hospitalaria</div>
+        <div class="dz-s">.xlsx, .xls o .csv — arrastra aquí o haz clic. Cruza cada concepto contra la lista de precios y trae el costo del catálogo.</div>
+      </div>
+      <div class="dz-log" id="dz-log"></div>
+
+      <div class="csrch">
+        <input id="cat-search" type="text" placeholder="Buscar en la lista de precios para agregar un insumo…" autocomplete="off">
+        <div class="cat-dd" id="cat-dd"></div>
+      </div>
+
+      <table class="itab">
+        <thead><tr><th>Insumo</th><th>Costo U.</th><th>Precio U. (lista)</th><th>Cant.</th><th>Importe (lista)</th><th></th></tr></thead>
+        <tbody id="ins-body"></tbody>
+        <tfoot><tr><td colspan="4">Total a precio de lista</td><td class="imp" id="ins-total" style="font-weight:600;color:var(--ink)">$0</td><td></td></tr></tfoot>
+      </table>
+      <button class="btn btn-ghost" id="ins-add" style="margin-top:10px">+ Agregar insumo</button>
+
+      <div class="obj">
+        <div class="obj-l">
+          <div class="obj-t">Aplicar precio total objetivo</div>
+          <div class="obj-s">Sube las cantidades de insumos —<b>hasta 3× la cantidad base</b>— para que el <b>total a precio de lista</b> alcance el objetivo. <b>Respeta siempre el precio unitario de lista</b> de cada producto (solo cambian las cantidades).</div>
+        </div>
+        <input class="num" id="obj-monto" type="number" min="0" placeholder="Precio total objetivo $">
+        <button class="btn-apply" id="obj-aplicar">Aplicar</button>
+      </div>
+      <div id="obj-res"></div>
+    </div>
+
+    <!-- CAPA A -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-A">A</span>
+        <h2>Costos directos</h2>
+        <span class="sub">Atribuibles a este episodio. Se miden, no se estiman.</span>
+      </div>
+      <div class="line"><div class="lab">Honorario cirujano / tratante <small>honorario base</small></div><input class="num" id="a-cirujano" type="number" min="0" value="18000"></div>
+      <div class="line"><div class="lab">Anestesiólogo <small>× horas de quirófano</small></div><input class="num sm" id="a-anest-hora" type="number" min="0" value="2200"><span class="mid">$/h →</span><input class="num sm calc" id="a-anest" readonly></div>
+      <div class="line"><div class="lab">Interconsultas</div><input class="num" id="a-inter" type="number" min="0" value="2500"></div>
+      <div class="line"><div class="lab">Enfermería <small>Σ días × tarifa por área</small></div><input class="num calc" id="a-enf" readonly></div>
+      <div class="line"><div class="lab">Quirófano <small>horas × $/hora</small></div><input class="num calc" id="a-qx" readonly></div>
+      <div class="line"><div class="lab">Equipamiento <small>uso específico</small></div><input class="num" id="a-equipo" type="number" min="0" value="3000"></div>
+      <div class="line"><div class="lab">Materiales y medicamentos <small>de la cuenta de insumos ↑</small></div><input class="num calc" id="a-insumos" readonly></div>
+      <div class="subt"><span>Subtotal directos <b class="A">(A)</b></span><b class="A" id="tot-A">$0</b></div>
+    </div>
+
+    <!-- CAPA B -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-B">B</span>
+        <h2>Costos indirectos</h2>
+        <span class="sub">Reales pero compartidos. Se prorratean con una base.</span>
+      </div>
+      <div class="line"><div class="lab">Infraestructura / día-cama <small>Σ días × día-cama por área</small></div><input class="num calc" id="b-cama" readonly></div>
+      <div class="line"><div class="lab">Administración <small>% sobre directos (A)</small></div><input class="num sm" id="b-admin-pct" type="number" min="0" value="8"><span class="mid">% →</span><input class="num sm calc" id="b-admin" readonly></div>
+      <div class="line"><div class="lab">Indirectos generales <small>energía, agua, sistemas · por día</small></div><input class="num sm" id="b-gen-dia" type="number" min="0" value="700"><span class="mid">$/día →</span><input class="num sm calc" id="b-gen" readonly></div>
+      <div class="subt"><span>Subtotal indirectos <b class="B">(B)</b></span><b class="B" id="tot-B">$0</b></div>
+    </div>
+
+    <!-- CAPA C -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-C">C</span>
+        <h2>Riesgo operativo</h2>
+        <span class="sub">No es consumo, pero es real: complicaciones, reintervenciones, incobrables.</span>
+      </div>
+      <div class="line"><div class="lab">Riesgo operativo <small>% sobre (A + B)</small></div><input class="num sm" id="c-riesgo-pct" type="number" min="0" value="7"><span class="mid">% →</span><input class="num sm calc" id="c-riesgo" readonly></div>
+      <div class="sec-note" style="margin:12px 0 0">La <b>reserva de sostenibilidad</b> (reinversión, crecimiento) se aplica en el siguiente paso como <b>margen</b>, no aquí, para no duplicarla.</div>
+      <div class="subt"><span>Subtotal riesgo <b class="C">(C)</b></span><b class="C" id="tot-C">$0</b></div>
+    </div>
+
+    <!-- PRECIO -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-P">$</span>
+        <h2>Precio objetivo</h2>
+        <span class="sub">Costo total × (1 + margen sostenible).</span>
+      </div>
+      <div class="line"><div class="lab"><b>Costo total del episodio</b> <small>A + B + C · el piso absoluto</small></div><input class="num calc" id="costo-total" readonly style="font-weight:600;color:var(--ink)"></div>
+      <div class="line"><div class="lab">Margen sostenible <small>reinversión, contingencia, crecimiento</small></div><input class="num sm" id="p-margen" type="number" min="0" value="20"><span class="mid">% →</span><input class="num sm calc" id="p-margen-monto" readonly></div>
+      <div class="subt"><span><b>Precio objetivo</b></span><b class="A" id="precio" style="color:var(--ok)">$0</b></div>
+    </div>
+
+    <!-- ASEGURADORA -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-N">⇄</span>
+        <h2>Tarifa de la aseguradora</h2>
+        <span class="sub">¿Cubre el precio? Si hay brecha, se negocia —por las vías legítimas.</span>
+      </div>
+      <div class="line"><div class="lab">Tarifa que reconoce la aseguradora <small>lo que pagaría hoy por este episodio</small></div><input class="num" id="aseg-tarifa" type="number" min="0" value="70000"></div>
+      <div id="brecha-box"></div>
+    </div>
+
+    <!-- FLUJO -->
+    <div class="sec">
+      <div class="sec-h">
+        <span class="sec-tag tag-R">→</span>
+        <h2>El flujo, de punta a punta</h2>
+      </div>
+      <div class="flow">
+        <div class="step"><span class="n">1</span><div class="tx"><b>Recorrido del paciente</b> <small>— días, áreas, quirófano</small></div></div>
+        <div class="arrow">↓ dimensiona</div>
+        <div class="step"><span class="n">2</span><div class="tx"><b>Cantidades reales</b> <small>— insumos, enfermería, quirófano</small></div></div>
+        <div class="arrow">↓ se costea cada línea (A + B + C)</div>
+        <div class="step"><span class="n">3</span><div class="tx"><b>Costo total del episodio</b> <small>— el piso, lo que de verdad cuesta</small></div></div>
+        <div class="arrow">↓ × (1 + margen sostenible)</div>
+        <div class="step"><span class="n">4</span><div class="tx"><b>Precio objetivo</b> <small>— lo que Alejandría necesita cobrar</small></div></div>
+        <div class="arrow">↓ comparar con</div>
+        <div class="step"><span class="n">5</span><div class="tx"><b>Tarifa de la aseguradora</b></div></div>
+        <div class="arrow">↓</div>
+        <div class="step neg"><span class="n">6</span><div class="tx"><b>¿Brecha? → negociar honorarios y tabuladores</b> <small>— legítimo. Nunca subir cantidades de insumos.</small></div></div>
+      </div>
+      <div class="sec-note" style="margin-top:14px;border-top:1px solid #f0f2f5;padding-top:12px">Cada paso es auditable: el recorrido justifica las cantidades, las cantidades justifican el costo, el costo justifica el precio. Si una aseguradora cuestiona, muestras la cadena completa. Esa es la fortaleza.</div>
+    </div>
+
+  </div>
+
+  <!-- COLUMNA RESUMEN -->
+  <aside class="aside">
+    <div class="sum">
+      <div class="sum-h"><div class="t" id="sum-proc">Resumen del episodio</div><div class="s">Costo → precio → brecha</div></div>
+      <div class="sum-row A"><span>Directos (A)</span><span class="v" id="s-A">$0</span></div>
+      <div class="sum-row B"><span>Indirectos (B)</span><span class="v" id="s-B">$0</span></div>
+      <div class="sum-row C"><span>Riesgo (C)</span><span class="v" id="s-C">$0</span></div>
+      <div class="sum-piso"><div class="l">Costo total · piso absoluto</div><div class="n" id="s-piso">$0</div></div>
+      <div class="sum-row"><span>Margen sostenible</span><span class="v" id="s-margen">$0</span></div>
+      <div class="sum-precio"><div class="l">Precio objetivo</div><div class="n" id="s-precio">$0</div><div class="sub" id="s-precio-sub">margen 20% sobre el costo</div></div>
+      <div class="sum-row"><span>Tarifa aseguradora</span><span class="v" id="s-tarifa">$0</span></div>
+      <div class="sum-row"><span id="s-brecha-l">Brecha</span><span class="v" id="s-brecha">$0</span></div>
+      <div class="sum-foot">El piso es lo que cuesta atender de verdad. Por debajo, el hospital pierde. El margen y los honorarios son donde se negocia.</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  function $(id){return document.getElementById(id);}
+  function num(id){var e=$(id);return e?(parseFloat(e.value)||0):0;}
+  function fmt(n){return '$'+Math.round(n).toLocaleString('es-MX');}
+  function escA(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+  // Áreas: enfermería (A) y día-cama (B) por día. Valores de muestra.
+  var AREAS=[
+    {key:'urg', nombre:'Urgencias',            on:false, dias:0, enf:600,  cama:1500},
+    {key:'piso',nombre:'Piso (hospitalización)',on:true,  dias:1, enf:800,  cama:2500},
+    {key:'rec', nombre:'Recuperación',          on:false, dias:0, enf:900,  cama:2000},
+    {key:'uci', nombre:'Terapia intensiva',     on:false, dias:0, enf:2500, cama:8000},
+    {key:'ais', nombre:'Aislamiento',           on:false, dias:0, enf:1200, cama:4000}
+  ];
+
+  // Insumos (materiales y medicamentos). Valores de muestra. La base se fija = cant más abajo.
+  var INSUMOS=[
+    {nombre:'Gasa estéril 10x10',        costoU:9,  precioU:18,  cant:30},
+    {nombre:'Solución Hartmann 1000ml',  costoU:42, precioU:75,  cant:6},
+    {nombre:'Jeringa 10ml',              costoU:5,  precioU:12,  cant:20},
+    {nombre:'Cefalosporina 1g IV',       costoU:85, precioU:160, cant:8},
+    {nombre:'Analgésico IV',             costoU:60, precioU:120, cant:10},
+    {nombre:'Apósito adhesivo',          costoU:25, precioU:55,  cant:8}
+  ];
+  INSUMOS.forEach(function(x){x.base=x.cant;}); // base = cantidad real de partida
+  var FACTOR_MAX=3; // las cantidades pueden subir hasta 3× su base para cuadrar el objetivo
+
+  // Lista de precios completa (catálogo de cotizador, vía catalogo.js). c=costo, p=precio.
+  var PR=(window.CAT||[]).map(function(r){return{n:r[0],c:r[1],p:r[2],cat:r[3]};});
+  var PM={}; PR.forEach(function(x){PM[x.n]=x;});
+  function fz(q,n){var a=String(q).toUpperCase().trim(),b=String(n).toUpperCase();if(!a)return false;return b.indexOf(a)>=0||a.split(/\s+/).every(function(w){return b.indexOf(w)>=0;});}
+
+  var LS='ca_costeo_v2';
+
+  // ---- Áreas ----
+  var tb=$('area-body');
+  AREAS.forEach(function(a){
+    var tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td><label class="chk"><input type="checkbox" data-k="'+a.key+'" '+(a.on?'checked':'')+'> '+a.nombre+'</label></td>'+
+      '<td><input type="number" min="0" data-k="'+a.key+'" data-f="dias" value="'+a.dias+'"></td>'+
+      '<td><input type="number" min="0" data-k="'+a.key+'" data-f="enf" value="'+a.enf+'"></td>'+
+      '<td><input type="number" min="0" data-k="'+a.key+'" data-f="cama" value="'+a.cama+'"></td>';
+    tb.appendChild(tr);
+  });
+  function leerAreas(){
+    tb.querySelectorAll('input[type=checkbox]').forEach(function(c){
+      var a=AREAS.find(function(x){return x.key===c.dataset.k;}); if(a)a.on=c.checked;
+    });
+    tb.querySelectorAll('input[type=number]').forEach(function(inp){
+      var a=AREAS.find(function(x){return x.key===inp.dataset.k;});
+      if(a)a[inp.dataset.f]=parseFloat(inp.value)||0;
+    });
+  }
+
+  // ---- Insumos ----
+  var ib=$('ins-body');
+  function renderInsumos(){
+    ib.innerHTML='';
+    INSUMOS.forEach(function(x,i){
+      var tr=document.createElement('tr');
+      tr.innerHTML=
+        '<td><input class="nm" data-i="'+i+'" data-f="nombre" value="'+escA(x.nombre)+'"></td>'+
+        '<td><input data-i="'+i+'" data-f="costoU" type="number" min="0" value="'+x.costoU+'"></td>'+
+        '<td><input data-i="'+i+'" data-f="precioU" type="number" min="0" value="'+(x.precioU||0)+'"></td>'+
+        '<td><input data-i="'+i+'" data-f="cant" type="number" min="0" value="'+x.cant+'"></td>'+
+        '<td class="imp">'+fmt((x.precioU||0)*(x.cant||0))+'</td>'+
+        '<td><button class="xrm" data-i="'+i+'" title="Quitar">&times;</button></td>';
+      ib.appendChild(tr);
+    });
+  }
+  function leerInsumos(){
+    ib.querySelectorAll('input').forEach(function(inp){
+      var x=INSUMOS[+inp.dataset.i]; if(!x)return;
+      if(inp.dataset.f==='nombre')x.nombre=inp.value;
+      else x[inp.dataset.f]=parseFloat(inp.value)||0;
+    });
+  }
+  // Normaliza: si falta precio de lista usa el costo (y viceversa), para que el importe nunca quede en 0.
+  function normInsumos(){
+    INSUMOS.forEach(function(x){
+      x.costoU=+x.costoU||0; x.precioU=+x.precioU||0; x.cant=+x.cant||0;
+      if(x.precioU<=0 && x.costoU>0) x.precioU=x.costoU;
+      if(x.costoU<=0 && x.precioU>0) x.costoU=x.precioU;
+      if(x.base==null) x.base=x.cant;
+    });
+  }
+
+  // ---- Cómputo puro (no toca el DOM) ----
+  function computar(){
+    var estancia=0, enfA=0, camaB=0;
+    AREAS.forEach(function(a){ var d=a.on?a.dias:0; estancia+=d; enfA+=d*a.enf; camaB+=d*a.cama; });
+    var qxHoras=num('qx-horas');
+    var qxA=qxHoras*num('qx-hora');
+    var anestA=qxHoras*num('a-anest-hora');
+    var insT=0, insP=0; INSUMOS.forEach(function(x){ insT+=(x.costoU||0)*(x.cant||0); insP+=(x.precioU||0)*(x.cant||0); });
+    var A=num('a-cirujano')+anestA+num('a-inter')+enfA+qxA+num('a-equipo')+insT;
+    var adminB=A*num('b-admin-pct')/100;
+    var genB=estancia*num('b-gen-dia');
+    var B=camaB+adminB+genB;
+    var C=(A+B)*num('c-riesgo-pct')/100;
+    var costo=A+B+C;
+    var margenMonto=costo*num('p-margen')/100;
+    var precio=costo+margenMonto;
+    return {estancia:estancia,enfA:enfA,camaB:camaB,qxA:qxA,anestA:anestA,insT:insT,insP:insP,
+            A:A,adminB:adminB,genB:genB,B:B,C:C,costo:costo,margenMonto:margenMonto,precio:precio};
+  }
+
+  // ---- Pintar ----
+  function calc(){
+    leerAreas(); leerInsumos();
+    var c=computar();
+    $('estancia').textContent=c.estancia+(c.estancia===1?' día':' días');
+    $('a-enf').value=fmt(c.enfA); $('a-qx').value=fmt(c.qxA); $('a-anest').value=fmt(c.anestA);
+    $('a-insumos').value=fmt(c.insT);
+    // importes por fila a precio de lista + total a precio de lista (sin reconstruir la tabla)
+    var rows=ib.querySelectorAll('tr');
+    INSUMOS.forEach(function(x,i){ if(rows[i]){var cell=rows[i].querySelector('.imp'); if(cell)cell.textContent=fmt((x.precioU||0)*(x.cant||0));} });
+    $('ins-total').textContent=fmt(c.insP);
+    $('b-cama').value=fmt(c.camaB); $('b-admin').value=fmt(c.adminB); $('b-gen').value=fmt(c.genB);
+    $('c-riesgo').value=fmt(c.C);
+    $('tot-A').textContent=fmt(c.A); $('tot-B').textContent=fmt(c.B); $('tot-C').textContent=fmt(c.C);
+    $('costo-total').value=fmt(c.costo);
+    $('p-margen-monto').value=fmt(c.margenMonto);
+    $('precio').textContent=fmt(c.precio);
+    // resumen lateral
+    $('s-A').textContent=fmt(c.A); $('s-B').textContent=fmt(c.B); $('s-C').textContent=fmt(c.C);
+    $('s-piso').textContent=fmt(c.costo);
+    $('s-margen').textContent=fmt(c.margenMonto);
+    $('s-precio').textContent=fmt(c.precio);
+    $('s-precio-sub').textContent='margen '+num('p-margen')+'% sobre el costo';
+    var proc=($('proc').value||'').trim();
+    $('sum-proc').textContent=proc?proc:'Resumen del episodio';
+    // brecha
+    var tarifa=num('aseg-tarifa');
+    $('s-tarifa').textContent=fmt(tarifa);
+    var brecha=c.precio-tarifa;
+    var negociable=num('a-cirujano')+c.anestA+num('a-inter')+c.margenMonto;
+    var insumosFijos=c.enfA+c.qxA+num('a-equipo')+c.insT+c.B+c.C;
+    var sbl=$('s-brecha-l'), sb=$('s-brecha'), box=$('brecha-box');
+    if(brecha<=0){
+      sbl.textContent='Cubre el costo'; sb.textContent=fmt(-brecha)+' a favor'; sb.style.color='#7fe0a8';
+      box.innerHTML='<div class="brecha ok">✔ La tarifa de la aseguradora ('+fmt(tarifa)+') <b>cubre</b> el precio objetivo ('+fmt(c.precio)+').<span class="big">'+fmt(-brecha)+' por encima del precio</span>No hay brecha que disputar. El episodio es sostenible con esta tarifa.</div>';
+    } else {
+      sbl.textContent='Brecha a negociar'; sb.textContent=fmt(brecha); sb.style.color='#e7c47e';
+      box.innerHTML=
+        '<div class="brecha gap">⚠️ La tarifa ('+fmt(tarifa)+') queda <b>por debajo</b> del precio objetivo ('+fmt(c.precio)+').'+
+        '<span class="big">Brecha: '+fmt(brecha)+'</span>'+
+        'Esta brecha se negocia por las vías legítimas —el valor del trabajo y del riesgo—, <b>nunca</b> inventando consumo del paciente.'+
+        '<div class="split">'+
+          '<div class="b neg"><div class="h">⇄ Sí se negocia</div>Honorarios médicos y margen sostenible.<div class="mn">'+fmt(negociable)+'</div>Tabuladores pactados, nivel de complejidad reconocido, paquete vs desglose.</div>'+
+          '<div class="b fix"><div class="h">🔒 No se infla</div>Insumos, enfermería, quirófano, indirectos y riesgo.<div class="mn">'+fmt(insumosFijos)+'</div>Es la verdad del episodio. Subir cantidades = la factura se vuelve prueba en tu contra.</div>'+
+        '</div></div>';
+    }
+    guardar();
+  }
+
+  // ---- Carga de Excel / CSV de la cuenta hospitalaria ----
+  function pRows(rows){
+    var log=$('dz-log');
+    // Detectar encabezado: columna de concepto y de cantidad (como en cotizador)
+    var nc=-1, qc=-1, cc=-1, pc=-1, headerRow=-1;
+    for(var hi=0;hi<Math.min(12,rows.length);hi++){
+      var hd=(rows[hi]||[]).map(function(c){return String(c==null?'':c).toUpperCase();});
+      var ni=hd.findIndex(function(x){return x.indexOf('CONCEPTO')>=0||x.indexOf('DESCRIP')>=0||x.indexOf('NOMBRE')>=0||x.indexOf('INSUMO')>=0||x.indexOf('ARTICULO')>=0||x.indexOf('PRODUCT')>=0;});
+      if(ni>=0){
+        nc=ni; headerRow=hi;
+        qc=hd.findIndex(function(x){return x.indexOf('CANT')>=0;});
+        cc=hd.findIndex(function(x){return x.indexOf('COSTO')>=0;});
+        pc=hd.findIndex(function(x){return x.indexOf('PRECIO')>=0||x.indexOf('P.U')>=0||x.indexOf('P/U')>=0||x.indexOf('P UNIT')>=0||x.indexOf('UNITARIO')>=0||x.indexOf('TARIFA')>=0||x.indexOf('VALOR')>=0||x.indexOf('IMPORTE')>=0;});
+        break;
+      }
+    }
+    if(nc<0){ nc=0; qc=1; cc=-1; pc=1; }
+    var start=headerRow>=0?headerRow+1:0;
+    var nuevos=[], ok=0, match=0, nomatch=0;
+    for(var r=start;r<rows.length;r++){
+      var row=rows[r]||[];
+      var raw=String(row[nc]==null?'':row[nc]).trim();
+      if(!raw||raw.length<2) continue;
+      var qty=qc>=0?(parseFloat(String(row[qc]).replace(/[^0-9.\-]/g,''))||0):1; if(qty<=0)qty=1;
+      // Cruce contra la lista de precios: exacto y luego difuso (igual que cotizador)
+      var x=PM[raw];
+      if(!x){ var b=PR.filter(function(p){return fz(raw,p.n);}); if(b.length)x=b[0]; }
+      var nombre, costoU, precioU;
+      if(x){ nombre=x.n; costoU=Number(x.c)||0; precioU=Number(x.p)||0; match++; }
+      else {
+        nombre=raw;
+        var exCosto=cc>=0?(parseFloat(String(row[cc]).replace(/[^0-9.\-]/g,''))||0):0;
+        var exPrecio=pc>=0?(parseFloat(String(row[pc]).replace(/[^0-9.\-]/g,''))||0):0;
+        costoU=exCosto>0?exCosto:exPrecio;
+        precioU=exPrecio>0?exPrecio:exCosto;
+        nomatch++;
+      }
+      nuevos.push({nombre:nombre, costoU:costoU, precioU:precioU, cant:qty, base:qty}); // base = cantidad real importada
+      ok++;
+    }
+    if(!ok){ log.innerHTML='<span class="wn">&#9888; No se reconocieron filas. Revisa que el archivo tenga una columna de concepto/insumo y, si puedes, una de cantidad.</span>'; return; }
+    INSUMOS=nuevos;
+    normInsumos();
+    renderInsumos(); calc();
+    log.innerHTML='<span class="ok">&#10003; '+ok+' insumos cargados</span> &middot; '+match+' con costo desde la lista de precios'+(nomatch?(' &middot; <span class="wn">'+nomatch+' sin coincidencia (costo del Excel o $0; verifícalos)</span>'):'')+'.';
+  }
+  function parseFile(f){
+    var log=$('dz-log'); log.innerHTML='<span>&#128270; Leyendo '+escA(f.name)+'…</span>';
+    if(typeof XLSX==='undefined'){ log.innerHTML='<span class="wn">&#9888; La librería de Excel no cargó. Verifica tu conexión e intenta de nuevo, o usa CSV.</span>'; return; }
+    var rd=new FileReader();
+    var isCsv=/\.csv$/i.test(f.name);
+    rd.onerror=function(){ log.innerHTML='<span class="wn">&#9888; No se pudo leer el archivo.</span>'; };
+    rd.onload=function(e){
+      try{
+        var wb = isCsv ? XLSX.read(e.target.result,{type:'string'}) : XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        var sh = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(sh,{header:1,defval:''});
+        pRows(rows);
+      }catch(err){ log.innerHTML='<span class="wn">&#9888; Error al procesar: '+escA(err.message)+'. Intenta convertir a CSV.</span>'; }
+    };
+    if(isCsv) rd.readAsText(f,'UTF-8'); else rd.readAsArrayBuffer(f);
+  }
+
+  // ---- Monto objetivo: subir cantidades de insumos hasta cuadrar el precio (tope FACTOR_MAX× la base) ----
+  function aplicarObjetivo(){
+    var res=$('obj-res');
+    var target=num('obj-monto');
+    if(!target||target<=0){ res.innerHTML='<div class="msg wn">Escribe un precio objetivo válido.</div>'; return; }
+    leerAreas(); leerInsumos();
+    // Partimos siempre de la cantidad base (real); de ahí subimos hasta FACTOR_MAX× la base.
+    INSUMOS.forEach(function(x){ if(x.base==null)x.base=x.cant; x.cant=x.base; });
+    var b0=computar();
+    if(target<=b0.insP){
+      renderInsumos(); calc();
+      res.innerHTML='<div class="msg wn">El precio total objetivo ('+fmt(target)+') es menor o igual al total a precio de lista con las cantidades base ('+fmt(b0.insP)+'). Este botón solo <b>sube</b> cantidades; no baja. Para bajar, ajusta a la baja las cantidades reales.</div>';
+      return;
+    }
+    var subibles=INSUMOS.filter(function(x){return (x.precioU||0)>0 && (FACTOR_MAX*x.base)>x.cant;}).length;
+    if(!subibles){
+      renderInsumos(); calc();
+      res.innerHTML='<div class="msg wn">&#9888; No hay margen para subir: los insumos tienen precio de lista $0 o ya no caben más unidades dentro del tope de '+FACTOR_MAX+'× su base. Carga la cuenta o ajusta precios/cantidades base.</div>';
+      return;
+    }
+    var guard=2000000;
+    while(guard-->0){
+      if(computar().insP>=target) break;
+      var cands=INSUMOS.filter(function(x){return (x.precioU||0)>0 && x.cant < FACTOR_MAX*x.base;});
+      if(!cands.length) break; // todos llegaron a su tope 3×
+      cands.sort(function(a,b){return a.precioU-b.precioU;}); // el de menor precio primero: granularidad fina, menor sobrepaso
+      cands[0].cant+=1;
+    }
+    renderInsumos(); calc();
+    var fin=computar();
+    if(fin.insP>=target){
+      res.innerHTML='<div class="msg ok">&#10003; Objetivo alcanzado subiendo cantidades (máx <b>'+FACTOR_MAX+'× la base</b>), respetando el precio unitario de lista. Total a precio de lista: <b>'+fmt(fin.insP)+'</b> (objetivo '+fmt(target)+').</div>';
+    } else {
+      res.innerHTML='<div class="msg wn">&#9888; Se llegó al tope de <b>'+FACTOR_MAX+'× las cantidades base</b> y el total a precio de lista quedó en <b>'+fmt(fin.insP)+'</b>; no se puede acercar más al objetivo ('+fmt(target)+') sin pasar ese límite. Faltan '+fmt(target-fin.insP)+': sube las cantidades base reales o agrega más conceptos de la lista.</div>';
+    }
+  }
+
+  // ---- Impresión: presupuesto limpio para el cliente (solo precios; sin costo ni rentabilidad) ----
+  function imprimirCotizacion(){
+    leerInsumos(); normInsumos();
+    var ivaPct=parseFloat(($('iva-pct')||{}).value)||0;
+    var iva=ivaPct/100;
+    var sub=0, n=0, filas='';
+    INSUMOS.forEach(function(x){
+      var q=+x.cant||0; if(q<=0)return;
+      var pu=+x.precioU||0, imp=pu*q; sub+=imp; n++;
+      filas+='<tr><td class="c">'+n+'</td><td>'+escA(x.nombre)+'</td><td class="c">'+q+'</td><td class="r">'+fmt(pu)+'</td><td class="r">'+fmt(imp)+'</td></tr>';
+    });
+    if(!n){ alert('No hay conceptos con cantidad para imprimir.'); return; }
+    var ivaM=sub*iva, total=sub+ivaM;
+    var proc=($('proc').value||'').trim();
+    var fecha=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+    var doc='<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Presupuesto - Alejandria</title><style>'+
+      '*{box-sizing:border-box;margin:0;padding:0}'+
+      'body{font-family:-apple-system,"Segoe UI",Arial,sans-serif;color:#0e2c47;padding:34px 40px;font-size:13px}'+
+      '.head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0e2c47;padding-bottom:14px;margin-bottom:20px}'+
+      '.brand{font-family:Georgia,serif;font-size:26px;font-weight:600;letter-spacing:3px}'+
+      '.brand small{display:block;font-family:-apple-system,sans-serif;font-size:9px;letter-spacing:2.5px;color:#7a8aa0;margin-top:4px}'+
+      '.meta{text-align:right;font-size:12px;color:#5a6474;line-height:1.7}.meta b{color:#0e2c47}'+
+      'h1{font-family:Georgia,serif;font-weight:500;font-size:18px;margin-bottom:14px}'+
+      'table{width:100%;border-collapse:collapse;font-size:12.5px}'+
+      'thead th{background:#0e2c47;color:#fff;padding:8px 10px;text-align:left;font-weight:500;font-size:11px}'+
+      'thead th.c{text-align:center}thead th.r{text-align:right}'+
+      'tbody td{padding:7px 10px;border-bottom:1px solid #e8edf2}'+
+      'tbody td.c{text-align:center}tbody td.r{text-align:right}'+
+      'tbody tr:nth-child(even){background:#f7f9fb}'+
+      '.tot{margin:18px 0 0 auto;width:300px}'+
+      '.tot .row{display:flex;justify-content:space-between;padding:6px 10px}'+
+      '.tot .row.sub{border-top:1px solid #cdd7df;margin-top:4px}'+
+      '.grand{background:#0e2c47;color:#fff;padding:12px;border-radius:7px;display:flex;justify-content:space-between;align-items:center;margin-top:8px}'+
+      '.grand .l{font-size:11px;letter-spacing:1.5px}.grand .v{font-size:21px;font-weight:600}'+
+      '.firma{margin-top:70px;width:290px}'+
+      '.firma .ln{border-top:1px solid #0e2c47;margin-bottom:7px}'+
+      '.firma .nm{font-weight:600;font-size:13px;letter-spacing:.2px}'+
+      '.firma .rl{font-size:11px;color:#5a6474;margin-top:2px}'+
+      '.foot{margin-top:34px;font-size:10px;color:#9aa4b0;border-top:1px solid #e8edf2;padding-top:10px;line-height:1.6}'+
+      '@media print{body{padding:6px 10px}}'+
+      '</style></head><body onload="window.print()">'+
+      '<div class="head"><div class="brand">ALEJANDR&Iacute;A<small>SISTEMA HOSPITALARIO</small></div>'+
+      '<div class="meta"><div><b>Presupuesto</b></div><div>Fecha: '+fecha+'</div>'+(proc?('<div>Procedimiento: <b>'+escA(proc)+'</b></div>'):'')+'</div></div>'+
+      '<h1>Presupuesto de atenci&oacute;n</h1>'+
+      '<table><thead><tr><th class="c" style="width:34px">#</th><th>Concepto</th><th class="c" style="width:64px">Cant.</th><th class="r" style="width:120px">Precio unitario</th><th class="r" style="width:120px">Importe</th></tr></thead><tbody>'+filas+'</tbody></table>'+
+      '<div class="tot">'+
+        '<div class="row sub"><span>Subtotal</span><span>'+fmt(sub)+'</span></div>'+
+        '<div class="row"><span>IVA ('+ivaPct+'%)</span><span>'+fmt(ivaM)+'</span></div>'+
+        '<div class="row"><span>Total</span><span>'+fmt(total)+'</span></div>'+
+        '<div class="grand"><span class="l">GRAN TOTAL</span><span class="v">'+fmt(total)+'</span></div>'+
+      '</div>'+
+      '<div class="firma"><div class="ln"></div><div class="nm">Santiago Sandoval Haro</div><div class="rl">Cl&iacute;nica Alejandr&iacute;a</div></div>'+
+      '<div class="foot">Presupuesto informativo basado en precios de lista vigentes; sujeto a cambios y a la atenci&oacute;n efectivamente brindada. No incluye conceptos no enlistados. Cl&iacute;nica Alejandr&iacute;a.</div>'+
+      '</body></html>';
+    var w=window.open('','_blank');
+    if(!w){ alert('El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes para este sitio e inténtalo de nuevo.'); return; }
+    w.document.open(); w.document.write(doc); w.document.close();
+  }
+
+  // ---- Persistencia ----
+  function guardar(){
+    try{
+      var data={proc:$('proc').value, areas:AREAS, insumos:INSUMOS, campos:{}};
+      ['qx-horas','qx-hora','a-cirujano','a-anest-hora','a-inter','a-equipo','b-admin-pct','b-gen-dia','c-riesgo-pct','p-margen','aseg-tarifa','obj-monto','iva-pct'].forEach(function(id){if($(id))data.campos[id]=$(id).value;});
+      localStorage.setItem(LS,JSON.stringify(data));
+    }catch(e){}
+  }
+  function cargar(){
+    try{
+      var d=JSON.parse(localStorage.getItem(LS)||'null'); if(!d)return;
+      if(d.proc)$('proc').value=d.proc;
+      if(d.campos){for(var id in d.campos){if($(id))$(id).value=d.campos[id];}}
+      if(d.areas){d.areas.forEach(function(sa){
+        var a=AREAS.find(function(x){return x.key===sa.key;}); if(!a)return;
+        a.on=sa.on;a.dias=sa.dias;a.enf=sa.enf;a.cama=sa.cama;
+        var cb=tb.querySelector('input[type=checkbox][data-k="'+sa.key+'"]'); if(cb)cb.checked=!!sa.on;
+        ['dias','enf','cama'].forEach(function(f){var i=tb.querySelector('input[data-f="'+f+'"][data-k="'+sa.key+'"]');if(i)i.value=sa[f];});
+      });}
+      if(d.insumos&&d.insumos.length){ INSUMOS=d.insumos.map(function(x){return {nombre:x.nombre||'',costoU:+x.costoU||0,precioU:(x.precioU!=null?+x.precioU:0),cant:+x.cant||0,base:(x.base!=null?+x.base:(+x.cant||0))};}); }
+    }catch(e){}
+  }
+
+  // ---- Listeners ----
+  document.addEventListener('input',function(e){ if(e.target.matches('input')) calc(); });
+  document.addEventListener('change',function(e){ if(e.target.matches('input[type=checkbox]')) calc(); });
+  ib.addEventListener('click',function(e){
+    if(e.target.classList.contains('xrm')){ INSUMOS.splice(+e.target.dataset.i,1); renderInsumos(); calc(); }
+  });
+  // Editar la cantidad a mano redefine la base (cantidad real declarada)
+  ib.addEventListener('input',function(e){
+    var inp=e.target; if(inp&&inp.dataset&&inp.dataset.f==='cant'){ var x=INSUMOS[+inp.dataset.i]; if(x)x.base=parseFloat(inp.value)||0; }
+  });
+  $('ins-add').addEventListener('click',function(){ INSUMOS.push({nombre:'Nuevo insumo',costoU:0,precioU:0,cant:1,base:1}); renderInsumos(); calc(); });
+  $('obj-aplicar').addEventListener('click',aplicarObjetivo);
+
+  // Buscador del catálogo (lista de precios) para agregar insumos al vuelo
+  var cs=$('cat-search'), cdd=$('cat-dd');
+  function renderCat(q){
+    q=(q||'').trim();
+    if(q.length<2){ cdd.style.display='none'; cdd.innerHTML=''; return; }
+    var hits=[]; for(var i=0;i<PR.length && hits.length<30;i++){ if(fz(q,PR[i].n))hits.push(PR[i]); }
+    if(!hits.length){ cdd.style.display='block'; cdd.innerHTML='<div class="it" style="cursor:default;color:#9aa4b0">Sin coincidencias en la lista de precios</div>'; cdd._hits=[]; return; }
+    cdd.innerHTML=hits.map(function(x,i){return '<div class="it" data-i="'+i+'"><span>'+escA(x.n)+' <small>'+escA(x.cat||'')+'</small></span><span class="c">'+fmt(Number(x.c)||0)+'</span></div>';}).join('');
+    cdd.style.display='block'; cdd._hits=hits;
+  }
+  if(cs){
+    cs.addEventListener('input',function(){ renderCat(cs.value); });
+    cdd.addEventListener('click',function(e){
+      var it=e.target.closest('.it'); if(!it||it.dataset.i===undefined||it.dataset.i==='')return;
+      var x=(cdd._hits||[])[+it.dataset.i]; if(!x)return;
+      INSUMOS.push({nombre:x.n, costoU:Number(x.c)||0, precioU:Number(x.p)||0, cant:1, base:1});
+      renderInsumos(); calc();
+      cs.value=''; cdd.style.display='none'; cdd.innerHTML='';
+    });
+    document.addEventListener('click',function(e){ if(!cs.contains(e.target)&&!cdd.contains(e.target)){ cdd.style.display='none'; } });
+  }
+  var dz=$('dz'), file=$('file');
+  dz.addEventListener('click',function(){file.click();});
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave',function(){dz.classList.remove('drag');});
+  dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])parseFile(e.dataTransfer.files[0]);});
+  file.addEventListener('change',function(){if(file.files[0])parseFile(file.files[0]);});
+  $('btn-reset').addEventListener('click',function(){ if(!confirm('¿Reiniciar todos los valores? Se borrará lo capturado.'))return; try{localStorage.removeItem(LS);}catch(e){} location.reload(); });
+  $('btn-print').addEventListener('click',imprimirCotizacion);
+
+  cargar();
+  normInsumos();
+  renderInsumos();
+  calc();
+})();
+</script>
+</body>
+</html>

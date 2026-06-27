@@ -334,6 +334,7 @@
 
       <div class="nav-group">
         <div class="nav-label">Finanzas</div>
+        <button class="nav-item" data-view="costeo"><i class="ti ti-calculator"></i> Modelo de costeo <span class="nav-dot" title="Activo"></span></button>
         <button class="nav-item" data-view="soon" data-name="Finanzas"><i class="ti ti-chart-bar"></i> Finanzas <span class="nav-soon">pronto</span></button>
         <button class="nav-item" data-view="soon" data-name="Facturación"><i class="ti ti-file-invoice"></i> Facturación <span class="nav-soon">pronto</span></button>
       </div>
@@ -430,6 +431,14 @@
         <div class="framewrap"><iframe id="admisionFrame" title="Admisión"></iframe></div>
       </section>
 
+      <!-- MODELO DE COSTEO -->
+      <section id="view-costeo" class="hide">
+        <div class="eyebrow">Finanzas</div>
+        <h1 class="greet" style="font-size:30px;margin-bottom:12px">Modelo de costeo</h1>
+        <div class="frame-bar"><span class="live"><i class="ti ti-circle-check"></i> Módulo activo</span> Costeo por capas · el precio sale del costo.</div>
+        <div class="framewrap"><iframe id="costeoFrame" title="Modelo de costeo"></iframe></div>
+      </section>
+
       <!-- CONSTRUCTION -->
       <section id="view-soon" class="hide">
         <div class="construct">
@@ -468,11 +477,12 @@
   beds.innerHTML=html;
 
   // Navegación entre vistas
-  var views={home:$('view-home'),cotizaciones:$('view-cotizaciones'),expediente:$('view-expediente'),admision:$('view-admision'),soon:$('view-soon')};
+  var views={home:$('view-home'),cotizaciones:$('view-cotizaciones'),expediente:$('view-expediente'),admision:$('view-admision'),costeo:$('view-costeo'),soon:$('view-soon')};
   var crumb=$('crumbNow');
   var frame=$('cotizaFrame'), frameLoaded=false;
   var expFrame=$('expedienteFrame'), expLoaded=false;
   var admFrame=$('admisionFrame'), admLoaded=false;
+  var cosFrame=$('costeoFrame'), cosLoaded=false;
   function setView(v,label){
     for(var k in views){views[k].classList.add('hide');}
     if(v==='dashboard'){views.home.classList.remove('hide');crumb.textContent='Inicio';}
@@ -487,6 +497,10 @@
     else if(v==='admision'){
       views.admision.classList.remove('hide');crumb.textContent='Admisión';
       if(!admLoaded){admFrame.src='admision.html';admLoaded=true;}
+    }
+    else if(v==='costeo'){
+      views.costeo.classList.remove('hide');crumb.textContent='Modelo de costeo';
+      if(!cosLoaded){cosFrame.src='costeo.html';cosLoaded=true;}
     } else {
       views.soon.classList.remove('hide');crumb.textContent=label||'Módulo';
       $('soonTitle').textContent=label||'Módulo en construcción';
