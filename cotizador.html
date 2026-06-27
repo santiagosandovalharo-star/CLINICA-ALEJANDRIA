@@ -535,7 +535,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
   <div class="tw"><table><thead><tr>
     <th style="width:22px" class="no-print"></th>
     <th class="no-print">Clave</th><th>Concepto</th><th class="no-print">Cat.</th><th class="c">Cant</th>
-    <th class="r no-print">Precio U.</th><th class="r">Precio</th>
+    <th class="r no-print">Precio U.</th><th class="r cost-col no-print">Costo U.</th><th class="r">Precio</th>
     <th class="r">Desc.</th><th class="r no-print">Subtotal</th>
     <th class="r">IVA</th><th class="r">Precio final</th>
     <th class="r cost-col no-print">Costo</th><th class="r cost-col no-print">Utilidad</th><th class="r cost-col no-print">Margen</th>
@@ -543,7 +543,7 @@ tfoot td{padding:5px 4px;font-weight:700;background:var(--pri);color:#fff;font-s
   </tr></thead><tbody id="tbody"></tbody>
   <tfoot id="tfoot" style="display:none"><tr>
     <td class="no-print"></td><td colspan="3">TOTALES</td><td class="r" id="tf-q"></td>
-    <td class="r no-print" id="tf-precio"></td><td class="r" id="tf-preciotot"></td>
+    <td class="r no-print" id="tf-precio"></td><td class="r cost-col no-print"></td><td class="r" id="tf-preciotot"></td>
     <td class="r" id="tf-descuento"></td><td class="r no-print" id="tf-subtotal"></td>
     <td class="r" id="tf-iva"></td><td class="r" id="tf-total"></td>
     <td class="r cost-col no-print" id="tf-costo"></td><td class="r cost-col no-print" id="tf-util"></td><td class="r cost-col no-print" id="tf-marg"></td>
@@ -4492,6 +4492,7 @@ function render(){
     }else{
       h+='<td class="r no-print">'+fmt(precioU)+bcNote+'</td>';
     }
+    h+='<td class="r cost-col no-print"'+(hideCost?' style="display:none"':'')+'>'+fmt(cU)+'</td>';
     h+='<td class="r">'+fmt(precioT)+'</td>';
     h+='<td class="r" style="color:var(--err)">-'+fmt(descT)+'</td>';
     h+='<td class="r no-print" style="font-weight:600;color:var(--pri2)">'+fmt(subT)+'</td>';
