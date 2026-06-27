@@ -551,7 +551,30 @@
     var ur=document.querySelector('.user-role'); if(ur)ur.textContent=rol;
     var av=document.querySelector('.avatar'); if(av)av.textContent=iniciales(nombre);
     var pf=document.querySelector('.perfil b'); if(pf)pf.textContent=rol;
+    await aplicarPermisos(rol);
     console.log('[DASH] sesión iniciada:',nombre,'·',rol);
+  }
+
+  async function aplicarPermisos(rol){
+    var MAP={dashboard:'dashboard',admision:'admision',cotizaciones:'cotizaciones',expediente:'expediente'};
+    var permitidos=null;
+    try{
+      if(caSupa && rol){
+        var rp=await caSupa.from('permisos').select('modulo_clave').eq('rol_clave',rol);
+        if(!rp.error && rp.data && rp.data.length){
+          permitidos={};
+          rp.data.forEach(function(x){ permitidos[x.modulo_clave]=true; });
+        }
+      }
+    }catch(e){ console.log('[DASH] permisos:',e&&e.message); }
+    // Red de seguridad: si el rol no tiene matriz (desconocido o error), acceso total
+    if(!permitidos){ console.log('[DASH] sin matriz para el rol; acceso total por seguridad'); return; }
+    document.querySelectorAll('.nav-item[data-view]').forEach(function(btn){
+      var v=btn.getAttribute('data-view'), clave=MAP[v];
+      if(!clave) return;            // módulos "pronto": no se tocan
+      if(v==='dashboard') return;   // el dashboard nunca se oculta
+      if(!permitidos[clave]){ btn.style.display='none'; }
+    });
   }
 
   async function doLogin(){
